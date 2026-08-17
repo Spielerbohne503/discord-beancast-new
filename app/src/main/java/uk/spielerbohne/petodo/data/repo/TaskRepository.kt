@@ -11,6 +11,8 @@ import uk.spielerbohne.petodo.domain.model.Priority
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.domain.model.TaskList
 import uk.spielerbohne.petodo.domain.nag.NagSchedule
+import uk.spielerbohne.petodo.domain.recurrence.Recurrence
+import uk.spielerbohne.petodo.domain.recurrence.RecurrenceRule
 import uk.spielerbohne.petodo.domain.sort.FractionalIndex
 import java.time.Clock
 import java.time.Instant
@@ -92,16 +94,59 @@ class TaskRepository(
         return id
     }
 
-    /** Abhaken bzw. wieder öffnen. */
-    suspend fun setCompleted(id: String, completed: Boolean) {
+    /**
+     * Abhaken bzw. wieder öffnen.
+     *
+     * Bei einer wiederkehrenden Aufgabe heißt Abhaken: Die Serie rückt auf den nächsten
+     * Termin vor, statt zu enden. Es bleibt genau eine offene Instanz — verpasste
+     * Termine werden übersprungen und in `missedCount` gezählt.
+     */
+    suspend fun setCompleted(id: String, completed: Boolean, zone: ZoneId = clock.zone) {
         val entity = taskDao.findById(id) ?: return
-        val now = Instant.now(clock).toEpochMilli()
+        val now = Instant.now(clock)
+        val millis = now.toEpochMilli()
+
+        val rule = RecurrenceRule.parse(entity.rrule)
+        val currentDue = entity.dueAt?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+
+        if (completed && rule != null && currentDue != null) {
+            val advance = Recurrence.advance(rule, currentDue, now.atZone(zone).toLocalDate())
+            val nextDue = advance.nextDue
+
+            if (nextDue != null) {
+                val anchor = NagSchedule.anchorTime(entity.toDomain(), zone)
+                taskDao.update(
+                    entity.copy(
+                        dueAt = nextDue.atTime(anchor).atZone(zone).toInstant().toEpochMilli(),
+                        completedAt = null,
+                        missedCount = entity.missedCount + advance.skipped,
+                        nagCount = 0,
+                        snoozedUntil = null,
+                        rrule = advance.remainingRule?.toRfc5545(),
+                        updatedAt = millis,
+                    )
+                )
+                return
+            }
+
+            // Serienende: normal abhaken, Regel entfernen.
+            taskDao.update(entity.copy(completedAt = millis, rrule = null, updatedAt = millis))
+            return
+        }
+
         taskDao.update(
             entity.copy(
-                completedAt = if (completed) now else null,
-                updatedAt = now,
+                completedAt = if (completed) millis else null,
+                updatedAt = millis,
             )
         )
+    }
+
+    /** Wiederholungsregel setzen oder entfernen. */
+    suspend fun setRecurrence(id: String, rule: RecurrenceRule?) {
+        val entity = taskDao.findById(id) ?: return
+        val now = Instant.now(clock).toEpochMilli()
+        taskDao.update(entity.copy(rrule = rule?.toRfc5545(), updatedAt = now))
     }
 
     /** Titel, Notiz und Fälligkeit bearbeiten. */

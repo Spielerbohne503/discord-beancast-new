@@ -29,6 +29,7 @@ data class Task(
     val rrule: String? = null,
     val completedAt: Instant? = null,
     val sortKey: String,
+    val missedCount: Int = 0,
     val nagCount: Int = 0,
     val nagLastAt: Instant? = null,
     val snoozedUntil: Instant? = null,

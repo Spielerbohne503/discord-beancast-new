@@ -46,6 +46,11 @@ data class TaskEntity(
     val completedAt: Long? = null,
     /** Fractional Index (Lexorank), NICHT Integer-Position. */
     @ColumnInfo(name = "sortKey") val sortKey: String,
+    /**
+     * Wie viele Termine einer Wiederholung übersprungen wurden. Verpasste Termine
+     * werden gezählt, erzeugen aber keine zusätzliche Überfälligkeitslast.
+     */
+    @ColumnInfo(defaultValue = "0") val missedCount: Int = 0,
     val nagCount: Int = 0,
     val nagLastAt: Long? = null,
     val snoozedUntil: Long? = null,

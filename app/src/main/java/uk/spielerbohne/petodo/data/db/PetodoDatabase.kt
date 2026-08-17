@@ -31,7 +31,7 @@ import uk.spielerbohne.petodo.data.db.entity.TaskTagEntity
         TaskTagEntity::class,
         ReminderEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class PetodoDatabase : RoomDatabase() {
