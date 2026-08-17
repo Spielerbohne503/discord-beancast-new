@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PeTodo</string>
+
+    <!-- Untere Navigationsleiste -->
+    <string name="nav_today">Heute</string>
+    <string name="nav_focus">Fokus</string>
+    <string name="nav_pet">Pet</string>
+    <string name="nav_more">Mehr</string>
+
+    <!-- Heute-Screen -->
+    <string name="today_title">Heute</string>
+    <string name="section_overdue">Überfällig</string>
+    <string name="section_today">Heute</string>
+    <string name="section_later">Später und ohne Datum</string>
+    <string name="section_done_today">Heute erledigt</string>
+    <string name="today_empty">Nichts offen. Die Liste ist leer.</string>
+    <string name="quick_add_hint">Neue Aufgabe …</string>
+    <string name="quick_add_submit">Aufgabe anlegen</string>
+    <string name="quick_add_pick_due">Fälligkeit wählen</string>
+    <string name="quick_add_due_clear">Fälligkeit entfernen</string>
+
+    <!-- Aufgabe -->
+    <string name="task_toggle_done">Abhaken</string>
+    <string name="task_open_details">Aufgabe öffnen</string>
+    <string name="task_edit_title">Aufgabe bearbeiten</string>
+    <string name="task_field_title">Titel</string>
+    <string name="task_field_note">Notiz</string>
+    <string name="task_field_due">Fällig</string>
+    <string name="task_no_due">ohne Fälligkeit</string>
+    <string name="task_pick_date">Datum</string>
+    <string name="task_pick_time">Uhrzeit</string>
+    <string name="task_clear_due">Fälligkeit löschen</string>
+    <string name="task_delete">Löschen</string>
+    <string name="task_reopen">Wieder öffnen</string>
+    <string name="task_deleted">Aufgabe gelöscht</string>
+    <string name="task_note_indicator">Notiz</string>
+
+    <!-- Allgemein -->
+    <string name="action_save">Speichern</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_ok">OK</string>
+    <string name="action_undo">Rückgängig</string>
+    <string name="action_close">Schließen</string>
+
+    <!-- Datums- und Zeitformate -->
+    <string name="due_today_at">Heute %1$s</string>
+    <string name="due_tomorrow_at">Morgen %1$s</string>
+    <string name="due_yesterday_at">Gestern %1$s</string>
+    <string name="due_date_at">%1$s %2$s</string>
+    <string name="due_overdue_days">%1$d Tage überfällig</string>
+    <string name="due_overdue_one_day">1 Tag überfällig</string>
+
+    <!-- Platzhalter-Screens (Phase 2-4) -->
+    <string name="placeholder_focus_title">Fokus</string>
+    <string name="placeholder_focus_body">Der Fokus-Timer kommt in Phase 3.</string>
+    <string name="placeholder_pet_title">Pet</string>
+    <string name="placeholder_pet_body">Das Pet kommt in Phase 4.</string>
+    <string name="placeholder_more_title">Mehr</string>
+    <string name="placeholder_more_body">Einstellungen kommen in Phase 2.</string>
+
+    <!-- Startdaten -->
+    <string name="list_inbox">Inbox</string>
+    <string name="list_someday">Irgendwann</string>
+</resources>
