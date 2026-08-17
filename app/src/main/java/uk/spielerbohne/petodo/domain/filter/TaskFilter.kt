@@ -91,16 +91,22 @@ object TaskFilter {
             task.note?.contains(query, ignoreCase = true) == true
 
     /**
-     * Offene Aufgaben: früheste Fälligkeit zuerst, undatierte ans Ende, dann höhere
-     * Priorität, dann Fractional Index. Erledigte: das zuletzt Erledigte oben.
+     * Eine konkrete Liste behält die Reihenfolge von Hand (Fractional Index) — nur dort
+     * ergibt Ziehen einen Sinn. Smart Lists sortieren nach Fälligkeit, weil sie Aufgaben
+     * aus mehreren Listen zusammenwürfeln. Erledigte: das zuletzt Erledigte oben.
      */
-    private fun orderFor(scope: TaskScope): Comparator<Task> =
-        if (scope == TaskScope.Completed) {
-            compareByDescending<Task> { it.completedAt }.thenBy { it.sortKey }
-        } else {
-            compareBy<Task> { it.dueAt == null }
-                .thenBy { it.dueAt ?: Instant.EPOCH }
-                .thenByDescending { it.priority }
-                .thenBy { it.sortKey }
-        }
+    fun orderFor(scope: TaskScope): Comparator<Task> = when (scope) {
+        TaskScope.Completed -> compareByDescending<Task> { it.completedAt }.thenBy { it.sortKey }
+
+        is TaskScope.InList -> compareBy { it.sortKey }
+
+        else -> compareBy<Task> { it.dueAt == null }
+            .thenBy { it.dueAt ?: Instant.EPOCH }
+            .thenByDescending { it.priority }
+            .thenBy { it.sortKey }
+    }
+
+    /** Ob in dieser Ansicht von Hand umsortiert werden darf. */
+    fun isManuallyOrdered(scope: TaskScope, query: String): Boolean =
+        scope is TaskScope.InList && query.isBlank()
 }

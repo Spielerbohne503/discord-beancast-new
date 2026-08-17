@@ -1,6 +1,7 @@
 package uk.spielerbohne.petodo.domain.filter
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import uk.spielerbohne.petodo.domain.TestTasks.BERLIN
@@ -104,6 +105,26 @@ class TaskFilterTest {
             listOf("frueh", "spaet", "ohne_dringend", "ohne_normal"),
             ids(TaskScope.AllOpen, tasks = tasks),
         )
+    }
+
+    @Test
+    fun eine_liste_behaelt_die_reihenfolge_von_hand() {
+        // In einer konkreten Liste zählt der Fractional Index, nicht die Fälligkeit —
+        // sonst wäre ein Zug sofort wieder weg.
+        val tasks = listOf(
+            task(id = "spaet", listId = "arbeit", sortKey = "a", dueAt = at("2026-09-01", "09:00"), hasTime = true),
+            task(id = "frueh", listId = "arbeit", sortKey = "b", dueAt = at("2026-08-18", "09:00"), hasTime = true),
+        )
+        assertEquals(listOf("spaet", "frueh"), ids(TaskScope.InList("arbeit"), tasks = tasks))
+    }
+
+    @Test
+    fun von_hand_sortiert_wird_nur_in_einer_liste_und_ohne_suche() {
+        assertTrue(TaskFilter.isManuallyOrdered(TaskScope.InList("arbeit"), query = ""))
+        assertFalse(TaskFilter.isManuallyOrdered(TaskScope.InList("arbeit"), query = "such"))
+        assertFalse(TaskFilter.isManuallyOrdered(TaskScope.AllOpen, query = ""))
+        assertFalse(TaskFilter.isManuallyOrdered(TaskScope.NextSevenDays, query = ""))
+        assertFalse(TaskFilter.isManuallyOrdered(TaskScope.Completed, query = ""))
     }
 
     @Test

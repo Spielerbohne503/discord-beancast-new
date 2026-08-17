@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Random
 import java.util.UUID
 
 class NotificationIdsTest {
@@ -23,17 +24,27 @@ class NotificationIdsTest {
 
     @Test
     fun ids_sind_immer_positiv_und_kollidieren_nie_mit_den_festen_ids() {
-        repeat(10_000) {
-            val id = NotificationIds.forTask(UUID.randomUUID().toString())
+        uuids(10_000).forEach { uuid ->
+            val id = NotificationIds.forTask(uuid)
             assertTrue("$id ist nicht positiv", id > 0)
             assertTrue("$id liegt im reservierten Bereich", id > NotificationIds.RESERVED_MAX)
         }
     }
 
     @Test
-    fun zehntausend_uuids_ergeben_zehntausend_verschiedene_ids() {
-        val ids = (1..10_000).map { NotificationIds.forTask(UUID.randomUUID().toString()) }.toSet()
+    fun zehntausend_uuids_streuen_ohne_zusammenzustossen() {
+        // Notification-IDs sind Int; bei 2^31 Werten sind Kollisionen mathematisch nicht
+        // ausgeschlossen (Geburtstagsparadox: bei 10.000 IDs rund 2 %). Der Test benutzt
+        // deshalb ein *festes* Feld von UUIDs statt Zufall — sonst schlüge er
+        // gelegentlich grundlos fehl und niemand würde ihn mehr ernst nehmen.
+        val ids = uuids(10_000).map(NotificationIds::forTask).toSet()
         assertEquals(10_000, ids.size)
+    }
+
+    /** Deterministische UUIDs: gleicher Lauf, gleiches Ergebnis. */
+    private fun uuids(count: Int): List<String> {
+        val random = Random(20260817)
+        return (1..count).map { UUID(random.nextLong(), random.nextLong()).toString() }
     }
 
     @Test
@@ -53,7 +64,7 @@ class NotificationIdsTest {
 
     @Test
     fun verschiedene_aufgaben_teilen_sich_keinen_alarm_code() {
-        val codes = (1..10_000).map { NotificationIds.alarmRequestCode(UUID.randomUUID().toString()) }
+        val codes = uuids(10_000).map(NotificationIds::alarmRequestCode)
         assertEquals(10_000, codes.toSet().size)
     }
 

@@ -14,6 +14,7 @@ import uk.spielerbohne.petodo.domain.nag.NagSchedule
 import uk.spielerbohne.petodo.domain.recurrence.Recurrence
 import uk.spielerbohne.petodo.domain.recurrence.RecurrenceRule
 import uk.spielerbohne.petodo.domain.sort.FractionalIndex
+import uk.spielerbohne.petodo.domain.sort.Reorder
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -198,6 +199,22 @@ class TaskRepository(
         val entity = taskDao.findById(id) ?: return
         val now = Instant.now(clock).toEpochMilli()
         taskDao.update(entity.copy(listId = listId, updatedAt = now))
+    }
+
+    /**
+     * Verschiebt eine Aufgabe innerhalb einer von Hand sortierten Liste.
+     *
+     * [orderedIds] ist die Reihenfolge, wie sie der Nutzer gerade sieht. Geschrieben wird
+     * genau eine Zeile — das ist der Grund für den Fractional Index.
+     */
+    suspend fun moveTask(orderedIds: List<String>, from: Int, to: Int) {
+        val keys = orderedIds.mapNotNull { taskDao.findById(it)?.sortKey }
+        if (keys.size != orderedIds.size) return
+
+        val newKey = Reorder.keyForMove(keys, from, to) ?: return
+        val entity = taskDao.findById(orderedIds[from]) ?: return
+        val now = Instant.now(clock).toEpochMilli()
+        taskDao.update(entity.copy(sortKey = newKey, updatedAt = now))
     }
 
     /** Unteraufgaben einer Aufgabe. */

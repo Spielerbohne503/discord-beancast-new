@@ -21,6 +21,7 @@ import uk.spielerbohne.petodo.domain.filter.TaskFilter
 import uk.spielerbohne.petodo.domain.filter.TaskScope
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.domain.model.TaskList
+import uk.spielerbohne.petodo.domain.sort.Reorder
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -33,6 +34,8 @@ data class BrowseUiState(
     val listColors: Map<String, Int> = emptyMap(),
     val now: Instant = Instant.EPOCH,
     val zone: ZoneId = ZoneId.systemDefault(),
+    /** Nur in einer konkreten Liste und ohne Suche lässt sich von Hand sortieren. */
+    val manuallyOrdered: Boolean = false,
 ) {
     val currentList: TaskList?
         get() = (scope as? TaskScope.InList)?.let { inList -> lists.firstOrNull { it.id == inList.listId } }
@@ -55,21 +58,31 @@ class BrowseViewModel(
     private val scope = MutableStateFlow(initialScope)
     private val query = MutableStateFlow("")
 
+    /** Reihenfolge während eines Ziehens — erst beim Loslassen wird gespeichert. */
+    private val dragOrder = MutableStateFlow<List<Task>?>(null)
+    private var dragOriginalIds: List<String>? = null
+    private var dragFrom: Int? = null
+    private var dragTaskId: String? = null
+
     val state: StateFlow<BrowseUiState> = combine(
         repository.observeTasks(),
         taskListRepository.observeLists(),
         scope,
         query,
-    ) { tasks, lists, currentScope, currentQuery ->
+        dragOrder,
+    ) { tasks, lists, currentScope, currentQuery, pending ->
         val now = Instant.now(clock)
+        @Suppress("UNCHECKED_CAST")
         BrowseUiState(
             scope = currentScope,
             query = currentQuery,
-            tasks = TaskFilter.apply(tasks, currentScope, currentQuery, now, clock.zone),
+            tasks = (pending as? List<Task>)
+                ?: TaskFilter.apply(tasks, currentScope, currentQuery, now, clock.zone),
             lists = lists,
             listColors = lists.mapNotNull { list -> list.colorArgb?.let { list.id to it } }.toMap(),
             now = now,
             zone = clock.zone,
+            manuallyOrdered = TaskFilter.isManuallyOrdered(currentScope, currentQuery),
         )
     }.stateIn(
         scope = viewModelScope,
@@ -78,10 +91,50 @@ class BrowseViewModel(
     )
 
     fun setScope(newScope: TaskScope) {
+        cancelDrag()
         scope.value = newScope
     }
 
+    // ------------------------------------------------------------------- Umsortieren
+
+    /**
+     * Ein Zug während des Ziehens. Die Liste ordnet sich sofort neu, gespeichert wird
+     * erst beim Loslassen — ein abgebrochener Zug hinterlässt nichts.
+     */
+    fun onDragMove(from: Int, to: Int) {
+        val current = dragOrder.value ?: state.value.tasks
+        if (dragFrom == null) {
+            dragOriginalIds = current.map { it.id }
+            dragFrom = from
+            dragTaskId = current.getOrNull(from)?.id
+        }
+        dragOrder.value = Reorder.move(current, from, to)
+    }
+
+    fun onDragDrop() {
+        val originalIds = dragOriginalIds
+        val from = dragFrom
+        val movedId = dragTaskId
+        val finalOrder = dragOrder.value
+
+        cancelDrag()
+
+        if (originalIds == null || from == null || movedId == null || finalOrder == null) return
+        val to = finalOrder.indexOfFirst { it.id == movedId }
+        if (to < 0) return
+
+        viewModelScope.launch { repository.moveTask(originalIds, from, to) }
+    }
+
+    fun cancelDrag() {
+        dragOrder.value = null
+        dragOriginalIds = null
+        dragFrom = null
+        dragTaskId = null
+    }
+
     fun setQuery(text: String) {
+        cancelDrag()
         query.value = text
     }
 

@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -48,6 +48,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -58,6 +60,8 @@ import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.filter.TaskScope
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.ui.common.PriorityUi
+import uk.spielerbohne.petodo.ui.common.rememberReorderState
+import uk.spielerbohne.petodo.ui.common.reorderable
 import uk.spielerbohne.petodo.ui.today.dueLabel
 import uk.spielerbohne.petodo.ui.today.overdueLabel
 
@@ -83,6 +87,8 @@ fun BrowseRoute(
         onToggle = viewModel::toggleCompleted,
         onOpenTask = onOpenTask,
         onBack = onBack,
+        onDragMove = viewModel::onDragMove,
+        onDragDrop = viewModel::onDragDrop,
     )
 }
 
@@ -96,10 +102,17 @@ fun BrowseScreen(
     onToggle: (Task) -> Unit,
     onOpenTask: (String) -> Unit,
     onBack: () -> Unit,
+    onDragMove: (Int, Int) -> Unit = { _, _ -> },
+    onDragDrop: () -> Unit = {},
 ) {
     var searching by remember { mutableStateOf(startInSearch) }
     val focusRequester = remember { FocusRequester() }
     val listState = rememberLazyListState()
+    val reorderState = rememberReorderState(
+        listState = listState,
+        onMove = onDragMove,
+        onDrop = onDragDrop,
+    )
 
     LaunchedEffect(searching) {
         if (searching) runCatching { focusRequester.requestFocus() }
@@ -181,14 +194,33 @@ fun BrowseScreen(
                 )
             }
 
-            LazyColumn(state = listState) {
-                items(state.tasks, key = { it.id }) { task ->
-                    BrowseRow(
-                        task = task,
-                        state = state,
-                        onToggle = { onToggle(task) },
-                        onOpen = { onOpenTask(task.id) },
-                    )
+            LazyColumn(
+                state = listState,
+                // Ziehen nur dort, wo die Reihenfolge von Hand gilt — in einer nach
+                // Fälligkeit sortierten Ansicht wäre ein Zug sofort wieder weg.
+                modifier = if (state.manuallyOrdered) Modifier.reorderable(reorderState) else Modifier,
+            ) {
+                itemsIndexed(state.tasks, key = { _, task -> task.id }) { index, task ->
+                    val dragged = reorderState.draggedIndex == index
+                    Box(
+                        modifier = Modifier
+                            .zIndex(if (dragged) 1f else 0f)
+                            .graphicsLayer { translationY = reorderState.offsetFor(index) }
+                            .background(
+                                if (dragged) {
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                } else {
+                                    Color.Transparent
+                                }
+                            )
+                    ) {
+                        BrowseRow(
+                            task = task,
+                            state = state,
+                            onToggle = { onToggle(task) },
+                            onOpen = { onOpenTask(task.id) },
+                        )
+                    }
                     HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
                 }
             }
