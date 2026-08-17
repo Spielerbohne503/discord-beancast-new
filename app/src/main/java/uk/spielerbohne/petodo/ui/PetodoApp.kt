@@ -12,24 +12,33 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
+import uk.spielerbohne.petodo.ui.more.MoreRoute
+import uk.spielerbohne.petodo.ui.onboarding.OnboardingScreen
 import uk.spielerbohne.petodo.ui.placeholder.PlaceholderScreen
 import uk.spielerbohne.petodo.ui.today.TodayRoute
 
 /**
- * Untere Leiste mit vier Einträgen. "Heute" funktioniert, die anderen drei sind
- * Platzhalter für die Phasen 2 bis 4 — sie stehen aber von Anfang an da, damit die
+ * Untere Leiste mit vier Einträgen. Heute und Mehr funktionieren, Fokus und Pet sind
+ * Platzhalter für die Phasen 3 und 4 — sie stehen aber von Anfang an da, damit die
  * Navigation nicht später umgebaut werden muss.
  */
 private enum class TopLevelDestination(
@@ -45,6 +54,31 @@ private enum class TopLevelDestination(
 
 @Composable
 fun PetodoApp(container: AppContainer) {
+    val onboardingCompleted by container.settingsRepository.onboardingCompleted
+        .collectAsStateWithLifecycle(initialValue = true)
+    val scope = rememberCoroutineScope()
+
+    // Beim ersten Start erklären, wovon es abhängt, ob eine Erinnerung ankommt.
+    var showOnboarding by remember { mutableStateOf(false) }
+    LaunchedEffect(onboardingCompleted) {
+        if (!onboardingCompleted) showOnboarding = true
+    }
+
+    if (showOnboarding) {
+        OnboardingScreen(
+            onFinished = {
+                showOnboarding = false
+                scope.launch { container.settingsRepository.setOnboardingCompleted(true) }
+            }
+        )
+        return
+    }
+
+    MainScaffold(container = container, onOpenPermissions = { showOnboarding = true })
+}
+
+@Composable
+private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -91,10 +125,7 @@ fun PetodoApp(container: AppContainer) {
                 )
             }
             composable(TopLevelDestination.MORE.route) {
-                PlaceholderScreen(
-                    titleRes = R.string.placeholder_more_title,
-                    bodyRes = R.string.placeholder_more_body,
-                )
+                MoreRoute(container = container, onOpenPermissions = onOpenPermissions)
             }
         }
     }

@@ -10,6 +10,7 @@ import uk.spielerbohne.petodo.data.mapper.toHhMmOrNull
 import uk.spielerbohne.petodo.domain.model.Priority
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.domain.model.TaskList
+import uk.spielerbohne.petodo.domain.nag.NagSchedule
 import uk.spielerbohne.petodo.domain.sort.FractionalIndex
 import java.time.Clock
 import java.time.Instant
@@ -127,6 +128,63 @@ class TaskRepository(
                 // Fälligkeit geändert = neue Nag-Kette.
                 nagCount = if (entity.dueAt != dueAt?.toEpochMilli()) 0 else entity.nagCount,
                 updatedAt = now,
+            )
+        )
+    }
+
+    // ------------------------------------------------------------------ Nag (Phase 2)
+
+    /** Alle offenen Aufgaben mit Fälligkeit — Grundlage fürs Neuregistrieren der Alarme. */
+    suspend fun openTasksWithDueDate(): List<Task> =
+        taskDao.openWithDueDate().map(TaskEntity::toDomain)
+
+    /** Überfällige offene Aufgaben, ohne die aus ausgenommenen Listen. */
+    suspend fun overdueTasks(now: Instant, zone: ZoneId): List<Task> {
+        val excluded = listIdsExcludedFromNag()
+        return openTasksWithDueDate()
+            .filter { it.listId !in excluded && it.isOverdue(now, zone) }
+            .sortedBy { it.dueAt }
+    }
+
+    suspend fun listIdsExcludedFromNag(): Set<String> = taskListDao.idsExcludedFromNag().toSet()
+
+    suspend fun isListExcludedFromNag(listId: String): Boolean =
+        listId in listIdsExcludedFromNag()
+
+    /** Nach einer gemeldeten Erinnerung: Zähler und Zeitpunkt fortschreiben. */
+    suspend fun markNagged(id: String, nagCount: Int, at: Instant) {
+        val entity = taskDao.findById(id) ?: return
+        taskDao.update(
+            entity.copy(
+                nagCount = nagCount,
+                nagLastAt = at.toEpochMilli(),
+                updatedAt = at.toEpochMilli(),
+            )
+        )
+    }
+
+    /** "+1 Std" aus der Benachrichtigung: setzt `snoozedUntil`, ohne die Fälligkeit zu ändern. */
+    suspend fun snooze(id: String, until: Instant) {
+        val entity = taskDao.findById(id) ?: return
+        val now = Instant.now(clock).toEpochMilli()
+        taskDao.update(entity.copy(snoozedUntil = until.toEpochMilli(), updatedAt = now))
+    }
+
+    /**
+     * "Morgen" aus der Benachrichtigung: schiebt die Fälligkeit einen Kalendertag weiter
+     * und beginnt die Nag-Kette von vorn.
+     */
+    suspend fun postponeToTomorrow(id: String, zone: ZoneId = clock.zone) {
+        val entity = taskDao.findById(id) ?: return
+        val task = entity.toDomain()
+        val now = Instant.now(clock)
+        val neuerTermin = NagSchedule.postponeToTomorrow(task, now, zone)
+        taskDao.update(
+            entity.copy(
+                dueAt = neuerTermin.toEpochMilli(),
+                nagCount = 0,
+                snoozedUntil = null,
+                updatedAt = now.toEpochMilli(),
             )
         )
     }

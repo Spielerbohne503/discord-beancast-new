@@ -62,4 +62,62 @@
     <!-- Startdaten -->
     <string name="list_inbox">Inbox</string>
     <string name="list_someday">Irgendwann</string>
+
+    <!-- Benachrichtigungskanäle -->
+    <string name="channel_reminders_name">Erinnerungen</string>
+    <string name="channel_reminders_description">Fälligkeiten und Nachfassen. Diesen Kanal solltest du anlassen.</string>
+    <string name="channel_focus_name">Fokus</string>
+    <string name="channel_focus_description">Timer und Statuszeile. Lautlos und dauerhaft.</string>
+    <string name="channel_pet_name">Pet</string>
+    <string name="channel_pet_description">Bemerkungen des Pets. Lautlos — und abschaltbar, ohne die Erinnerungen zu verlieren.</string>
+
+    <!-- Benachrichtigungstexte -->
+    <string name="notification_body_first">Jetzt fällig.</string>
+    <string name="notification_body_again">Steht immer noch offen.</string>
+    <string name="notification_body_cleanup">Willst du das noch?</string>
+    <plurals name="notification_body_loud">
+        <item quantity="one">Seit einem Tag offen.</item>
+        <item quantity="other">Seit %1$d Tagen offen.</item>
+    </plurals>
+    <plurals name="notification_summary_title">
+        <item quantity="one">1 überfällige Aufgabe</item>
+        <item quantity="other">%1$d überfällige Aufgaben</item>
+    </plurals>
+
+    <!-- Aktionsknöpfe in der Benachrichtigung -->
+    <string name="notification_action_done">Erledigt</string>
+    <string name="notification_action_snooze_hour">+1 Std</string>
+    <string name="notification_action_tomorrow">Morgen</string>
+    <string name="notification_action_reschedule">Neu terminieren</string>
+    <string name="notification_action_delete">Löschen</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Damit die App dich wirklich weckt</string>
+    <string name="onboarding_intro">Drei Berechtigungen entscheiden darüber, ob eine Erinnerung ankommt oder still verschluckt wird. Danach fragt die App nie wieder.</string>
+    <string name="onboarding_notifications_title">Benachrichtigungen</string>
+    <string name="onboarding_notifications_body">Ohne diese Erlaubnis kann die App gar nichts melden.</string>
+    <string name="onboarding_exact_alarms_title">Exakte Alarme</string>
+    <string name="onboarding_exact_alarms_body">Nur exakte Alarme überstehen den Energiesparmodus. Ohne sie kommt die Erinnerung irgendwann — vielleicht Stunden später.</string>
+    <string name="onboarding_battery_title">Akku-Ausnahme</string>
+    <string name="onboarding_battery_body">Ohne Ausnahme friert Android die App nach ein paar Tagen ein. Sie braucht keinen Akku, wenn sie nichts tut — nur die Erlaubnis, geweckt zu werden.</string>
+    <string name="onboarding_manufacturer_title">Herstellerhürde</string>
+    <string name="onboarding_manufacturer_body">Auf Geräten von Samsung, Xiaomi, Huawei und OnePlus reicht korrekter Code nicht. Dort muss die App zusätzlich in der herstellereigenen App-Verwaltung von der Akku-Optimierung ausgenommen werden — meist unter „Akku“ oder „App-Verwaltung“, Stichwort „nicht optimiert“ oder „im Hintergrund zulassen“.</string>
+    <string name="onboarding_grant">Erlauben</string>
+    <string name="onboarding_granted">Erteilt</string>
+    <string name="onboarding_open_settings">Einstellungen öffnen</string>
+    <string name="onboarding_done">Fertig</string>
+    <string name="onboarding_skip">Später</string>
+    <string name="onboarding_reopen">Berechtigungen prüfen</string>
+
+    <!-- Mehr / Einstellungen -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_quiet_hours_title">Ruhezeit</string>
+    <string name="settings_quiet_hours_body">In diesem Fenster wird nicht gemahnt. Fällige Erinnerungen werden ans Fensterende geschoben, nie verworfen.</string>
+    <string name="settings_quiet_hours_enabled">Ruhezeit aktiv</string>
+    <string name="settings_quiet_hours_from">Von</string>
+    <string name="settings_quiet_hours_to">Bis</string>
+    <string name="settings_permissions_title">Berechtigungen</string>
+    <string name="settings_permissions_body">Benachrichtigungen, exakte Alarme und Akku-Ausnahme prüfen.</string>
+    <string name="settings_about_title">Über</string>
+    <string name="settings_about_body">PeTodo %1$s · vollständig offline, kein Konto, keine Telemetrie.</string>
 </resources>

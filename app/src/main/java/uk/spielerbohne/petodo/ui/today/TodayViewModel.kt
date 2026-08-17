@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import uk.spielerbohne.petodo.data.alarm.NagCoordinator
 import uk.spielerbohne.petodo.data.repo.TaskRepository
 import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.model.Task
@@ -36,6 +39,7 @@ data class TodayUiState(
  */
 class TodayViewModel(
     private val repository: TaskRepository,
+    private val nagCoordinator: NagCoordinator,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -74,13 +78,26 @@ class TodayViewModel(
     fun addTask(title: String, dueDate: LocalDate?, dueTime: LocalTime?) {
         if (title.isBlank()) return
         viewModelScope.launch {
-            repository.createTask(title = title, dueDate = dueDate, dueTime = dueTime)
+            val id = repository.createTask(title = title, dueDate = dueDate, dueTime = dueTime)
+            syncAlarm(id)
         }
     }
 
+    /**
+     * Abhaken nimmt die Benachrichtigung sofort zurück — wieder öffnen setzt den Alarm
+     * neu.
+     */
     fun toggleCompleted(task: Task) {
         viewModelScope.launch {
-            repository.setCompleted(task.id, completed = !task.isCompleted)
+            val completed = !task.isCompleted
+            repository.setCompleted(task.id, completed = completed)
+            withContext(Dispatchers.IO) {
+                if (completed) {
+                    nagCoordinator.onTaskCompleted(task.id)
+                } else {
+                    nagCoordinator.syncTask(task.id)
+                }
+            }
         }
     }
 
@@ -88,6 +105,7 @@ class TodayViewModel(
         if (title.isBlank()) return
         viewModelScope.launch {
             repository.updateTask(id, title, note, dueDate, dueTime)
+            syncAlarm(id)
         }
     }
 
@@ -95,6 +113,7 @@ class TodayViewModel(
         viewModelScope.launch {
             repository.delete(id)
             lastDeleted.value = id
+            withContext(Dispatchers.IO) { nagCoordinator.onTaskCompleted(id) }
         }
     }
 
@@ -103,7 +122,12 @@ class TodayViewModel(
         viewModelScope.launch {
             repository.restore(id)
             lastDeleted.value = null
+            syncAlarm(id)
         }
+    }
+
+    private suspend fun syncAlarm(taskId: String) {
+        withContext(Dispatchers.IO) { nagCoordinator.syncTask(taskId) }
     }
 
     fun clearUndo() {
@@ -115,7 +139,13 @@ class TodayViewModel(
         private const val STOP_TIMEOUT_MILLIS = 5_000L
 
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
-            initializer { TodayViewModel(container.taskRepository, container.clock) }
+            initializer {
+                TodayViewModel(
+                    repository = container.taskRepository,
+                    nagCoordinator = container.nagCoordinator,
+                    clock = container.clock,
+                )
+            }
         }
     }
 }

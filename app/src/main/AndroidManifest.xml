@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!--
+        Akku-Ausnahme: bewusste Entscheidung aus dem Projektplan (Abschnitt 6.7). Ohne sie
+        friert Android die App nach ein paar Tagen ein und die Erinnerungen fallen aus.
+        Die App fragt sie einmalig im Onboarding und erklärt vorher, wofür.
+    -->
+    <uses-permission
+        android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+        tools:ignore="BatteryLife" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
@@ -29,6 +37,39 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Feuernder Alarm einer Aufgabe. Nicht exportiert: nur die App selbst löst aus. -->
+        <receiver
+            android:name=".data.alarm.NagReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="uk.spielerbohne.petodo.action.NAG" />
+                <data android:scheme="petodo" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Aktionsknöpfe aus der Benachrichtigung: Erledigt / +1 Std / Morgen / Löschen. -->
+        <receiver
+            android:name=".data.alarm.TaskActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="uk.spielerbohne.petodo.action.TASK_ACTION" />
+                <data android:scheme="petodo" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Alarme überleben keinen Neustart und kein App-Update. -->
+        <receiver
+            android:name=".data.alarm.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
