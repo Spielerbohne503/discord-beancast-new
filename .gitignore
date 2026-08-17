@@ -8,4 +8,11 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+# Signaturschlüssel — gehört nie ins Repository
+keystore.properties
+*.jks
+*.keystore
+
+# Gebaute APKs
+/dist
