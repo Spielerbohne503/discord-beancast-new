@@ -132,6 +132,19 @@
     <string name="lists_inbox_protected">Die Inbox bleibt bestehen.</string>
     <string name="lists_color">Farbe</string>
 
+    <!-- Sicherung -->
+    <string name="backup_title">Sicherung</string>
+    <string name="backup_body">Alles liegt nur auf diesem Gerät. Eine Sicherung ist die einzige Kopie, die einen Handywechsel überlebt.</string>
+    <string name="backup_export">Sichern</string>
+    <string name="backup_import">Wiederherstellen</string>
+    <string name="backup_file_name">petodo-sicherung-%1$s.json</string>
+    <string name="backup_exported">Sicherung geschrieben: %1$d Zeilen</string>
+    <string name="backup_export_failed">Sicherung fehlgeschlagen.</string>
+    <string name="backup_restored">Wiederhergestellt: %1$d neu, %2$d aktualisiert, %3$d unverändert</string>
+    <string name="backup_restore_invalid">Das ist keine PeTodo-Sicherung.</string>
+    <string name="backup_restore_failed">Wiederherstellen fehlgeschlagen.</string>
+    <string name="backup_restore_hint">Beim Wiederherstellen gewinnt je Aufgabe der jüngere Stand. Eine alte Sicherung überschreibt also keine neuere Arbeit.</string>
+
     <!-- Etiketten-Verwaltung -->
     <string name="tags_title">Etiketten</string>
     <string name="tags_empty">Noch keine Etiketten. Sie entstehen beim Eintippen auf der Aufgabe.</string>

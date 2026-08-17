@@ -87,6 +87,17 @@ Indizes mit `n+1.json`. Weicht etwas ab, würde Room beim Start des Nutzers abbr
 Balancing-Zahlen stehen ausschließlich in `domain/Balance.kt`. Eine Zahl mit fachlicher
 Bedeutung irgendwo anders im Code ist ein Fehler, auch wenn sie stimmt.
 
+## Sicherung
+
+`domain/backup/` enthält einen eigenen JSON-Codec — keine Bibliothek (nicht erlaubt) und
+kein `org.json` (wäre in `domain/` verboten und im JVM-Test nur eine Attrappe). Zahlen
+werden als Literal gehalten, damit Millisekunden-Zeitstempel nicht über einen `Double`
+laufen.
+
+Das Sicherungsformat ist tabellennah und enthält Tombstones und `updatedAt`. Beim
+Wiederherstellen gilt Last-Write-Wins je Zeile — dieselbe Regel wie beim späteren Sync
+(Projektplan v3.0). Eine alte Sicherung überschreibt damit keine neuere Arbeit.
+
 ## Testkonventionen
 
 - Unit-Tests (JVM, `app/src/test/java/...`) für **alles** in `domain/`. Keine UI-Tests.

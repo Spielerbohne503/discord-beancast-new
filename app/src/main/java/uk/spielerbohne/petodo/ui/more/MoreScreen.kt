@@ -13,18 +13,23 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,8 +52,20 @@ fun MoreRoute(
     val quietHours by viewModel.quietHours.collectAsStateWithLifecycle()
     val lists by viewModel.lists.collectAsStateWithLifecycle()
     val tags by viewModel.tags.collectAsStateWithLifecycle()
+    val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    LaunchedEffect(backupMessage) {
+        val message = backupMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message.toText(context))
+        viewModel.clearBackupMessage()
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
     MoreScreen(
+        modifier = Modifier.padding(padding),
         quietHours = quietHours,
         lists = lists,
         tags = tags,
@@ -60,11 +77,24 @@ fun MoreRoute(
         onDeleteTag = viewModel::deleteTag,
         onOpenPermissions = onOpenPermissions,
         onOpenList = onOpenList,
+        onExport = viewModel::exportTo,
+        onRestore = viewModel::restoreFrom,
     )
+    }
+}
+
+/** Übersetzt das Ergebnis in einen Satz — die Texte liegen wie alle anderen in strings.xml. */
+private fun BackupMessage.toText(context: android.content.Context): String = when (this) {
+    is BackupMessage.Exported -> context.getString(R.string.backup_exported, rows)
+    is BackupMessage.Restored -> context.getString(R.string.backup_restored, inserted, updated, skipped)
+    BackupMessage.NotABackup -> context.getString(R.string.backup_restore_invalid)
+    BackupMessage.ExportFailed -> context.getString(R.string.backup_export_failed)
+    BackupMessage.RestoreFailed -> context.getString(R.string.backup_restore_failed)
 }
 
 @Composable
 fun MoreScreen(
+    modifier: Modifier = Modifier,
     quietHours: QuietHours,
     lists: List<uk.spielerbohne.petodo.domain.model.TaskList>,
     tags: List<uk.spielerbohne.petodo.domain.model.Tag>,
@@ -76,11 +106,13 @@ fun MoreScreen(
     onDeleteTag: (String) -> Unit,
     onOpenPermissions: () -> Unit,
     onOpenList: (String) -> Unit = {},
+    onExport: (android.net.Uri) -> Unit = {},
+    onRestore: (android.net.Uri) -> Unit = {},
 ) {
     var picking by remember { mutableStateOf<QuietHoursEdge?>(null) }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
@@ -153,6 +185,8 @@ fun MoreScreen(
         )
 
         TagsSection(tags = tags, onDelete = onDeleteTag)
+
+        BackupSection(onExport = onExport, onRestore = onRestore)
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(

@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import uk.spielerbohne.petodo.data.alarm.AlarmScheduler
 import uk.spielerbohne.petodo.data.alarm.NagCoordinator
+import uk.spielerbohne.petodo.data.backup.BackupRepository
 import uk.spielerbohne.petodo.data.db.PetodoDatabase
 import uk.spielerbohne.petodo.data.notify.NagNotifications
 import uk.spielerbohne.petodo.data.repo.TagRepository
@@ -23,6 +24,8 @@ import java.time.Clock
 class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone()) {
 
     private val appContext: Context = context.applicationContext
+
+    val contentResolver: android.content.ContentResolver get() = appContext.contentResolver
 
     /**
      * Lebt so lange wie der Prozess. Receiver benutzen ihn, damit ihre Arbeit nicht
@@ -47,6 +50,8 @@ class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone(
     }
 
     val tagRepository: TagRepository by lazy { TagRepository(database.tagDao(), clock) }
+
+    val backupRepository: BackupRepository by lazy { BackupRepository(database, clock) }
 
     val settingsRepository: SettingsRepository by lazy { SettingsRepository(appContext) }
 
