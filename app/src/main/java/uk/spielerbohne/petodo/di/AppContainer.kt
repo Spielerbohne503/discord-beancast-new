@@ -7,6 +7,8 @@ import uk.spielerbohne.petodo.data.alarm.AlarmScheduler
 import uk.spielerbohne.petodo.data.alarm.NagCoordinator
 import uk.spielerbohne.petodo.data.db.PetodoDatabase
 import uk.spielerbohne.petodo.data.notify.NagNotifications
+import uk.spielerbohne.petodo.data.repo.TagRepository
+import uk.spielerbohne.petodo.data.repo.TaskListRepository
 import uk.spielerbohne.petodo.data.repo.TaskRepository
 import uk.spielerbohne.petodo.data.settings.SettingsRepository
 import java.time.Clock
@@ -39,6 +41,12 @@ class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone(
             clock = clock,
         )
     }
+
+    val taskListRepository: TaskListRepository by lazy {
+        TaskListRepository(database.taskListDao(), clock)
+    }
+
+    val tagRepository: TagRepository by lazy { TagRepository(database.tagDao(), clock) }
 
     val settingsRepository: SettingsRepository by lazy { SettingsRepository(appContext) }
 

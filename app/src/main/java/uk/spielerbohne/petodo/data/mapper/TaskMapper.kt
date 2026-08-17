@@ -1,9 +1,11 @@
 package uk.spielerbohne.petodo.data.mapper
 
 import uk.spielerbohne.petodo.data.db.entity.TaskEntity
+import uk.spielerbohne.petodo.data.db.entity.TagEntity
 import uk.spielerbohne.petodo.data.db.entity.TaskListEntity
 import uk.spielerbohne.petodo.domain.model.Priority
 import uk.spielerbohne.petodo.domain.model.Task
+import uk.spielerbohne.petodo.domain.model.Tag
 import uk.spielerbohne.petodo.domain.model.TaskList
 import java.time.Instant
 import java.time.LocalTime
@@ -25,6 +27,7 @@ fun LocalTime?.toHhMmOrNull(): String? = this?.format(HHMM)
 fun TaskEntity.toDomain(): Task = Task(
     id = id,
     listId = listId,
+    parentId = parentId,
     title = title,
     note = note,
     dueAt = dueAt?.let(Instant::ofEpochMilli),
@@ -45,6 +48,7 @@ fun TaskEntity.toDomain(): Task = Task(
 fun Task.toEntity(): TaskEntity = TaskEntity(
     id = id,
     listId = listId,
+    parentId = parentId,
     title = title,
     note = note,
     dueAt = dueAt?.toEpochMilli(),
@@ -64,10 +68,21 @@ fun Task.toEntity(): TaskEntity = TaskEntity(
 
 fun TaskListEntity.toDomain(): TaskList = TaskList(
     id = id,
+    parentId = parentId,
     name = name,
     colorArgb = colorArgb,
     sortKey = sortKey,
     excludeFromNag = excludeFromNag,
+    createdAt = Instant.ofEpochMilli(createdAt),
+    updatedAt = Instant.ofEpochMilli(updatedAt),
+    deletedAt = deletedAt?.let(Instant::ofEpochMilli),
+)
+
+fun TagEntity.toDomain(): Tag = Tag(
+    id = id,
+    name = name,
+    colorArgb = colorArgb,
+    sortKey = sortKey,
     createdAt = Instant.ofEpochMilli(createdAt),
     updatedAt = Instant.ofEpochMilli(updatedAt),
     deletedAt = deletedAt?.let(Instant::ofEpochMilli),

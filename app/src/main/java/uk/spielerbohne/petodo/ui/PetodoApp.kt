@@ -31,6 +31,9 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import uk.spielerbohne.petodo.ui.detail.TaskDetailRoute
 import uk.spielerbohne.petodo.ui.more.MoreRoute
 import uk.spielerbohne.petodo.ui.onboarding.OnboardingScreen
 import uk.spielerbohne.petodo.ui.placeholder.PlaceholderScreen
@@ -110,7 +113,20 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(TopLevelDestination.TODAY.route) {
-                TodayRoute(container = container)
+                TodayRoute(
+                    container = container,
+                    onOpenTask = { taskId -> navController.navigate("task/$taskId") },
+                )
+            }
+            composable(
+                route = "task/{taskId}",
+                arguments = listOf(navArgument("taskId") { type = NavType.StringType }),
+            ) { entry ->
+                TaskDetailRoute(
+                    container = container,
+                    taskId = entry.arguments?.getString("taskId").orEmpty(),
+                    onBack = { navController.popBackStack() },
+                )
             }
             composable(TopLevelDestination.FOCUS.route) {
                 PlaceholderScreen(

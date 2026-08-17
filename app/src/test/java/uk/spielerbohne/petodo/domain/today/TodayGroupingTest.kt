@@ -143,6 +143,22 @@ class TodayGroupingTest {
     }
 
     @Test
+    fun unteraufgaben_erscheinen_nicht_als_eigene_zeile() {
+        // Sonst steht dieselbe Arbeit zweimal in der Liste: einmal als Aufgabe, einmal
+        // als ihre eigene Unteraufgabe.
+        val board = TodayGrouping.group(
+            listOf(
+                task(id = "eltern", dueAt = at("2026-08-17", "18:00"), hasTime = true),
+                task(id = "kind", parentId = "eltern", dueAt = at("2026-08-17", "18:00"), hasTime = true),
+            ),
+            jetzt,
+            BERLIN,
+        )
+        assertEquals(listOf("eltern"), board.today.map { it.id })
+        assertEquals(1, board.openCount)
+    }
+
+    @Test
     fun leeres_brett_meldet_sich_als_leer() {
         assertTrue(TodayGrouping.group(emptyList(), jetzt, BERLIN).isEmpty)
         assertEquals(0, TodayGrouping.group(emptyList(), jetzt, BERLIN).openCount)

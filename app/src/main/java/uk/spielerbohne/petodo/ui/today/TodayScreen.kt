@@ -1,17 +1,26 @@
 package uk.spielerbohne.petodo.ui.today
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -24,6 +33,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -44,13 +54,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.model.Task
+import uk.spielerbohne.petodo.ui.common.PriorityUi
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
 @Composable
-fun TodayRoute(container: AppContainer) {
+fun TodayRoute(container: AppContainer, onOpenTask: (String) -> Unit) {
     val viewModel: TodayViewModel = viewModel(factory = TodayViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -58,10 +69,12 @@ fun TodayRoute(container: AppContainer) {
         state = state,
         onToggle = viewModel::toggleCompleted,
         onAdd = viewModel::addTask,
-        onSave = viewModel::saveTask,
+        onOpenTask = onOpenTask,
         onDelete = viewModel::deleteTask,
         onUndoDelete = viewModel::undoDelete,
         onUndoConsumed = viewModel::clearUndo,
+        onPostponeOverdue = viewModel::postponeOverdue,
+        onPostponeConsumed = viewModel::clearPostponed,
     )
 }
 
@@ -70,13 +83,14 @@ fun TodayRoute(container: AppContainer) {
 fun TodayScreen(
     state: TodayUiState,
     onToggle: (Task) -> Unit,
-    onAdd: (String, LocalDate?, LocalTime?) -> Unit,
-    onSave: (String, String, String?, LocalDate?, LocalTime?) -> Unit,
+    onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit,
+    onOpenTask: (String) -> Unit,
     onDelete: (String) -> Unit,
     onUndoDelete: () -> Unit,
     onUndoConsumed: () -> Unit,
+    onPostponeOverdue: () -> Unit,
+    onPostponeConsumed: () -> Unit,
 ) {
-    var editing by remember { mutableStateOf<Task?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.task_deleted)
     val undoLabel = stringResource(R.string.action_undo)
@@ -87,11 +101,21 @@ fun TodayScreen(
         if (result == SnackbarResult.ActionPerformed) onUndoDelete() else onUndoConsumed()
     }
 
+    val postponedMessage = state.lastPostponedCount?.let { count ->
+        androidx.compose.ui.platform.LocalContext.current.resources
+            .getQuantityString(R.plurals.overdue_postponed, count, count)
+    }
+    LaunchedEffect(state.lastPostponedCount) {
+        postponedMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(postponedMessage)
+        onPostponeConsumed()
+    }
+
+    val postponeLabel = stringResource(R.string.overdue_postpone_all)
+
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.today_title)) }) },
-        bottomBar = {
-            QuickAddBar(onAdd = onAdd)
-        },
+        bottomBar = { QuickAddBar(onAdd = onAdd) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         val board = state.board
@@ -99,7 +123,7 @@ fun TodayScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 16.dp),
+            contentPadding = PaddingValues(bottom = 16.dp),
         ) {
             if (board.isEmpty) {
                 item {
@@ -115,82 +139,63 @@ fun TodayScreen(
             taskSection(
                 titleRes = R.string.section_overdue,
                 tasks = board.overdue,
-                now = state.now,
-                zone = state.zone,
+                state = state,
                 emphasize = true,
+                // "Verschieben" räumt den ganzen Block auf einmal auf — die Fluchttür
+                // aus einer schlechten Woche.
+                bulkAction = if (board.overdue.isNotEmpty()) postponeLabel to onPostponeOverdue else null,
                 onToggle = onToggle,
-                onEdit = { editing = it },
+                onOpen = onOpenTask,
             )
-            taskSection(
-                titleRes = R.string.section_today,
-                tasks = board.today,
-                now = state.now,
-                zone = state.zone,
-                onToggle = onToggle,
-                onEdit = { editing = it },
-            )
-            taskSection(
-                titleRes = R.string.section_later,
-                tasks = board.later,
-                now = state.now,
-                zone = state.zone,
-                onToggle = onToggle,
-                onEdit = { editing = it },
-            )
-            taskSection(
-                titleRes = R.string.section_done_today,
-                tasks = board.doneToday,
-                now = state.now,
-                zone = state.zone,
-                onToggle = onToggle,
-                onEdit = { editing = it },
-            )
+            taskSection(R.string.section_today, board.today, state, onToggle = onToggle, onOpen = onOpenTask)
+            taskSection(R.string.section_later, board.later, state, onToggle = onToggle, onOpen = onOpenTask)
+            taskSection(R.string.section_done_today, board.doneToday, state, onToggle = onToggle, onOpen = onOpenTask)
         }
-    }
-
-    editing?.let { task ->
-        TaskEditorDialog(
-            task = task,
-            zone = state.zone,
-            onDismiss = { editing = null },
-            onSave = { title, note, dueDate, dueTime ->
-                onSave(task.id, title, note, dueDate, dueTime)
-                editing = null
-            },
-            onDelete = {
-                onDelete(task.id)
-                editing = null
-            },
-        )
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.taskSection(
+private fun LazyListScope.taskSection(
     titleRes: Int,
     tasks: List<Task>,
-    now: Instant,
-    zone: ZoneId,
+    state: TodayUiState,
     emphasize: Boolean = false,
+    bulkAction: Pair<String, () -> Unit>? = null,
     onToggle: (Task) -> Unit,
-    onEdit: (Task) -> Unit,
+    onOpen: (String) -> Unit,
 ) {
     if (tasks.isEmpty()) return
 
     item(key = "header-$titleRes") {
-        Text(
-            text = stringResource(titleRes),
-            style = MaterialTheme.typography.titleSmall,
-            color = if (emphasize) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(titleRes),
+                style = MaterialTheme.typography.titleSmall,
+                color = if (emphasize) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                bulkAction?.let { (label, action) ->
+                    TextButton(onClick = action) { Text(label) }
+                }
+                Text(
+                    text = tasks.size.toString(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
     items(tasks, key = { it.id }) { task ->
         TaskRow(
             task = task,
-            now = now,
-            zone = zone,
+            state = state,
             onToggle = { onToggle(task) },
-            onEdit = { onEdit(task) },
+            onOpen = { onOpen(task.id) },
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
     }
@@ -199,27 +204,42 @@ private fun androidx.compose.foundation.lazy.LazyListScope.taskSection(
 @Composable
 private fun TaskRow(
     task: Task,
-    now: Instant,
-    zone: ZoneId,
+    state: TodayUiState,
     onToggle: () -> Unit,
-    onEdit: () -> Unit,
+    onOpen: () -> Unit,
 ) {
+    val zone = state.zone
+    val now = state.now
     val due = task.dueLabel(now, zone)
     val overdue = task.overdueLabel(now, zone)
+    val listColor = state.listColors[task.listId]
+    val progress = state.subtaskProgress[task.id]
+    val tags = state.tagsByTask[task.id].orEmpty()
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            // Abhaken per Tippen — der Stift daneben öffnet die Bearbeitung.
-            .clickable(onClickLabel = stringResource(R.string.task_toggle_done), onClick = onToggle)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Farbstreifen der Liste — der schnellste Weg zu sehen, wohin etwas gehört.
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .padding(vertical = 4.dp)
+                .background(
+                    color = listColor?.let(::Color) ?: Color.Transparent,
+                    shape = RoundedCornerShape(2.dp),
+                )
+        )
+        // Abhaken per Tippen auf die Zeile, Öffnen über den Titelbereich.
         Checkbox(checked = task.isCompleted, onCheckedChange = { onToggle() })
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(vertical = 8.dp),
+                .clickable(onClickLabel = stringResource(R.string.task_open_details), onClick = onOpen)
+                .padding(vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
@@ -228,29 +248,42 @@ private fun TaskRow(
                 textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                 color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
             )
-            val subtitle = listOfNotNull(overdue ?: due, task.note?.let { stringResource(R.string.task_note_indicator) })
-                .joinToString(" · ")
-            if (subtitle.isNotEmpty()) {
+
+            val details = buildList {
+                (overdue ?: due)?.let(::add)
+                if (progress != null && progress.hasSubtasks) {
+                    add(stringResource(R.string.detail_subtask_progress, progress.done, progress.total))
+                }
+                tags.forEach { add("#${it.name}") }
+                task.note?.takeIf { it.isNotBlank() }?.let { add(stringResource(R.string.task_note_indicator)) }
+            }
+            if (details.isNotEmpty()) {
                 Text(
-                    text = subtitle,
+                    text = details.joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (overdue != null) MaterialTheme.colorScheme.error
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
-        IconButton(onClick = onEdit) {
-            Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.task_open_details))
+        if (PriorityUi.hasVisibleFlag(task.priority)) {
+            Icon(
+                imageVector = Icons.Filled.Flag,
+                contentDescription = PriorityUi.label(task.priority),
+                tint = PriorityUi.color(task.priority),
+                modifier = Modifier.padding(end = 12.dp),
+            )
         }
     }
 }
 
-/** Schnell-Eingabe unten: Titel tippen, optional Fälligkeit, absenden. */
+/** Schnell-Eingabe unten: Titel, Fälligkeit, Priorität — die drei Angaben mit Tagesnutzen. */
 @Composable
-private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?) -> Unit) {
+private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit) {
     var title by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf<LocalDate?>(null) }
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
+    var priority by remember { mutableStateOf(uk.spielerbohne.petodo.domain.model.Priority.DEFAULT) }
 
     Surface(tonalElevation = 3.dp) {
         Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
@@ -268,10 +301,11 @@ private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?) -> Unit) {
                 )
                 IconButton(
                     onClick = {
-                        onAdd(title, dueDate, dueTime)
+                        onAdd(title, dueDate, dueTime, priority)
                         title = ""
                         dueDate = null
                         dueTime = null
+                        priority = uk.spielerbohne.petodo.domain.model.Priority.DEFAULT
                     },
                     enabled = title.isNotBlank(),
                 ) {
@@ -281,13 +315,21 @@ private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?) -> Unit) {
                     )
                 }
             }
-            DuePicker(
-                dueDate = dueDate,
-                dueTime = dueTime,
-                onDueDateChange = { dueDate = it },
-                onDueTimeChange = { dueTime = it },
-                modifier = Modifier.padding(bottom = 4.dp),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                DuePicker(
+                    dueDate = dueDate,
+                    dueTime = dueTime,
+                    onDueDateChange = { dueDate = it },
+                    onDueTimeChange = { dueTime = it },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(bottom = 4.dp),
+                )
+                uk.spielerbohne.petodo.ui.common.PriorityPicker(
+                    priority = priority,
+                    onPriorityChange = { priority = it },
+                )
+            }
         }
     }
 }

@@ -65,6 +65,10 @@ ViewModel ruft sie nur auf und führt das Ergebnis aus.
 | Tags als Mehrfachzuordnung, ohne UI | `TagEntity`, `TaskTagEntity` |
 | Mehrere Erinnerungen je Aufgabe | `ReminderEntity` |
 
+Die Felder `parentId`, `tags`/`task_tags` und `priority` haben seit v0.3 eine UI
+(Detailseite, Schnell-Eingabe, Mehr-Screen). `rrule` und `reminders` liegen weiterhin
+ohne UI im Schema.
+
 ## Datenbankmigrationen
 
 `fallbackToDestructiveMigration` ist verboten — ein Schemafehler darf keine Aufgaben

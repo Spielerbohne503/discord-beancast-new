@@ -15,8 +15,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uk.spielerbohne.petodo.data.alarm.NagCoordinator
+import uk.spielerbohne.petodo.data.repo.TagRepository
+import uk.spielerbohne.petodo.data.repo.TaskListRepository
 import uk.spielerbohne.petodo.data.repo.TaskRepository
 import uk.spielerbohne.petodo.di.AppContainer
+import uk.spielerbohne.petodo.domain.model.Priority
+import uk.spielerbohne.petodo.domain.model.SubtaskProgress
+import uk.spielerbohne.petodo.domain.model.Tag
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.domain.today.TodayBoard
 import uk.spielerbohne.petodo.domain.today.TodayGrouping
@@ -30,7 +35,11 @@ data class TodayUiState(
     val board: TodayBoard = TodayBoard(),
     val now: Instant = Instant.EPOCH,
     val zone: ZoneId = ZoneId.systemDefault(),
+    val listColors: Map<String, Int> = emptyMap(),
+    val tagsByTask: Map<String, List<Tag>> = emptyMap(),
+    val subtaskProgress: Map<String, SubtaskProgress> = emptyMap(),
     val lastDeletedTaskId: String? = null,
+    val lastPostponedCount: Int? = null,
 )
 
 /**
@@ -39,12 +48,15 @@ data class TodayUiState(
  */
 class TodayViewModel(
     private val repository: TaskRepository,
+    private val taskListRepository: TaskListRepository,
+    private val tagRepository: TagRepository,
     private val nagCoordinator: NagCoordinator,
     private val clock: Clock,
 ) : ViewModel() {
 
     private val now = MutableStateFlow(Instant.now(clock))
     private val lastDeleted = MutableStateFlow<String?>(null)
+    private val lastPostponed = MutableStateFlow<Int?>(null)
 
     init {
         // Minütlich neu einordnen, damit eine Aufgabe zur Fälligkeit von "heute" nach
@@ -57,28 +69,51 @@ class TodayViewModel(
         }
     }
 
-    val state: StateFlow<TodayUiState> =
-        combine(repository.observeTasks(), now, lastDeleted) { tasks, instant, deletedId ->
-            TodayUiState(
-                board = TodayGrouping.group(tasks, instant, clock.zone),
-                now = instant,
-                zone = clock.zone,
-                lastDeletedTaskId = deletedId,
-            )
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-            initialValue = TodayUiState(now = Instant.now(clock), zone = clock.zone),
+    private val signals = combine(lastDeleted, lastPostponed) { deleted, postponed ->
+        deleted to postponed
+    }
+
+    val state: StateFlow<TodayUiState> = combine(
+        repository.observeTasks(),
+        taskListRepository.observeLists(),
+        tagRepository.observeTagsByTask(),
+        now,
+        signals,
+    ) { tasks, lists, tagsByTask, instant, (deletedId, postponedCount) ->
+        val subtasksByParent = tasks.filter { it.isSubtask && !it.isDeleted }.groupBy { it.parentId }
+
+        TodayUiState(
+            board = TodayGrouping.group(tasks, instant, clock.zone),
+            now = instant,
+            zone = clock.zone,
+            listColors = lists.mapNotNull { list -> list.colorArgb?.let { list.id to it } }.toMap(),
+            tagsByTask = tagsByTask,
+            subtaskProgress = subtasksByParent
+                .mapValues { (_, subtasks) -> SubtaskProgress.of(subtasks) }
+                .filterKeys { it != null }
+                .mapKeys { (parentId, _) -> parentId!! },
+            lastDeletedTaskId = deletedId,
+            lastPostponedCount = postponedCount,
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+        initialValue = TodayUiState(now = Instant.now(clock), zone = clock.zone),
+    )
 
     fun refreshNow() {
         now.value = Instant.now(clock)
     }
 
-    fun addTask(title: String, dueDate: LocalDate?, dueTime: LocalTime?) {
+    fun addTask(title: String, dueDate: LocalDate?, dueTime: LocalTime?, priority: Int = Priority.DEFAULT) {
         if (title.isBlank()) return
         viewModelScope.launch {
-            val id = repository.createTask(title = title, dueDate = dueDate, dueTime = dueTime)
+            val id = repository.createTask(
+                title = title,
+                dueDate = dueDate,
+                dueTime = dueTime,
+                priority = priority,
+            )
             syncAlarm(id)
         }
     }
@@ -101,14 +136,6 @@ class TodayViewModel(
         }
     }
 
-    fun saveTask(id: String, title: String, note: String?, dueDate: LocalDate?, dueTime: LocalTime?) {
-        if (title.isBlank()) return
-        viewModelScope.launch {
-            repository.updateTask(id, title, note, dueDate, dueTime)
-            syncAlarm(id)
-        }
-    }
-
     fun deleteTask(id: String) {
         viewModelScope.launch {
             repository.delete(id)
@@ -126,12 +153,32 @@ class TodayViewModel(
         }
     }
 
-    private suspend fun syncAlarm(taskId: String) {
-        withContext(Dispatchers.IO) { nagCoordinator.syncTask(taskId) }
-    }
-
     fun clearUndo() {
         lastDeleted.value = null
+    }
+
+    /**
+     * Den ganzen Überfällig-Block auf morgen schieben.
+     *
+     * Das ist bewusst eine Handlung, keine Verdrängung: Aufräumen ist im Projektplan
+     * genauso viel wert wie Erledigen.
+     */
+    fun postponeOverdue() {
+        viewModelScope.launch {
+            val ids = state.value.board.overdue.map { it.id }
+            if (ids.isEmpty()) return@launch
+            val moved = repository.postponeAllToTomorrow(ids)
+            withContext(Dispatchers.IO) { ids.forEach { nagCoordinator.syncTask(it) } }
+            lastPostponed.value = moved
+        }
+    }
+
+    fun clearPostponed() {
+        lastPostponed.value = null
+    }
+
+    private suspend fun syncAlarm(taskId: String) {
+        withContext(Dispatchers.IO) { nagCoordinator.syncTask(taskId) }
     }
 
     companion object {
@@ -142,6 +189,8 @@ class TodayViewModel(
             initializer {
                 TodayViewModel(
                     repository = container.taskRepository,
+                    taskListRepository = container.taskListRepository,
+                    tagRepository = container.tagRepository,
                     nagCoordinator = container.nagCoordinator,
                     clock = container.clock,
                 )

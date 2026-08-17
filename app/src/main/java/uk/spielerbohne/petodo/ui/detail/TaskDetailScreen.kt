@@ -1,0 +1,368 @@
+package uk.spielerbohne.petodo.ui.detail
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Label
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import uk.spielerbohne.petodo.R
+import uk.spielerbohne.petodo.di.AppContainer
+import uk.spielerbohne.petodo.domain.model.Task
+import uk.spielerbohne.petodo.domain.model.TaskList
+import uk.spielerbohne.petodo.ui.common.PriorityPicker
+import uk.spielerbohne.petodo.ui.today.DuePicker
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+
+@Composable
+fun TaskDetailRoute(container: AppContainer, taskId: String, onBack: () -> Unit) {
+    val viewModel: TaskDetailViewModel = viewModel(
+        key = "task-$taskId",
+        factory = TaskDetailViewModel.factory(container, taskId),
+    )
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Gelöschte Aufgabe: zurück, statt eine leere Seite zu zeigen.
+    LaunchedEffect(state.gone, state.task) {
+        if (state.gone && state.task == null) onBack()
+    }
+
+    state.task?.let { task ->
+        TaskDetailScreen(
+            task = task,
+            state = state,
+            onBack = onBack,
+            onTitleChange = viewModel::setTitle,
+            onNoteChange = viewModel::setNote,
+            onDueChange = viewModel::setDue,
+            onPriorityChange = viewModel::setPriority,
+            onListChange = viewModel::moveToList,
+            onToggleCompleted = viewModel::toggleCompleted,
+            onDelete = {
+                viewModel.delete()
+                onBack()
+            },
+            onAddSubtask = viewModel::addSubtask,
+            onToggleSubtask = viewModel::toggleSubtask,
+            onDeleteSubtask = viewModel::deleteSubtask,
+            onAddTag = viewModel::addTag,
+            onRemoveTag = viewModel::removeTag,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun TaskDetailScreen(
+    task: Task,
+    state: TaskDetailUiState,
+    onBack: () -> Unit,
+    onTitleChange: (String) -> Unit,
+    onNoteChange: (String) -> Unit,
+    onDueChange: (LocalDate?, LocalTime?) -> Unit,
+    onPriorityChange: (Int) -> Unit,
+    onListChange: (String) -> Unit,
+    onToggleCompleted: () -> Unit,
+    onDelete: () -> Unit,
+    onAddSubtask: (String) -> Unit,
+    onToggleSubtask: (Task) -> Unit,
+    onDeleteSubtask: (String) -> Unit,
+    onAddTag: (String) -> Unit,
+    onRemoveTag: (String) -> Unit,
+) {
+    var title by remember(task.id, task.title) { mutableStateOf(task.title) }
+    var note by remember(task.id, task.note) { mutableStateOf(task.note.orEmpty()) }
+    val zone = state.zone
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { ListSwitcher(lists = state.lists, current = state.list, onListChange = onListChange) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.detail_back),
+                        )
+                    }
+                },
+                actions = {
+                    PriorityPicker(priority = task.priority, onPriorityChange = onPriorityChange)
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.task_delete))
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            // Kopfzeile: Abhaken plus Fälligkeit — genau die zwei Dinge, die man zuerst sucht.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleCompleted() })
+                DueSummary(task = task, zone = zone)
+            }
+
+            TextField(
+                value = title,
+                onValueChange = {
+                    title = it
+                    onTitleChange(it)
+                },
+                textStyle = MaterialTheme.typography.headlineSmall,
+                colors = transparentFieldColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            TextField(
+                value = note,
+                onValueChange = {
+                    note = it
+                    onNoteChange(it)
+                },
+                placeholder = { Text(stringResource(R.string.detail_description_hint)) },
+                colors = transparentFieldColors(),
+                minLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            DuePicker(
+                dueDate = task.dueDate(zone),
+                dueTime = if (task.hasTime) task.dueAt?.atZone(zone)?.toLocalTime() else null,
+                onDueDateChange = { date ->
+                    onDueChange(date, if (task.hasTime) task.dueAt?.atZone(zone)?.toLocalTime() else null)
+                },
+                onDueTimeChange = { time -> onDueChange(task.dueDate(zone), time) },
+            )
+
+            HorizontalDivider()
+
+            SubtaskSection(
+                subtasks = state.subtasks,
+                doneCount = state.progress.done,
+                total = state.progress.total,
+                onAdd = onAddSubtask,
+                onToggle = onToggleSubtask,
+                onDelete = onDeleteSubtask,
+            )
+
+            HorizontalDivider()
+
+            TagSection(tags = state.tags, onAdd = onAddTag, onRemove = onRemoveTag)
+        }
+    }
+}
+
+@Composable
+private fun DueSummary(task: Task, zone: ZoneId) {
+    val overdue = task.overdueDays(java.time.Instant.now(), zone)
+    val text = task.dueDate(zone)?.let { date ->
+        val base = date.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM))
+        if (overdue > 0) {
+            "$base · " + if (overdue == 1L) {
+                stringResource(R.string.due_overdue_one_day)
+            } else {
+                stringResource(R.string.due_overdue_days, overdue.toInt())
+            }
+        } else {
+            base
+        }
+    } ?: stringResource(R.string.task_no_due)
+
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (overdue > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ListSwitcher(
+    lists: List<TaskList>,
+    current: TaskList?,
+    onListChange: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        AssistChip(
+            onClick = { expanded = true },
+            label = { Text(current?.name ?: stringResource(R.string.detail_list)) },
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            lists.forEach { list ->
+                DropdownMenuItem(
+                    text = { Text(list.name) },
+                    onClick = {
+                        onListChange(list.id)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SubtaskSection(
+    subtasks: List<Task>,
+    doneCount: Int,
+    total: Int,
+    onAdd: (String) -> Unit,
+    onToggle: (Task) -> Unit,
+    onDelete: (String) -> Unit,
+) {
+    var draft by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(stringResource(R.string.detail_subtasks), style = MaterialTheme.typography.titleSmall)
+            if (total > 0) {
+                Text(
+                    text = stringResource(R.string.detail_subtask_progress, doneCount, total),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        subtasks.forEach { subtask ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = subtask.isCompleted, onCheckedChange = { onToggle(subtask) })
+                Text(
+                    text = subtask.title,
+                    modifier = Modifier.weight(1f),
+                    textDecoration = if (subtask.isCompleted) TextDecoration.LineThrough else null,
+                    color = if (subtask.isCompleted) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        Color.Unspecified
+                    },
+                )
+                IconButton(onClick = { onDelete(subtask.id) }) {
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.task_delete))
+                }
+            }
+        }
+
+        OutlinedTextField(
+            value = draft,
+            onValueChange = { draft = it },
+            placeholder = { Text(stringResource(R.string.detail_subtask_hint)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                onAdd(draft)
+                draft = ""
+            }),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TagSection(
+    tags: List<uk.spielerbohne.petodo.domain.model.Tag>,
+    onAdd: (String) -> Unit,
+    onRemove: (String) -> Unit,
+) {
+    var draft by remember { mutableStateOf("") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(stringResource(R.string.detail_tags), style = MaterialTheme.typography.titleSmall)
+
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            tags.forEach { tag ->
+                InputChip(
+                    selected = false,
+                    onClick = { onRemove(tag.id) },
+                    label = { Text(tag.name) },
+                    leadingIcon = { Icon(Icons.Filled.Label, contentDescription = null) },
+                    trailingIcon = {
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = stringResource(R.string.detail_tag_remove),
+                        )
+                    },
+                )
+            }
+        }
+
+        OutlinedTextField(
+            value = draft,
+            onValueChange = { draft = it },
+            placeholder = { Text(stringResource(R.string.detail_tag_hint)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+                onAdd(draft)
+                draft = ""
+            }),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun transparentFieldColors() = TextFieldDefaults.colors(
+    focusedContainerColor = Color.Transparent,
+    unfocusedContainerColor = Color.Transparent,
+    focusedIndicatorColor = Color.Transparent,
+    unfocusedIndicatorColor = Color.Transparent,
+)

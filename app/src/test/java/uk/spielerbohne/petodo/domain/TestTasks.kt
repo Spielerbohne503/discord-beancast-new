@@ -26,6 +26,7 @@ object TestTasks {
         deletedAt: Instant? = null,
         priority: Int = Priority.DEFAULT,
         listId: String = TaskList.ID_INBOX,
+        parentId: String? = null,
         sortKey: String = "i",
         createdAt: Instant = at("2026-01-01"),
         nagCount: Int = 0,
@@ -34,6 +35,7 @@ object TestTasks {
     ): Task = Task(
         id = id,
         listId = listId,
+        parentId = parentId,
         title = title,
         dueAt = dueAt,
         dueTimeLocal = dueTimeLocal,

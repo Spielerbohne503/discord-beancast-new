@@ -40,6 +40,8 @@ object TodayGrouping {
 
         for (task in tasks) {
             if (task.isDeleted) continue
+            // Unteraufgaben erscheinen unter ihrer Aufgabe, nicht als eigene Zeile.
+            if (task.isSubtask) continue
             if (task.isCompleted) {
                 val completedDate = task.completedAt?.atZone(zone)?.toLocalDate()
                 if (completedDate == today) doneToday += task

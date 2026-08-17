@@ -18,6 +18,8 @@ import java.time.ZoneId
 data class Task(
     val id: String,
     val listId: String,
+    /** Übergeordnete Aufgabe, falls dies eine Unteraufgabe ist. */
+    val parentId: String? = null,
     val title: String,
     val note: String? = null,
     val dueAt: Instant? = null,
@@ -34,6 +36,7 @@ data class Task(
     val updatedAt: Instant,
     val deletedAt: Instant? = null,
 ) {
+    val isSubtask: Boolean get() = parentId != null
     val isDeleted: Boolean get() = deletedAt != null
     val isCompleted: Boolean get() = completedAt != null
     val isOpen: Boolean get() = !isCompleted && !isDeleted

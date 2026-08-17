@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import uk.spielerbohne.petodo.data.db.dao.FocusSessionDao
 import uk.spielerbohne.petodo.data.db.dao.PetStateDao
+import uk.spielerbohne.petodo.data.db.dao.TagDao
 import uk.spielerbohne.petodo.data.db.dao.RewardEventDao
 import uk.spielerbohne.petodo.data.db.dao.TaskDao
 import uk.spielerbohne.petodo.data.db.dao.TaskListDao
@@ -40,6 +41,7 @@ abstract class PetodoDatabase : RoomDatabase() {
     abstract fun rewardEventDao(): RewardEventDao
     abstract fun petStateDao(): PetStateDao
     abstract fun focusSessionDao(): FocusSessionDao
+    abstract fun tagDao(): TagDao
 
     companion object {
         const val NAME = "petodo.db"

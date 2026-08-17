@@ -17,6 +17,11 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE deletedAt IS NULL AND completedAt IS NULL AND dueAt IS NOT NULL")
     suspend fun openWithDueDate(): List<TaskEntity>
 
+    @Query(
+        "SELECT * FROM tasks WHERE parentId = :parentId AND deletedAt IS NULL ORDER BY sortKey"
+    )
+    fun observeSubtasks(parentId: String): Flow<List<TaskEntity>>
+
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun findById(id: String): TaskEntity?
 

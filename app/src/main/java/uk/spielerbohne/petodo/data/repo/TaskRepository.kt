@@ -59,6 +59,7 @@ class TaskRepository(
         dueTime: LocalTime? = null,
         listId: String = TaskList.ID_INBOX,
         priority: Int = Priority.DEFAULT,
+        parentId: String? = null,
         zone: ZoneId = clock.zone,
     ): String {
         val now = Instant.now(clock)
@@ -74,6 +75,7 @@ class TaskRepository(
             TaskEntity(
                 id = id,
                 listId = listId,
+                parentId = parentId,
                 title = title.trim(),
                 note = note?.takeIf { it.isNotBlank() },
                 dueAt = dueAt?.toEpochMilli(),
@@ -132,6 +134,31 @@ class TaskRepository(
         )
     }
 
+    // ------------------------------------------------------ Priorität, Liste, Unteraufgaben
+
+    /** Priorität setzen (0 niedrig · 1 normal · 2 hoch · 3 dringend). */
+    suspend fun setPriority(id: String, priority: Int) {
+        val entity = taskDao.findById(id) ?: return
+        val now = Instant.now(clock).toEpochMilli()
+        taskDao.update(entity.copy(priority = Priority.coerce(priority), updatedAt = now))
+    }
+
+    /**
+     * Aufgabe in eine andere Liste verschieben.
+     *
+     * Wandert sie in eine Liste mit `excludeFromNag`, verstummt der Nag — genau dafür ist
+     * die "Irgendwann"-Liste da.
+     */
+    suspend fun moveToList(id: String, listId: String) {
+        val entity = taskDao.findById(id) ?: return
+        val now = Instant.now(clock).toEpochMilli()
+        taskDao.update(entity.copy(listId = listId, updatedAt = now))
+    }
+
+    /** Unteraufgaben einer Aufgabe. */
+    fun observeSubtasks(parentId: String): Flow<List<Task>> =
+        taskDao.observeSubtasks(parentId).map { entities -> entities.map(TaskEntity::toDomain) }
+
     // ------------------------------------------------------------------ Nag (Phase 2)
 
     /** Alle offenen Aufgaben mit Fälligkeit — Grundlage fürs Neuregistrieren der Alarme. */
@@ -187,6 +214,20 @@ class TaskRepository(
                 updatedAt = now.toEpochMilli(),
             )
         )
+    }
+
+    /**
+     * Mehrere Aufgaben auf einmal verschieben ("Verschieben" über dem Überfällig-Block).
+     * Gibt zurück, wie viele tatsächlich bewegt wurden.
+     */
+    suspend fun postponeAllToTomorrow(ids: List<String>, zone: ZoneId = clock.zone): Int {
+        var moved = 0
+        ids.forEach { id ->
+            val before = taskDao.findById(id)?.dueAt
+            postponeToTomorrow(id, zone)
+            if (taskDao.findById(id)?.dueAt != before) moved++
+        }
+        return moved
     }
 
     /** Löschen heißt Tombstone setzen — die Zeile bleibt für den späteren Sync stehen. */

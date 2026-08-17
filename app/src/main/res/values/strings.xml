@@ -63,6 +63,50 @@
     <string name="list_inbox">Inbox</string>
     <string name="list_someday">Irgendwann</string>
 
+    <!-- Aufgaben-Detailseite -->
+    <string name="detail_title">Aufgabe</string>
+    <string name="detail_description_hint">Beschreibung</string>
+    <string name="detail_subtask_hint">Unteraufgabe hinzufügen</string>
+    <string name="detail_subtasks">Unteraufgaben</string>
+    <string name="detail_subtask_progress">%1$d von %2$d</string>
+    <string name="detail_tags">Etiketten</string>
+    <string name="detail_tag_hint">Etikett eingeben</string>
+    <string name="detail_tag_add">Etikett hinzufügen</string>
+    <string name="detail_tag_remove">Etikett entfernen</string>
+    <string name="detail_list">Liste</string>
+    <string name="detail_priority">Priorität</string>
+    <string name="detail_due">Fälligkeit</string>
+    <string name="detail_back">Zurück</string>
+    <string name="detail_saved">Gespeichert</string>
+
+    <!-- Priorität -->
+    <string name="priority_low">Niedrig</string>
+    <string name="priority_normal">Normal</string>
+    <string name="priority_high">Hoch</string>
+    <string name="priority_urgent">Dringend</string>
+    <string name="priority_none_hint">Keine Priorität</string>
+
+    <!-- Überfällig-Block -->
+    <string name="overdue_postpone_all">Verschieben</string>
+    <plurals name="overdue_postponed">
+        <item quantity="one">1 Aufgabe auf morgen verschoben</item>
+        <item quantity="other">%1$d Aufgaben auf morgen verschoben</item>
+    </plurals>
+
+    <!-- Listen -->
+    <string name="lists_title">Listen</string>
+    <string name="lists_new">Neue Liste</string>
+    <string name="lists_name_hint">Name der Liste</string>
+    <string name="lists_exclude_from_nag">Nicht mahnen (Druckventil)</string>
+    <string name="lists_delete">Liste löschen</string>
+    <string name="lists_inbox_protected">Die Inbox bleibt bestehen.</string>
+    <string name="lists_color">Farbe</string>
+
+    <!-- Etiketten-Verwaltung -->
+    <string name="tags_title">Etiketten</string>
+    <string name="tags_empty">Noch keine Etiketten. Sie entstehen beim Eintippen auf der Aufgabe.</string>
+    <string name="tags_delete">Etikett löschen</string>
+
     <!-- Benachrichtigungskanäle -->
     <string name="channel_reminders_name">Erinnerungen</string>
     <string name="channel_reminders_description">Fälligkeiten und Nachfassen. Diesen Kanal solltest du anlassen.</string>

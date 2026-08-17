@@ -8,6 +8,8 @@ import java.time.Instant
  */
 data class TaskList(
     val id: String,
+    /** Übergeordneter Ordner. v1 kennt keine Ordner. */
+    val parentId: String? = null,
     val name: String,
     val colorArgb: Int? = null,
     val sortKey: String,

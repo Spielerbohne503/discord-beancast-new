@@ -41,10 +41,19 @@ import java.time.format.FormatStyle
 fun MoreRoute(container: AppContainer, onOpenPermissions: () -> Unit) {
     val viewModel: MoreViewModel = viewModel(factory = MoreViewModel.factory(container))
     val quietHours by viewModel.quietHours.collectAsStateWithLifecycle()
+    val lists by viewModel.lists.collectAsStateWithLifecycle()
+    val tags by viewModel.tags.collectAsStateWithLifecycle()
 
     MoreScreen(
         quietHours = quietHours,
+        lists = lists,
+        tags = tags,
         onQuietHoursChange = viewModel::setQuietHours,
+        onCreateList = viewModel::createList,
+        onListColorChange = viewModel::setListColor,
+        onListExcludeChange = viewModel::setExcludeFromNag,
+        onDeleteList = viewModel::deleteList,
+        onDeleteTag = viewModel::deleteTag,
         onOpenPermissions = onOpenPermissions,
     )
 }
@@ -52,7 +61,14 @@ fun MoreRoute(container: AppContainer, onOpenPermissions: () -> Unit) {
 @Composable
 fun MoreScreen(
     quietHours: QuietHours,
+    lists: List<uk.spielerbohne.petodo.domain.model.TaskList>,
+    tags: List<uk.spielerbohne.petodo.domain.model.Tag>,
     onQuietHoursChange: (LocalTime, LocalTime, Boolean) -> Unit,
+    onCreateList: (String, Int?, Boolean) -> Unit,
+    onListColorChange: (String, Int) -> Unit,
+    onListExcludeChange: (String, Boolean) -> Unit,
+    onDeleteList: (String) -> Unit,
+    onDeleteTag: (String) -> Unit,
     onOpenPermissions: () -> Unit,
 ) {
     var picking by remember { mutableStateOf<QuietHoursEdge?>(null) }
@@ -120,6 +136,16 @@ fun MoreScreen(
                 }
             }
         }
+
+        ListsSection(
+            lists = lists,
+            onCreate = onCreateList,
+            onUpdateColor = onListColorChange,
+            onToggleExclude = onListExcludeChange,
+            onDelete = onDeleteList,
+        )
+
+        TagsSection(tags = tags, onDelete = onDeleteTag)
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
