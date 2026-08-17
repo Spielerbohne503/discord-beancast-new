@@ -53,6 +53,7 @@ fun MoreRoute(
     val lists by viewModel.lists.collectAsStateWithLifecycle()
     val tags by viewModel.tags.collectAsStateWithLifecycle()
     val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
+    val focusSettings by viewModel.focusSettings.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -69,6 +70,8 @@ fun MoreRoute(
         quietHours = quietHours,
         lists = lists,
         tags = tags,
+        focusSettings = focusSettings,
+        onFocusSettingsChange = viewModel::setFocusSettings,
         onQuietHoursChange = viewModel::setQuietHours,
         onCreateList = viewModel::createList,
         onListColorChange = viewModel::setListColor,
@@ -98,6 +101,9 @@ fun MoreScreen(
     quietHours: QuietHours,
     lists: List<uk.spielerbohne.petodo.domain.model.TaskList>,
     tags: List<uk.spielerbohne.petodo.domain.model.Tag>,
+    focusSettings: uk.spielerbohne.petodo.domain.focus.FocusSettings =
+        uk.spielerbohne.petodo.domain.focus.FocusSettings.DEFAULT,
+    onFocusSettingsChange: (uk.spielerbohne.petodo.domain.focus.FocusSettings) -> Unit = {},
     onQuietHoursChange: (LocalTime, LocalTime, Boolean) -> Unit,
     onCreateList: (String, Int?, Boolean) -> Unit,
     onListColorChange: (String, Int) -> Unit,
@@ -174,6 +180,8 @@ fun MoreScreen(
                 }
             }
         }
+
+        FocusSettingsSection(settings = focusSettings, onChange = onFocusSettingsChange)
 
         ListsSection(
             lists = lists,

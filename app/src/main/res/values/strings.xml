@@ -52,8 +52,6 @@
     <string name="due_overdue_one_day">1 Tag überfällig</string>
 
     <!-- Platzhalter-Screens (Phase 2-4) -->
-    <string name="placeholder_focus_title">Fokus</string>
-    <string name="placeholder_focus_body">Der Fokus-Timer kommt in Phase 3.</string>
     <string name="placeholder_pet_title">Pet</string>
     <string name="placeholder_pet_body">Das Pet kommt in Phase 4.</string>
     <string name="placeholder_more_title">Mehr</string>
@@ -131,6 +129,30 @@
     <string name="lists_delete">Liste löschen</string>
     <string name="lists_inbox_protected">Die Inbox bleibt bestehen.</string>
     <string name="lists_color">Farbe</string>
+
+    <!-- Fokus-Timer -->
+    <string name="focus_title">Fokus</string>
+    <string name="focus_state_ready">Bereit</string>
+    <string name="focus_phase_focus">Fokus</string>
+    <string name="focus_phase_short_break">Pause</string>
+    <string name="focus_phase_long_break">Lange Pause</string>
+    <string name="focus_start">Fokus starten</string>
+    <string name="focus_pause">Pause</string>
+    <string name="focus_resume">Weiter</string>
+    <string name="focus_stop">Stopp</string>
+    <string name="focus_skip">Überspringen</string>
+    <string name="focus_add_task">+ Aufgabe</string>
+    <string name="focus_linked_task">Verknüpfte Aufgabe</string>
+    <string name="focus_link_task">Aufgabe verknüpfen</string>
+    <string name="focus_no_task">Ohne Aufgabe</string>
+    <string name="focus_rounds_today">%1$d von %2$d heute</string>
+    <string name="focus_settings_title">Fokus-Zeiten</string>
+    <string name="focus_settings_focus">Fokus (Minuten)</string>
+    <string name="focus_settings_short">Kurze Pause</string>
+    <string name="focus_settings_long">Lange Pause</string>
+    <string name="focus_settings_rounds">Lange Pause nach … Runden</string>
+    <string name="focus_status_ready">%1$s · %2$s</string>
+    <string name="focus_notification_running">%1$s %2$s</string>
 
     <!-- Sicherung -->
     <string name="backup_title">Sicherung</string>

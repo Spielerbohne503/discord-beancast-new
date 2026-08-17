@@ -8,6 +8,7 @@ import uk.spielerbohne.petodo.data.alarm.NagCoordinator
 import uk.spielerbohne.petodo.data.backup.BackupRepository
 import uk.spielerbohne.petodo.data.db.PetodoDatabase
 import uk.spielerbohne.petodo.data.notify.NagNotifications
+import uk.spielerbohne.petodo.data.repo.FocusRepository
 import uk.spielerbohne.petodo.data.repo.TagRepository
 import uk.spielerbohne.petodo.data.repo.TaskListRepository
 import uk.spielerbohne.petodo.data.repo.TaskRepository
@@ -50,6 +51,10 @@ class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone(
     }
 
     val tagRepository: TagRepository by lazy { TagRepository(database.tagDao(), clock) }
+
+    val focusRepository: FocusRepository by lazy {
+        FocusRepository(database.focusSessionDao(), clock)
+    }
 
     val backupRepository: BackupRepository by lazy { BackupRepository(database, clock) }
 

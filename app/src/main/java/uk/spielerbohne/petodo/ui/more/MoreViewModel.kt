@@ -21,6 +21,7 @@ import uk.spielerbohne.petodo.data.repo.TagRepository
 import uk.spielerbohne.petodo.data.repo.TaskListRepository
 import uk.spielerbohne.petodo.data.settings.SettingsRepository
 import uk.spielerbohne.petodo.di.AppContainer
+import uk.spielerbohne.petodo.domain.focus.FocusSettings
 import uk.spielerbohne.petodo.domain.model.Tag
 import uk.spielerbohne.petodo.domain.model.TaskList
 import uk.spielerbohne.petodo.domain.nag.QuietHours
@@ -128,6 +129,16 @@ class MoreViewModel(
 
     fun clearBackupMessage() {
         _backupMessage.value = null
+    }
+
+    val focusSettings: StateFlow<FocusSettings> = settingsRepository.focusSettings.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+        initialValue = FocusSettings.DEFAULT,
+    )
+
+    fun setFocusSettings(settings: FocusSettings) {
+        viewModelScope.launch { settingsRepository.setFocusSettings(settings) }
     }
 
     val quietHours: StateFlow<QuietHours> = settingsRepository.quietHours.stateIn(

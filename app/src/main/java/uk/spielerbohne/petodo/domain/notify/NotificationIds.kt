@@ -41,6 +41,9 @@ object NotificationIds {
     /** Request-Code des wiederkehrenden Alarms einer Aufgabe. */
     fun alarmRequestCode(taskId: String): Int = spread(fnv1a("$taskId#alarm"))
 
+    /** Request-Code für einen Knopf der Fokus-Statuszeile. */
+    fun requestCodeForFocus(action: String): Int = spread(fnv1a("focus#$action"))
+
     private fun fnv1a(text: String): Int {
         var hash = FNV_OFFSET_BASIS
         for (byte in text.toByteArray(Charsets.UTF_8)) {

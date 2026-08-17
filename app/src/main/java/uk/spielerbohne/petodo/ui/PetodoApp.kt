@@ -36,6 +36,7 @@ import androidx.navigation.navArgument
 import uk.spielerbohne.petodo.domain.filter.TaskScope
 import uk.spielerbohne.petodo.ui.browse.BrowseRoute
 import uk.spielerbohne.petodo.ui.detail.TaskDetailRoute
+import uk.spielerbohne.petodo.ui.focus.FocusRoute
 import uk.spielerbohne.petodo.ui.more.MoreRoute
 import uk.spielerbohne.petodo.ui.onboarding.OnboardingScreen
 import uk.spielerbohne.petodo.ui.placeholder.PlaceholderScreen
@@ -156,10 +157,7 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
                 )
             }
             composable(TopLevelDestination.FOCUS.route) {
-                PlaceholderScreen(
-                    titleRes = R.string.placeholder_focus_title,
-                    bodyRes = R.string.placeholder_focus_body,
-                )
+                FocusRoute(container = container)
             }
             composable(TopLevelDestination.PET.route) {
                 PlaceholderScreen(

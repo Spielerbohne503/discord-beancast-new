@@ -19,6 +19,11 @@ data class FocusSessionEntity(
     val endsAt: Long,
     /** FOCUS · SHORT_BREAK · LONG_BREAK */
     val kind: String,
+    /**
+     * Zeitpunkt des Anhaltens. Daraus ergibt sich der Rest beim Fortsetzen — der
+     * Endzeitpunkt bleibt absolut, es wird nichts heruntergezählt.
+     */
+    val pausedAt: Long? = null,
     val completedAt: Long? = null,
     val abortedAt: Long? = null,
     val createdAt: Long,

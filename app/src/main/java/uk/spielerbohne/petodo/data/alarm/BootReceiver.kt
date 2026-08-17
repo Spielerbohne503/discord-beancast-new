@@ -7,6 +7,8 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import uk.spielerbohne.petodo.PetodoApplication
+import uk.spielerbohne.petodo.data.focus.FocusAction
+import uk.spielerbohne.petodo.data.focus.FocusService
 import uk.spielerbohne.petodo.di.launchGuarded
 
 /**
@@ -34,6 +36,13 @@ class BootReceiver : BroadcastReceiver() {
             withContext(Dispatchers.IO) {
                 val count = container.nagCoordinator.rescheduleAll()
                 Log.i(TAG, "Nach ${intent.action}: $count Alarme wiederhergestellt")
+
+                // Ein Neustart tötet den Foreground Service, nicht aber die Sitzung: Der
+                // Endzeitpunkt steht in der Datenbank. Also Statuszeile wieder aufbauen.
+                if (container.focusRepository.activeSession() != null) {
+                    runCatching { FocusService.send(context, FocusAction.RESUME_DISPLAY) }
+                        .onFailure { Log.w(TAG, "Statuszeile konnte nicht neu gestartet werden", it) }
+                }
             }
         }
     }

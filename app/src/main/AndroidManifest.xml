@@ -38,6 +38,19 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Fokus-Timer als Foreground Service. specialUse, weil ein Pomodoro-Timer in
+            keine der engeren Kategorien passt; die Statuszeile ist ohnehin Pflicht.
+        -->
+        <service
+            android:name=".data.focus.FocusService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Pomodoro-Timer mit Statuszeile" />
+        </service>
+
         <!-- Feuernder Alarm einer Aufgabe. Nicht exportiert: nur die App selbst löst aus. -->
         <receiver
             android:name=".data.alarm.NagReceiver"

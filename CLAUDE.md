@@ -87,6 +87,15 @@ Indizes mit `n+1.json`. Weicht etwas ab, würde Room beim Start des Nutzers abbr
 Balancing-Zahlen stehen ausschließlich in `domain/Balance.kt`. Eine Zahl mit fachlicher
 Bedeutung irgendwo anders im Code ist ein Fehler, auch wenn sie stimmt.
 
+## Fokus-Timer
+
+Der Timer speichert einen **absoluten Endzeitpunkt**, nie einen heruntergezählten Rest.
+Anhalten merkt sich `pausedAt`; der Rest ergibt sich daraus. Der Foreground Service zählt
+nichts mit — er zeichnet nur neu, was `domain/focus/FocusTimer` aus dem Endzeitpunkt
+errechnet. Ein abgelaufener Endzeitpunkt heißt **fertig**, nicht "läuft noch".
+
+Die Statuszeile ist dauerhaft und zeigt auch ohne Timer den Tagesstand.
+
 ## Sicherung
 
 `domain/backup/` enthält einen eigenen JSON-Codec — keine Bibliothek (nicht erlaubt) und
