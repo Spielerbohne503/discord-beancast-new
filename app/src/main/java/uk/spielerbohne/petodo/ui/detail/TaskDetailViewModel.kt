@@ -21,6 +21,7 @@ import uk.spielerbohne.petodo.domain.model.SubtaskProgress
 import uk.spielerbohne.petodo.domain.model.Tag
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.domain.model.TaskList
+import uk.spielerbohne.petodo.domain.recurrence.RecurrenceRule
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
@@ -99,6 +100,8 @@ class TaskDetailViewModel(
     }
 
     fun setPriority(priority: Int) = edit { taskRepository.setPriority(it.id, priority) }
+
+    fun setRecurrence(rule: RecurrenceRule?) = edit { taskRepository.setRecurrence(it.id, rule) }
 
     fun moveToList(listId: String) = edit { taskRepository.moveToList(it.id, listId) }
 

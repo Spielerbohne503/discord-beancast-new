@@ -79,6 +79,21 @@
     <string name="detail_back">Zurück</string>
     <string name="detail_saved">Gespeichert</string>
 
+    <!-- Wiederholung -->
+    <string name="recurrence_label">Wiederholung</string>
+    <string name="recurrence_none">Einmalig</string>
+    <string name="recurrence_daily">Täglich</string>
+    <string name="recurrence_weekdays">Werktags</string>
+    <string name="recurrence_weekly">Wöchentlich</string>
+    <string name="recurrence_monthly">Monatlich</string>
+    <string name="recurrence_yearly">Jährlich</string>
+    <string name="recurrence_custom">Eigene Regel</string>
+    <string name="recurrence_needs_due">Eine Wiederholung braucht eine Fälligkeit.</string>
+    <plurals name="recurrence_missed">
+        <item quantity="one">1 Termin verpasst</item>
+        <item quantity="other">%1$d Termine verpasst</item>
+    </plurals>
+
     <!-- Priorität -->
     <string name="priority_low">Niedrig</string>
     <string name="priority_normal">Normal</string>
@@ -91,6 +106,21 @@
     <plurals name="overdue_postponed">
         <item quantity="one">1 Aufgabe auf morgen verschoben</item>
         <item quantity="other">%1$d Aufgaben auf morgen verschoben</item>
+    </plurals>
+
+    <!-- Durchsuchen und Smart Lists -->
+    <string name="browse_title">Aufgaben</string>
+    <string name="browse_search_hint">Suchen …</string>
+    <string name="browse_search">Suchen</string>
+    <string name="browse_search_close">Suche schließen</string>
+    <string name="browse_scope_all">Alle</string>
+    <string name="browse_scope_seven_days">7 Tage</string>
+    <string name="browse_scope_completed">Erledigt</string>
+    <string name="browse_empty">Hier ist nichts.</string>
+    <string name="browse_empty_search">Nichts gefunden.</string>
+    <plurals name="browse_count">
+        <item quantity="one">1 Aufgabe</item>
+        <item quantity="other">%1$d Aufgaben</item>
     </plurals>
 
     <!-- Listen -->

@@ -66,8 +66,8 @@ ViewModel ruft sie nur auf und führt das Ergebnis aus.
 | Mehrere Erinnerungen je Aufgabe | `ReminderEntity` |
 
 Die Felder `parentId`, `tags`/`task_tags` und `priority` haben seit v0.3 eine UI
-(Detailseite, Schnell-Eingabe, Mehr-Screen). `rrule` und `reminders` liegen weiterhin
-ohne UI im Schema.
+(Detailseite, Schnell-Eingabe, Mehr-Screen). `rrule` hat seit v0.4 eine UI
+(Wiederholungs-Chip auf der Detailseite); `reminders` liegt weiterhin ohne UI im Schema.
 
 ## Datenbankmigrationen
 

@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -61,7 +63,11 @@ import java.time.LocalTime
 import java.time.ZoneId
 
 @Composable
-fun TodayRoute(container: AppContainer, onOpenTask: (String) -> Unit) {
+fun TodayRoute(
+    container: AppContainer,
+    onOpenTask: (String) -> Unit,
+    onSearch: () -> Unit,
+) {
     val viewModel: TodayViewModel = viewModel(factory = TodayViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -75,6 +81,7 @@ fun TodayRoute(container: AppContainer, onOpenTask: (String) -> Unit) {
         onUndoConsumed = viewModel::clearUndo,
         onPostponeOverdue = viewModel::postponeOverdue,
         onPostponeConsumed = viewModel::clearPostponed,
+        onSearch = onSearch,
     )
 }
 
@@ -90,6 +97,7 @@ fun TodayScreen(
     onUndoConsumed: () -> Unit,
     onPostponeOverdue: () -> Unit,
     onPostponeConsumed: () -> Unit,
+    onSearch: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.task_deleted)
@@ -114,7 +122,19 @@ fun TodayScreen(
     val postponeLabel = stringResource(R.string.overdue_postpone_all)
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.today_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.today_title)) },
+                actions = {
+                    IconButton(onClick = onSearch) {
+                        Icon(
+                            Icons.Filled.Search,
+                            contentDescription = stringResource(R.string.browse_search),
+                        )
+                    }
+                },
+            )
+        },
         bottomBar = { QuickAddBar(onAdd = onAdd) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
@@ -265,6 +285,14 @@ private fun TaskRow(
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        if (task.rrule != null) {
+            Icon(
+                imageVector = Icons.Filled.Repeat,
+                contentDescription = stringResource(R.string.recurrence_label),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(end = 4.dp),
+            )
         }
         if (PriorityUi.hasVisibleFlag(task.priority)) {
             Icon(

@@ -52,7 +52,9 @@ import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.domain.model.TaskList
+import uk.spielerbohne.petodo.domain.recurrence.RecurrenceRule
 import uk.spielerbohne.petodo.ui.common.PriorityPicker
+import uk.spielerbohne.petodo.ui.common.RecurrencePicker
 import uk.spielerbohne.petodo.ui.today.DuePicker
 import java.time.LocalDate
 import java.time.LocalTime
@@ -80,6 +82,7 @@ fun TaskDetailRoute(container: AppContainer, taskId: String, onBack: () -> Unit)
             onNoteChange = viewModel::setNote,
             onDueChange = viewModel::setDue,
             onPriorityChange = viewModel::setPriority,
+            onRecurrenceChange = viewModel::setRecurrence,
             onListChange = viewModel::moveToList,
             onToggleCompleted = viewModel::toggleCompleted,
             onDelete = {
@@ -105,6 +108,7 @@ fun TaskDetailScreen(
     onNoteChange: (String) -> Unit,
     onDueChange: (LocalDate?, LocalTime?) -> Unit,
     onPriorityChange: (Int) -> Unit,
+    onRecurrenceChange: (RecurrenceRule?) -> Unit,
     onListChange: (String) -> Unit,
     onToggleCompleted: () -> Unit,
     onDelete: () -> Unit,
@@ -184,6 +188,28 @@ fun TaskDetailScreen(
                 },
                 onDueTimeChange = { time -> onDueChange(task.dueDate(zone), time) },
             )
+
+            // Eine Wiederholung ohne Fälligkeit hätte keinen Anker — deshalb nur mit Datum.
+            RecurrencePicker(
+                rule = RecurrenceRule.parse(task.rrule),
+                enabled = task.dueAt != null,
+                onRuleChange = onRecurrenceChange,
+            )
+            if (task.dueAt == null) {
+                Text(
+                    text = stringResource(R.string.recurrence_needs_due),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (task.missedCount > 0) {
+                Text(
+                    text = androidx.compose.ui.platform.LocalContext.current.resources
+                        .getQuantityString(R.plurals.recurrence_missed, task.missedCount, task.missedCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             HorizontalDivider()
 

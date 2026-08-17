@@ -33,6 +33,8 @@ import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import uk.spielerbohne.petodo.domain.filter.TaskScope
+import uk.spielerbohne.petodo.ui.browse.BrowseRoute
 import uk.spielerbohne.petodo.ui.detail.TaskDetailRoute
 import uk.spielerbohne.petodo.ui.more.MoreRoute
 import uk.spielerbohne.petodo.ui.onboarding.OnboardingScreen
@@ -116,6 +118,31 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
                 TodayRoute(
                     container = container,
                     onOpenTask = { taskId -> navController.navigate("task/$taskId") },
+                    onSearch = { navController.navigate("browse?search=true") },
+                )
+            }
+            composable(
+                route = "browse?listId={listId}&search={search}",
+                arguments = listOf(
+                    navArgument("listId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("search") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { entry ->
+                val listId = entry.arguments?.getString("listId")
+                BrowseRoute(
+                    container = container,
+                    initialScope = listId?.let(TaskScope::InList) ?: TaskScope.AllOpen,
+                    startInSearch = entry.arguments?.getString("search") == "true",
+                    onOpenTask = { taskId -> navController.navigate("task/$taskId") },
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable(
@@ -141,7 +168,11 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
                 )
             }
             composable(TopLevelDestination.MORE.route) {
-                MoreRoute(container = container, onOpenPermissions = onOpenPermissions)
+                MoreRoute(
+                    container = container,
+                    onOpenPermissions = onOpenPermissions,
+                    onOpenList = { listId -> navController.navigate("browse?listId=$listId") },
+                )
             }
         }
     }

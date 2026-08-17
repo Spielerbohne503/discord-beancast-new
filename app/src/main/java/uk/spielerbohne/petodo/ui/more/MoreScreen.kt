@@ -38,7 +38,11 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 @Composable
-fun MoreRoute(container: AppContainer, onOpenPermissions: () -> Unit) {
+fun MoreRoute(
+    container: AppContainer,
+    onOpenPermissions: () -> Unit,
+    onOpenList: (String) -> Unit,
+) {
     val viewModel: MoreViewModel = viewModel(factory = MoreViewModel.factory(container))
     val quietHours by viewModel.quietHours.collectAsStateWithLifecycle()
     val lists by viewModel.lists.collectAsStateWithLifecycle()
@@ -55,6 +59,7 @@ fun MoreRoute(container: AppContainer, onOpenPermissions: () -> Unit) {
         onDeleteList = viewModel::deleteList,
         onDeleteTag = viewModel::deleteTag,
         onOpenPermissions = onOpenPermissions,
+        onOpenList = onOpenList,
     )
 }
 
@@ -70,6 +75,7 @@ fun MoreScreen(
     onDeleteList: (String) -> Unit,
     onDeleteTag: (String) -> Unit,
     onOpenPermissions: () -> Unit,
+    onOpenList: (String) -> Unit = {},
 ) {
     var picking by remember { mutableStateOf<QuietHoursEdge?>(null) }
 
@@ -139,6 +145,7 @@ fun MoreScreen(
 
         ListsSection(
             lists = lists,
+            onOpen = onOpenList,
             onCreate = onCreateList,
             onUpdateColor = onListColorChange,
             onToggleExclude = onListExcludeChange,

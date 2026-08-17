@@ -50,6 +50,7 @@ val LIST_COLORS = listOf(
 @Composable
 fun ListsSection(
     lists: List<TaskList>,
+    onOpen: (String) -> Unit,
     onCreate: (String, Int?, Boolean) -> Unit,
     onUpdateColor: (String, Int) -> Unit,
     onToggleExclude: (String, Boolean) -> Unit,
@@ -76,7 +77,12 @@ fun ListsSection(
             lists.forEach { list ->
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(list.name, modifier = Modifier.weight(1f))
+                        Text(
+                            text = list.name,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onOpen(list.id) },
+                        )
                         if (list.id != TaskList.ID_INBOX) {
                             IconButton(onClick = { onDelete(list.id) }) {
                                 Icon(
