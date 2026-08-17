@@ -20,11 +20,17 @@ import uk.spielerbohne.petodo.domain.model.Priority
         Index("dueAt"),
         Index("deletedAt"),
         Index("sortKey"),
+        Index("parentId"),
     ],
 )
 data class TaskEntity(
     @PrimaryKey val id: String,
     val listId: String,
+    /**
+     * Übergeordnete Aufgabe (Unteraufgaben). v1 hat dafür keine UI und schreibt immer
+     * null — das Feld existiert, damit Unteraufgaben später keine Migration kosten.
+     */
+    val parentId: String? = null,
     val title: String,
     val note: String? = null,
     /** UTC-Millis. */

@@ -12,9 +12,12 @@ import uk.spielerbohne.petodo.data.db.dao.TaskDao
 import uk.spielerbohne.petodo.data.db.dao.TaskListDao
 import uk.spielerbohne.petodo.data.db.entity.FocusSessionEntity
 import uk.spielerbohne.petodo.data.db.entity.PetStateEntity
+import uk.spielerbohne.petodo.data.db.entity.ReminderEntity
 import uk.spielerbohne.petodo.data.db.entity.RewardEventEntity
+import uk.spielerbohne.petodo.data.db.entity.TagEntity
 import uk.spielerbohne.petodo.data.db.entity.TaskEntity
 import uk.spielerbohne.petodo.data.db.entity.TaskListEntity
+import uk.spielerbohne.petodo.data.db.entity.TaskTagEntity
 
 @Database(
     entities = [
@@ -23,8 +26,11 @@ import uk.spielerbohne.petodo.data.db.entity.TaskListEntity
         RewardEventEntity::class,
         PetStateEntity::class,
         FocusSessionEntity::class,
+        TagEntity::class,
+        TaskTagEntity::class,
+        ReminderEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class PetodoDatabase : RoomDatabase() {
@@ -40,6 +46,9 @@ abstract class PetodoDatabase : RoomDatabase() {
 
         fun build(context: Context, nowMillis: () -> Long): PetodoDatabase =
             Room.databaseBuilder(context, PetodoDatabase::class.java, NAME)
+                // Kein fallbackToDestructiveMigration: lieber ein Fehler beim Start als
+                // stillschweigend gelöschte Aufgaben.
+                .addMigrations(*Migrations.ALL)
                 .addCallback(object : RoomDatabase.Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         // Beim allerersten Start entstehen die beiden Listen in derselben

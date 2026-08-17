@@ -60,6 +60,25 @@ ViewModel ruft sie nur auf und führt das Ergebnis aus.
 | Drei Notification Channels von Anfang an | `data/notify/Channels.kt` (Phase 2) |
 | Alle Balancing-Zahlen in EINER Datei | `domain/Balance.kt` |
 | Alle Texte in `strings.xml` | `app/src/main/res/values/strings.xml` |
+| Unteraufgaben: `parentId` ohne UI | `TaskEntity.parentId` |
+| Ordner: `parentId` auf Listen, ohne UI | `TaskListEntity.parentId` |
+| Tags als Mehrfachzuordnung, ohne UI | `TagEntity`, `TaskTagEntity` |
+| Mehrere Erinnerungen je Aufgabe | `ReminderEntity` |
+
+## Datenbankmigrationen
+
+`fallbackToDestructiveMigration` ist verboten — ein Schemafehler darf keine Aufgaben
+löschen. Jede Schemaänderung bekommt eine Migration in `data/db/Migrations.kt` und wird
+gegen die exportierten Schemadateien geprüft:
+
+```
+python3 tools/verify_migrations.py
+```
+
+Das Werkzeug baut die alte Datenbank aus `app/schemas/…/n.json`, wendet die
+`execSQL`-Anweisungen aus `Migrations.kt` an und vergleicht Tabellen, Spalten und
+Indizes mit `n+1.json`. Weicht etwas ab, würde Room beim Start des Nutzers abbrechen.
+`app/schemas` gehört ins Repository.
 
 Balancing-Zahlen stehen ausschließlich in `domain/Balance.kt`. Eine Zahl mit fachlicher
 Bedeutung irgendwo anders im Code ist ein Fehler, auch wenn sie stimmt.
