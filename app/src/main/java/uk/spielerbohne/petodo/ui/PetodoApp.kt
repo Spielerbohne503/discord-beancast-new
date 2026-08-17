@@ -1,0 +1,101 @@
+package uk.spielerbohne.petodo.ui
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import uk.spielerbohne.petodo.R
+import uk.spielerbohne.petodo.di.AppContainer
+import uk.spielerbohne.petodo.ui.placeholder.PlaceholderScreen
+import uk.spielerbohne.petodo.ui.today.TodayRoute
+
+/**
+ * Untere Leiste mit vier Einträgen. "Heute" funktioniert, die anderen drei sind
+ * Platzhalter für die Phasen 2 bis 4 — sie stehen aber von Anfang an da, damit die
+ * Navigation nicht später umgebaut werden muss.
+ */
+private enum class TopLevelDestination(
+    val route: String,
+    val labelRes: Int,
+    val icon: ImageVector,
+) {
+    TODAY("today", R.string.nav_today, Icons.Filled.CheckCircle),
+    FOCUS("focus", R.string.nav_focus, Icons.Filled.Timer),
+    PET("pet", R.string.nav_pet, Icons.Filled.Pets),
+    MORE("more", R.string.nav_more, Icons.Filled.MoreHoriz),
+}
+
+@Composable
+fun PetodoApp(container: AppContainer) {
+    val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = backStackEntry?.destination
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                TopLevelDestination.entries.forEach { destination ->
+                    val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
+                    NavigationBarItem(
+                        selected = selected,
+                        onClick = {
+                            navController.navigate(destination.route) {
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(destination.icon, contentDescription = null) },
+                        label = { Text(stringResource(destination.labelRes)) },
+                    )
+                }
+            }
+        },
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = TopLevelDestination.TODAY.route,
+            modifier = Modifier.padding(innerPadding),
+        ) {
+            composable(TopLevelDestination.TODAY.route) {
+                TodayRoute(container = container)
+            }
+            composable(TopLevelDestination.FOCUS.route) {
+                PlaceholderScreen(
+                    titleRes = R.string.placeholder_focus_title,
+                    bodyRes = R.string.placeholder_focus_body,
+                )
+            }
+            composable(TopLevelDestination.PET.route) {
+                PlaceholderScreen(
+                    titleRes = R.string.placeholder_pet_title,
+                    bodyRes = R.string.placeholder_pet_body,
+                )
+            }
+            composable(TopLevelDestination.MORE.route) {
+                PlaceholderScreen(
+                    titleRes = R.string.placeholder_more_title,
+                    bodyRes = R.string.placeholder_more_body,
+                )
+            }
+        }
+    }
+}
