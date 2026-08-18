@@ -39,6 +39,7 @@ class SettingsRepository(context: Context) {
         val SHORT_BREAK_MINUTES = intPreferencesKey("short_break_minutes")
         val LONG_BREAK_MINUTES = intPreferencesKey("long_break_minutes")
         val ROUNDS_BEFORE_LONG_BREAK = intPreferencesKey("rounds_before_long_break")
+        val PET_NAME = stringPreferencesKey("pet_name")
     }
 
     private val preferences: Flow<Preferences> = store.data
@@ -76,6 +77,16 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    /**
+     * Der Name des Pets. Leer heißt: Die Oberfläche setzt den Vorgabenamen aus
+     * `strings.xml` ein — Texte gehören nicht in die Einstellungen.
+     */
+    val petName: Flow<String> = preferences.map { it[Keys.PET_NAME].orEmpty() }
+
+    suspend fun setPetName(name: String) {
+        store.edit { it[Keys.PET_NAME] = name.trim().take(MAX_PET_NAME) }
+    }
+
     suspend fun setOnboardingCompleted(completed: Boolean) {
         store.edit { it[Keys.ONBOARDING_DONE] = completed }
     }
@@ -99,4 +110,8 @@ class SettingsRepository(context: Context) {
     /** Ein unlesbarer Wert ist kein Grund abzustürzen — dann gilt die Vorgabe. */
     private fun parseTime(value: String?): LocalTime? =
         value?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+
+    private companion object {
+        const val MAX_PET_NAME = 24
+    }
 }

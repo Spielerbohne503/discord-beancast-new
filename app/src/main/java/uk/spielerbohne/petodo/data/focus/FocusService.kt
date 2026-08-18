@@ -28,6 +28,7 @@ import uk.spielerbohne.petodo.domain.focus.FocusState
 import uk.spielerbohne.petodo.domain.focus.FocusTimer
 import kotlinx.coroutines.flow.first
 import uk.spielerbohne.petodo.domain.notify.NotificationIds
+import uk.spielerbohne.petodo.domain.pet.HealthStage
 import uk.spielerbohne.petodo.domain.today.TodayGrouping
 import java.time.Instant
 
@@ -109,7 +110,7 @@ class FocusService : Service() {
         }
 
         val taskTitle = session?.taskId?.let { container.taskRepository.findTask(it)?.title }
-        notify(state, taskTitle, todayCounts())
+        notify(state, taskTitle, todayCounts(), container.petRepository.storedState().stage)
         return state is FocusState.Running
     }
 
@@ -149,14 +150,19 @@ class FocusService : Service() {
      * Ohne Benachrichtigungserlaubnis bleibt die Statuszeile unsichtbar — der Dienst
      * läuft trotzdem weiter, und der Timer stimmt, weil er am Endzeitpunkt hängt.
      */
-    private fun notify(state: FocusState, taskTitle: String?, counts: Pair<Int, Int>) {
+    private fun notify(
+        state: FocusState,
+        taskTitle: String?,
+        counts: Pair<Int, Int>,
+        stage: HealthStage,
+    ) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) {
             return
         }
 
-        val notification = status.build(state, taskTitle, counts.first, counts.second)
+        val notification = status.build(state, taskTitle, counts.first, counts.second, stage)
         try {
             NotificationManagerCompat.from(this).notify(NotificationIds.FOCUS_STATUS, notification)
         } catch (security: SecurityException) {

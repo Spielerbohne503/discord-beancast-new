@@ -8,6 +8,7 @@ import uk.spielerbohne.petodo.data.alarm.NagCoordinator
 import uk.spielerbohne.petodo.data.backup.BackupRepository
 import uk.spielerbohne.petodo.data.db.PetodoDatabase
 import uk.spielerbohne.petodo.data.notify.NagNotifications
+import uk.spielerbohne.petodo.data.pet.PetRepository
 import uk.spielerbohne.petodo.data.repo.FocusRepository
 import uk.spielerbohne.petodo.data.repo.TagRepository
 import uk.spielerbohne.petodo.data.repo.TaskListRepository
@@ -43,6 +44,8 @@ class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone(
             taskDao = database.taskDao(),
             taskListDao = database.taskListDao(),
             clock = clock,
+            // Faul: Das Pet braucht die Aufgaben, die Aufgaben nicht das Pet.
+            rewards = { petRepository },
         )
     }
 
@@ -53,7 +56,20 @@ class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone(
     val tagRepository: TagRepository by lazy { TagRepository(database.tagDao(), clock) }
 
     val focusRepository: FocusRepository by lazy {
-        FocusRepository(database.focusSessionDao(), clock)
+        FocusRepository(database.focusSessionDao(), clock, rewards = { petRepository })
+    }
+
+    /**
+     * Belohnungen werden im Repository verbucht, nicht im ViewModel — sonst zahlt der
+     * Weg über die Benachrichtigung nicht ein.
+     */
+    val petRepository: PetRepository by lazy {
+        PetRepository(
+            petStateDao = database.petStateDao(),
+            rewardEventDao = database.rewardEventDao(),
+            taskRepository = taskRepository,
+            clock = clock,
+        )
     }
 
     val backupRepository: BackupRepository by lazy { BackupRepository(database, clock) }

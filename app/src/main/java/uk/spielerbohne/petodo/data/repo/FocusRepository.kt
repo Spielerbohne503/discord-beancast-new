@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import uk.spielerbohne.petodo.data.db.dao.FocusSessionDao
 import uk.spielerbohne.petodo.data.db.entity.FocusSessionEntity
+import uk.spielerbohne.petodo.data.pet.RewardSink
 import uk.spielerbohne.petodo.domain.focus.FocusPhase
 import uk.spielerbohne.petodo.domain.focus.FocusSession
 import uk.spielerbohne.petodo.domain.focus.FocusSettings
@@ -23,6 +24,8 @@ import java.util.UUID
 class FocusRepository(
     private val focusSessionDao: FocusSessionDao,
     private val clock: Clock,
+    /** Faul hereingereicht, damit kein Ring zwischen Fokus und Pet entsteht. */
+    private val rewards: () -> RewardSink? = { null },
 ) {
 
     fun observeActiveSession(): Flow<FocusSession?> =
@@ -108,6 +111,8 @@ class FocusRepository(
         val now = Instant.now(clock).toEpochMilli()
         val completed = entity.copy(completedAt = now, pausedAt = null, updatedAt = now)
         focusSessionDao.update(completed)
+        // Nur die Fokusrunde zahlt ein, nicht die Pause.
+        if (FocusPhase.parse(entity.kind) == FocusPhase.FOCUS) rewards()?.onFocusCompleted()
         return completed.toDomain()
     }
 

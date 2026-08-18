@@ -34,6 +34,11 @@ class PetodoApplication : Application() {
         container.applicationScope.launch(Dispatchers.IO) {
             runCatching { container.nagCoordinator.rescheduleAll() }
                 .onFailure { Log.e(TAG, "Alarme konnten beim Start nicht abgeglichen werden", it) }
+
+            // Es tickt nichts: Der Wertestand wird beim Start einmal fortgeschrieben und
+            // danach nur noch bei Ereignissen.
+            runCatching { container.petRepository.recompute() }
+                .onFailure { Log.e(TAG, "Pet-Zustand konnte nicht fortgeschrieben werden", it) }
         }
     }
 

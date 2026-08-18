@@ -8,7 +8,10 @@ import androidx.core.app.NotificationCompat
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.data.notify.Channels
 import uk.spielerbohne.petodo.domain.focus.FocusPhase
+import uk.spielerbohne.petodo.data.pet.emojiRes
+import uk.spielerbohne.petodo.data.pet.labelRes
 import uk.spielerbohne.petodo.domain.focus.FocusState
+import uk.spielerbohne.petodo.domain.pet.HealthStage
 import uk.spielerbohne.petodo.domain.focus.FocusTimer
 import uk.spielerbohne.petodo.domain.notify.NotificationIds
 import uk.spielerbohne.petodo.ui.MainActivity
@@ -32,6 +35,8 @@ class FocusStatusNotification(private val context: Context) {
         taskTitle: String?,
         completedRounds: Int,
         openTasks: Int,
+        /** Das Pet-Icon wechselt mit dem Zustand (Projektplan, Abschnitt 7). */
+        stage: HealthStage = HealthStage.HEALTHY,
     ): Notification {
         val builder = NotificationCompat.Builder(context, Channels.FOCUS)
             .setSmallIcon(R.drawable.ic_notification)
@@ -47,7 +52,7 @@ class FocusStatusNotification(private val context: Context) {
                 builder.setContentTitle(
                     context.getString(
                         R.string.focus_status_ready,
-                        context.getString(R.string.focus_state_ready),
+                        context.getString(stage.emojiRes) + " " + context.getString(stage.labelRes),
                         context.getString(R.string.focus_rounds_today, completedRounds, openTasks),
                     )
                 )

@@ -16,7 +16,14 @@ interface RewardEventDao {
     @Insert
     suspend fun insert(event: RewardEventEntity)
 
-    @Query("SELECT * FROM reward_events WHERE deletedAt IS NULL AND at >= :since ORDER BY at")
+    /**
+     * Ereignisse **nach** einem Zeitpunkt — echt größer, nicht größer-gleich.
+     *
+     * Ein Ereignis genau auf dem letzten Rechenzeitpunkt wurde dort bereits verrechnet;
+     * mit `>=` käme es ein zweites Mal an. Frisch eingefügte Ereignisse reicht das
+     * Repository stattdessen direkt herein.
+     */
+    @Query("SELECT * FROM reward_events WHERE deletedAt IS NULL AND at > :since ORDER BY at")
     suspend fun since(since: Long): List<RewardEventEntity>
 
     @Query("SELECT * FROM reward_events WHERE deletedAt IS NULL ORDER BY at DESC LIMIT :limit")

@@ -6,6 +6,7 @@ import uk.spielerbohne.petodo.data.db.dao.TaskDao
 import uk.spielerbohne.petodo.data.db.dao.TaskListDao
 import uk.spielerbohne.petodo.data.db.entity.TaskEntity
 import uk.spielerbohne.petodo.data.mapper.toDomain
+import uk.spielerbohne.petodo.data.pet.RewardSink
 import uk.spielerbohne.petodo.data.mapper.toHhMmOrNull
 import uk.spielerbohne.petodo.domain.model.Priority
 import uk.spielerbohne.petodo.domain.model.Task
@@ -36,6 +37,11 @@ class TaskRepository(
     private val taskDao: TaskDao,
     private val taskListDao: TaskListDao,
     private val clock: Clock,
+    /**
+     * Wird faul hereingereicht, weil das Pet die Aufgaben braucht, die Aufgaben aber
+     * nicht das Pet — als Feld wäre das ein Ring. `null` heißt: ohne Pet, etwa im Test.
+     */
+    private val rewards: () -> RewardSink? = { null },
 ) {
 
     fun observeTasks(): Flow<List<Task>> =
@@ -92,6 +98,7 @@ class TaskRepository(
                 updatedAt = now.toEpochMilli(),
             )
         )
+        rewards()?.onTaskCreated()
         return id
     }
 
@@ -127,11 +134,14 @@ class TaskRepository(
                         updatedAt = millis,
                     )
                 )
+                // Eine Runde der Serie ist erledigt, auch wenn die Aufgabe offen bleibt.
+                rewards()?.onTaskCompleted(entity.toDomain())
                 return
             }
 
             // Serienende: normal abhaken, Regel entfernen.
             taskDao.update(entity.copy(completedAt = millis, rrule = null, updatedAt = millis))
+            rewards()?.onTaskCompleted(entity.toDomain())
             return
         }
 
@@ -141,6 +151,9 @@ class TaskRepository(
                 updatedAt = millis,
             )
         )
+        // Nur das Abhaken zahlt ein. Wieder-Öffnen nimmt nichts weg — das Log kennt
+        // keine Stornos, und Wiederaufmachen ist ehrliche Arbeit, keine Schummelei.
+        if (completed) rewards()?.onTaskCompleted(entity.toDomain())
     }
 
     /** Wiederholungsregel setzen oder entfernen. */
@@ -267,6 +280,7 @@ class TaskRepository(
         val entity = taskDao.findById(id) ?: return
         val task = entity.toDomain()
         val now = Instant.now(clock)
+        val warUeberfaellig = task.isOverdue(now, zone)
         val neuerTermin = NagSchedule.postponeToTomorrow(task, now, zone)
         taskDao.update(
             entity.copy(
@@ -276,6 +290,8 @@ class TaskRepository(
                 updatedAt = now.toEpochMilli(),
             )
         )
+        // Aufräumen zählt: Wer einen alten Termin ehrlich verschiebt, hilft dem Pet.
+        if (warUeberfaellig) rewards()?.onTaskCleaned(task)
     }
 
     /**
@@ -295,8 +311,12 @@ class TaskRepository(
     /** Löschen heißt Tombstone setzen — die Zeile bleibt für den späteren Sync stehen. */
     suspend fun delete(id: String) {
         val entity = taskDao.findById(id) ?: return
-        val now = Instant.now(clock).toEpochMilli()
-        taskDao.update(entity.copy(deletedAt = now, updatedAt = now))
+        val task = entity.toDomain()
+        val now = Instant.now(clock)
+        val warUeberfaellig = task.isOpen && task.isOverdue(now, clock.zone)
+        taskDao.update(entity.copy(deletedAt = now.toEpochMilli(), updatedAt = now.toEpochMilli()))
+        // Löschen gibt dasselbe wie Verschieben. Sonst bestraft die App Ehrlichkeit.
+        if (warUeberfaellig) rewards()?.onTaskCleaned(task)
     }
 
     /** Rücknahme eines Tombstones (Rückgängig direkt nach dem Löschen). */
