@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import uk.spielerbohne.petodo.R
+import uk.spielerbohne.petodo.ui.theme.GlassCard
 import java.time.LocalDate
 
 /**
@@ -45,7 +46,7 @@ fun BackupSection(
         ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let(onRestore) }
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),

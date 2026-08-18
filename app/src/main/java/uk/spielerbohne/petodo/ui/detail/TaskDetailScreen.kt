@@ -22,7 +22,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
@@ -33,6 +32,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import uk.spielerbohne.petodo.ui.theme.GlassCard
+import uk.spielerbohne.petodo.ui.theme.Palette
+import uk.spielerbohne.petodo.ui.theme.SectionLabel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -123,8 +126,10 @@ fun TaskDetailScreen(
     val zone = state.zone
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 title = { ListSwitcher(lists = state.lists, current = state.list, onListChange = onListChange) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -152,9 +157,14 @@ fun TaskDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Kopfzeile: Abhaken plus Fälligkeit — genau die zwei Dinge, die man zuerst sucht.
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleCompleted() })
-                DueSummary(task = task, zone = zone)
+            GlassCard(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleCompleted() })
+                    DueSummary(task = task, zone = zone)
+                }
             }
 
             TextField(
@@ -211,7 +221,11 @@ fun TaskDetailScreen(
                 )
             }
 
-            HorizontalDivider()
+            SectionLabel(
+                text = stringResource(R.string.detail_subtasks),
+                accent = Palette.Sky,
+                modifier = Modifier.padding(top = 8.dp),
+            )
 
             SubtaskSection(
                 subtasks = state.subtasks,
@@ -222,7 +236,11 @@ fun TaskDetailScreen(
                 onDelete = onDeleteSubtask,
             )
 
-            HorizontalDivider()
+            SectionLabel(
+                text = stringResource(R.string.detail_tags),
+                accent = Palette.Violet,
+                modifier = Modifier.padding(top = 8.dp),
+            )
 
             TagSection(tags = state.tags, onAdd = onAddTag, onRemove = onRemoveTag)
         }

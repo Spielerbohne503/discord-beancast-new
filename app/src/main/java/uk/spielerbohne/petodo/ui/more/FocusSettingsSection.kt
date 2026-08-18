@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import uk.spielerbohne.petodo.R
+import uk.spielerbohne.petodo.ui.theme.GlassCard
 import uk.spielerbohne.petodo.domain.focus.FocusSettings
 
 /**
@@ -32,7 +33,7 @@ fun FocusSettingsSection(
     settings: FocusSettings,
     onChange: (FocusSettings) -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),

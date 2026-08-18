@@ -1,22 +1,28 @@
 package uk.spielerbohne.petodo.ui.pet
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,18 +33,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import uk.spielerbohne.petodo.R
-import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.data.pet.labelRes
+import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.pet.HealthStage
 import uk.spielerbohne.petodo.domain.pet.Level
 import uk.spielerbohne.petodo.domain.pet.OverdueLoad
+import uk.spielerbohne.petodo.domain.pet.PetValues
 import uk.spielerbohne.petodo.domain.pet.RewardType
+import uk.spielerbohne.petodo.ui.theme.Brand
+import uk.spielerbohne.petodo.ui.theme.CircleIconButton
+import uk.spielerbohne.petodo.ui.theme.GlassCard
+import uk.spielerbohne.petodo.ui.theme.GradientCard
+import uk.spielerbohne.petodo.ui.theme.Palette
+import uk.spielerbohne.petodo.ui.theme.ScreenGlow
+import uk.spielerbohne.petodo.ui.theme.SectionLabel
+import uk.spielerbohne.petodo.ui.theme.ValueTrack
 import java.time.Duration
 
 @Composable
@@ -69,40 +87,67 @@ private fun PetScreen(
     val name = state.name.ifBlank { vorgabe }
     var renaming by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            StatusPanel(
-                name = name,
-                stage = pet.stage,
-                level = pet.level,
-                xp = pet.xp,
-                energy = pet.values.energy,
-                satiety = pet.values.satiety,
-                mood = pet.values.mood,
-                speech = reactionText ?: moodText,
-                onRename = { renaming = true },
-            )
-        }
+    Box(Modifier.fillMaxSize()) {
+        // Der Schein hinter der Karte trägt die Zustandsfarbe — ein krankes Pet färbt
+        // den ganzen Bildschirm, nicht nur sein Kärtchen.
+        ScreenGlow(
+            colors = pet.stage.gradient(),
+            alpha = 0.28f,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
 
-        item {
-            CareRow(
-                cooldowns = state.cooldowns,
-                onCare = onCare,
-            )
-        }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item("kopf") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, top = 4.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.pet_title),
+                        style = MaterialTheme.typography.displaySmall,
+                        modifier = Modifier.weight(1f),
+                    )
+                    CircleIconButton(
+                        icon = Icons.Filled.Edit,
+                        contentDescription = stringResource(R.string.pet_rename),
+                        onClick = { renaming = true },
+                    )
+                }
+            }
 
-        item { LoadCard(load = state.snapshot.load, overdueCount = state.snapshot.overdueCount) }
+            item("tafel") {
+                StatusPanel(
+                    name = name,
+                    stage = pet.stage,
+                    level = pet.level,
+                    xp = pet.xp,
+                    values = pet.values,
+                    speech = reactionText ?: moodText,
+                )
+            }
 
-        item {
-            Text(
-                text = stringResource(R.string.pet_no_death),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            item("pflege") {
+                CareRow(cooldowns = state.cooldowns, onCare = onCare)
+            }
+
+            item("last") {
+                LoadCard(load = state.snapshot.load, overdueCount = state.snapshot.overdueCount)
+            }
+
+            item("hinweis") {
+                Text(
+                    text = stringResource(R.string.pet_no_death),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            }
         }
     }
 
@@ -119,8 +164,11 @@ private fun PetScreen(
 }
 
 /**
- * Die Statustafel aus Abschnitt 8.1: Name, Level, Zustand, drei Balken. Kein Sprite —
- * und trotzdem sieht man auf einen Blick, woran man ist.
+ * Die Statustafel aus Abschnitt 8.1: Name, Level, Zustand, drei Balken.
+ *
+ * Kein Sprite — und trotzdem sieht man auf einen Blick, woran man ist: Die Karte selbst
+ * ist die Anzeige. Ihr Verlauf wechselt mit der Krankheitsstufe, also erkennt man den
+ * Zustand, bevor man ein Wort gelesen hat.
  */
 @Composable
 private fun StatusPanel(
@@ -128,126 +176,213 @@ private fun StatusPanel(
     stage: HealthStage,
     level: Int,
     xp: Int,
-    energy: Double,
-    satiety: Double,
-    mood: Double,
+    values: PetValues,
     speech: String?,
-    onRename: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    GradientCard(colors = stage.gradient(), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = stage.emoji(), style = MaterialTheme.typography.displaySmall)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(text = name, style = MaterialTheme.typography.headlineSmall)
                     Text(
-                        text = stringResource(R.string.pet_level, level) + " · " +
-                            stringResource(stage.labelRes),
+                        text = name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Palette.Chalk,
+                    )
+                    Text(
+                        text = stringResource(stage.labelRes),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Palette.Chalk.copy(alpha = 0.75f),
                     )
                 }
-                TextButton(onClick = onRename) { Text(stringResource(R.string.pet_rename)) }
+                LevelChip(level)
+            }
+
+            // Der eine große Wert: der Schnitt der drei Balken. Er ist es, der über die
+            // Stufe entscheidet — also steht er groß da und nicht im Kleingedruckten.
+            Column {
+                Text(
+                    text = stringResource(R.string.pet_condition).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Palette.Chalk.copy(alpha = 0.7f),
+                )
+                Text(
+                    text = stringResource(R.string.pet_value_percent, values.average.toInt()),
+                    style = MaterialTheme.typography.displayLarge,
+                    color = Palette.Chalk,
+                )
             }
 
             speech?.let {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    ),
+                Box(
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(Color.Black.copy(alpha = 0.28f))
+                        .fillMaxWidth(),
                 ) {
                     Text(
                         text = "„$it“",
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(14.dp),
                         style = MaterialTheme.typography.bodyLarge,
+                        color = Palette.Chalk,
                     )
                 }
             }
 
-            ValueBar(stringResource(R.string.pet_bar_energy), energy, stage)
-            ValueBar(stringResource(R.string.pet_bar_satiety), satiety, stage)
-            ValueBar(stringResource(R.string.pet_bar_mood), mood, stage)
-
-            Column {
-                LinearProgressIndicator(
-                    progress = { Level.progressWithin(xp).toFloat() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp),
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = stringResource(
-                        R.string.pet_level_progress,
-                        Level.xpToNextLevel(xp),
-                        level + 1,
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ValueRow(stringResource(R.string.pet_bar_energy), values.energy)
+                ValueRow(stringResource(R.string.pet_bar_satiety), values.satiety)
+                ValueRow(stringResource(R.string.pet_bar_mood), values.mood)
             }
+
+            LevelProgress(xp = xp, level = level)
         }
     }
 }
 
 @Composable
-private fun ValueBar(label: String, value: Double, stage: HealthStage) {
-    Column {
+private fun LevelChip(level: Int) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.3f))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.pet_level, level),
+            style = MaterialTheme.typography.labelLarge,
+            color = Palette.Chalk,
+        )
+    }
+}
+
+/** Ein Balken auf farbigem Grund: weiße Spur, weißer Faden — sonst wird es bunt auf bunt. */
+@Composable
+private fun ValueRow(label: String, value: Double) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Row(Modifier.fillMaxWidth()) {
-            Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = Palette.Chalk.copy(alpha = 0.8f),
+                modifier = Modifier.weight(1f),
+            )
             Text(
                 text = stringResource(R.string.pet_value_percent, value.toInt()),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelMedium,
+                color = Palette.Chalk,
             )
         }
-        Spacer(Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = { (value / 100.0).toFloat() },
-            color = stage.color(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp),
+        ValueTrack(
+            fraction = (value / 100.0).toFloat(),
+            colors = listOf(Palette.Chalk, Palette.Chalk.copy(alpha = 0.85f)),
+            height = 6.dp,
+            trackColor = Color.Black.copy(alpha = 0.25f),
+        )
+    }
+}
+
+@Composable
+private fun LevelProgress(xp: Int, level: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        ValueTrack(
+            fraction = Level.progressWithin(xp).toFloat(),
+            colors = listOf(Palette.Chalk.copy(alpha = 0.9f), Palette.Chalk.copy(alpha = 0.5f)),
+            height = 3.dp,
+            trackColor = Color.Black.copy(alpha = 0.25f),
+        )
+        Text(
+            text = stringResource(R.string.pet_level_progress, Level.xpToNextLevel(xp), level + 1),
+            style = MaterialTheme.typography.labelSmall,
+            color = Palette.Chalk.copy(alpha = 0.7f),
         )
     }
 }
 
 /**
- * Füttern, Spielen, Streicheln — mit sichtbarer Sperrzeit.
+ * Füttern, Spielen, Streicheln — drei gleich große Kacheln.
  *
- * Der Knopf verschwindet nicht, wenn die Sperre läuft: Er sagt, wie lange noch. Ein
- * verschwundener Knopf sieht aus wie ein Fehler.
+ * Der Knopf verschwindet nicht, wenn die Sperrzeit läuft: Er wird still und sagt, wie
+ * lange noch. Ein verschwundener Knopf sieht aus wie ein Fehler.
  */
 @Composable
 private fun CareRow(cooldowns: Map<RewardType, Duration>, onCare: (RewardType) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        PetViewModel.CARE_ACTIONS.forEach { type ->
-            val remaining = cooldowns[type] ?: Duration.ZERO
-            val ready = remaining.isZero || remaining.isNegative
-            val label = when (type) {
-                RewardType.FEED -> R.string.pet_action_feed
-                RewardType.PLAY -> R.string.pet_action_play
-                else -> R.string.pet_action_pat
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel(
+            text = stringResource(R.string.pet_care_title),
+            accent = Palette.Magenta,
+            modifier = Modifier.padding(start = 4.dp, top = 4.dp),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            PetViewModel.CARE_ACTIONS.forEach { type ->
+                CareTile(
+                    type = type,
+                    remaining = cooldowns[type] ?: Duration.ZERO,
+                    onClick = { onCare(type) },
+                    modifier = Modifier.weight(1f),
+                )
             }
+        }
+    }
+}
 
-            if (ready) {
-                Button(onClick = { onCare(type) }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(label), textAlign = TextAlign.Center)
-                }
-            } else {
-                OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(label) + "\n" +
-                            stringResource(R.string.pet_action_locked, formatCooldown(remaining)),
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
+@Composable
+private fun CareTile(
+    type: RewardType,
+    remaining: Duration,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val bereit = remaining.isZero || remaining.isNegative
+    val label = when (type) {
+        RewardType.FEED -> R.string.pet_action_feed
+        RewardType.PLAY -> R.string.pet_action_play
+        else -> R.string.pet_action_pat
+    }
+    val icon: ImageVector = when (type) {
+        RewardType.FEED -> Icons.Filled.Restaurant
+        RewardType.PLAY -> Icons.Filled.SportsEsports
+        else -> Icons.Filled.Favorite
+    }
+
+    GlassCard(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.large,
+        onClick = if (bereit) onClick else null,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (bereit) Palette.Magenta else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp),
+            )
+            Text(
+                text = stringResource(label),
+                style = MaterialTheme.typography.labelMedium,
+                color = if (bereit) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = if (bereit) "" else stringResource(R.string.pet_action_locked, formatCooldown(remaining)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -255,28 +390,36 @@ private fun CareRow(cooldowns: Map<RewardType, Duration>, onCare: (RewardType) -
 /** Warum es dem Pet gerade so geht — ohne diese Karte wirkt der Verfall willkürlich. */
 @Composable
 private fun LoadCard(load: Double, overdueCount: Int) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            SectionLabel(
                 text = stringResource(R.string.pet_load_title),
-                style = MaterialTheme.typography.titleMedium,
+                accent = if (overdueCount == 0) Palette.Lime else Palette.Amber,
             )
+
             if (overdueCount == 0) {
                 Text(
                     text = stringResource(R.string.pet_load_none),
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             } else {
                 Text(
                     text = stringResource(
                         R.string.pet_load_some,
                         overdueCount,
-                        stringResource(
-                            R.string.pet_load_factor,
-                            OverdueLoad.baseMultiplier(load),
-                        ),
+                        stringResource(R.string.pet_load_factor, OverdueLoad.baseMultiplier(load)),
                     ),
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                // Die Last als Balken: Sie läuft von 0 bis zum Deckel, und man sieht,
+                // wie weit es noch bis "so schnell wie es überhaupt geht" ist.
+                ValueTrack(
+                    fraction = (load / 10.0).toFloat(),
+                    colors = Brand.Overdue,
+                    height = 6.dp,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 )
                 Text(
                     text = stringResource(R.string.pet_recovery_hint),

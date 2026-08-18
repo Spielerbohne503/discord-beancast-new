@@ -1,6 +1,14 @@
 package uk.spielerbohne.petodo.ui.browse
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.draw.clip
+import uk.spielerbohne.petodo.ui.theme.Palette
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -25,10 +33,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -119,8 +125,10 @@ fun BrowseScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -206,22 +214,16 @@ fun BrowseScreen(
                         modifier = Modifier
                             .zIndex(if (dragged) 1f else 0f)
                             .graphicsLayer { translationY = reorderState.offsetFor(index) }
-                            .background(
-                                if (dragged) {
-                                    MaterialTheme.colorScheme.surfaceVariant
-                                } else {
-                                    Color.Transparent
-                                }
-                            )
+                            .padding(horizontal = 16.dp, vertical = 3.dp)
                     ) {
                         BrowseRow(
                             task = task,
                             state = state,
+                            dragged = dragged,
                             onToggle = { onToggle(task) },
                             onOpen = { onOpenTask(task.id) },
                         )
                     }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
                 }
             }
         }
@@ -243,20 +245,20 @@ private fun ScopeChips(
                 .horizontalScroll(rememberScrollState())
                 .padding(vertical = 4.dp),
         ) {
-            FilterChip(
+            ScopeChip(
                 selected = current == TaskScope.AllOpen,
+                label = stringResource(R.string.browse_scope_all),
                 onClick = { onScopeChange(TaskScope.AllOpen) },
-                label = { Text(stringResource(R.string.browse_scope_all)) },
             )
-            FilterChip(
+            ScopeChip(
                 selected = current == TaskScope.NextSevenDays,
+                label = stringResource(R.string.browse_scope_seven_days),
                 onClick = { onScopeChange(TaskScope.NextSevenDays) },
-                label = { Text(stringResource(R.string.browse_scope_seven_days)) },
             )
-            FilterChip(
+            ScopeChip(
                 selected = current == TaskScope.Completed,
+                label = stringResource(R.string.browse_scope_completed),
                 onClick = { onScopeChange(TaskScope.Completed) },
-                label = { Text(stringResource(R.string.browse_scope_completed)) },
             )
         }
         Row(
@@ -267,13 +269,52 @@ private fun ScopeChips(
                 .padding(bottom = 4.dp),
         ) {
             lists.forEach { list ->
-                FilterChip(
+                ScopeChip(
                     selected = (current as? TaskScope.InList)?.listId == list.id,
+                    label = list.name,
+                    accent = list.colorArgb?.let(::Color) ?: Palette.Sky,
                     onClick = { onScopeChange(TaskScope.InList(list.id)) },
-                    label = { Text(list.name) },
                 )
             }
         }
+    }
+}
+
+/**
+ * Eine Filterkapsel.
+ *
+ * Der `FilterChip` von Material bringt Haken, Rahmen und eine eigene Höhe mit; nebeneinander
+ * ergeben sie eine Werkzeugleiste. Hier ist die Auswahl nur Farbe — das reicht, und die
+ * Zeile bleibt ruhig.
+ */
+@Composable
+private fun ScopeChip(
+    selected: Boolean,
+    label: String,
+    onClick: () -> Unit,
+    accent: Color = Palette.Sky,
+) {
+    val hintergrund by animateColorAsState(
+        targetValue = if (selected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainer,
+        label = "kapselHintergrund",
+    )
+    val inhalt by animateColorAsState(
+        targetValue = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "kapselInhalt",
+    )
+
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(hintergrund)
+            .border(
+                BorderStroke(1.dp, if (selected) accent.copy(alpha = 0.45f) else MaterialTheme.colorScheme.outline),
+                CircleShape,
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+    ) {
+        Text(text = label, style = MaterialTheme.typography.labelMedium, color = inhalt)
     }
 }
 
@@ -281,6 +322,7 @@ private fun ScopeChips(
 private fun BrowseRow(
     task: Task,
     state: BrowseUiState,
+    dragged: Boolean,
     onToggle: () -> Unit,
     onOpen: () -> Unit,
 ) {
@@ -288,28 +330,44 @@ private fun BrowseRow(
     val overdue = task.overdueLabel(state.now, state.zone)
     val listColor = state.listColors[task.listId]
 
+    // Die gezogene Karte hebt ab: heller Rand statt grauem Hintergrund. Auf dunklem
+    // Grund ist Licht das einzige, was Höhe glaubhaft macht.
+    val rand by animateColorAsState(
+        targetValue = if (dragged) Palette.Sky else MaterialTheme.colorScheme.outline,
+        label = "ziehRand",
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(BorderStroke(if (dragged) 1.5.dp else 1.dp, rand), MaterialTheme.shapes.medium),
+    ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .fillMaxHeight()
-                .padding(vertical = 4.dp)
-                .background(
-                    color = listColor?.let(::Color) ?: Color.Transparent,
-                    shape = RoundedCornerShape(2.dp),
-                )
+        listColor?.let {
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .fillMaxHeight()
+                    .background(Color(it))
+            )
+        }
+        BrowseCheckDot(
+            checked = task.isCompleted,
+            onClick = onToggle,
+            modifier = Modifier.padding(start = 14.dp, end = 12.dp),
         )
-        Checkbox(checked = task.isCompleted, onCheckedChange = { onToggle() })
         Column(
             modifier = Modifier
                 .weight(1f)
                 .clickable(onClick = onOpen)
-                .padding(vertical = 10.dp),
+                .padding(vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
@@ -322,7 +380,7 @@ private fun BrowseRow(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (overdue != null) MaterialTheme.colorScheme.error
+                    color = if (overdue != null) Palette.Amber
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -332,7 +390,9 @@ private fun BrowseRow(
                 imageVector = Icons.Filled.Repeat,
                 contentDescription = stringResource(R.string.recurrence_label),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(end = 4.dp),
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(16.dp),
             )
         }
         if (PriorityUi.hasVisibleFlag(task.priority)) {
@@ -340,7 +400,43 @@ private fun BrowseRow(
                 imageVector = Icons.Filled.Flag,
                 contentDescription = PriorityUi.label(task.priority),
                 tint = PriorityUi.color(task.priority),
-                modifier = Modifier.padding(end = 12.dp),
+                modifier = Modifier
+                    .padding(end = 16.dp)
+                    .size(16.dp),
+            )
+        }
+    }
+    }
+}
+
+/** Derselbe runde Haken wie auf „Heute“ — zwei Formen für dieselbe Handlung wären Unfug. */
+@Composable
+private fun BrowseCheckDot(checked: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val akzent = MaterialTheme.colorScheme.primary
+    val fuellung by animateColorAsState(
+        targetValue = if (checked) akzent else Color.Transparent,
+        label = "hakenFuellung",
+    )
+    val rand by animateColorAsState(
+        targetValue = if (checked) akzent else MaterialTheme.colorScheme.outline,
+        label = "hakenRand",
+    )
+
+    Box(
+        modifier = modifier
+            .size(24.dp)
+            .clip(CircleShape)
+            .background(fuellung)
+            .border(BorderStroke(1.5.dp, rand), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (checked) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.background,
+                modifier = Modifier.size(15.dp),
             )
         }
     }

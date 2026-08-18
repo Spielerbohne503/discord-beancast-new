@@ -1,14 +1,30 @@
 package uk.spielerbohne.petodo.ui
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavDestination
+import uk.spielerbohne.petodo.ui.theme.Palette
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -51,11 +68,13 @@ private enum class TopLevelDestination(
     val route: String,
     val labelRes: Int,
     val icon: ImageVector,
+    /** Jeder Bereich hat seine Farbe — dieselbe wie auf seinen Karten. */
+    val accent: Color,
 ) {
-    TODAY("today", R.string.nav_today, Icons.Filled.CheckCircle),
-    FOCUS("focus", R.string.nav_focus, Icons.Filled.Timer),
-    PET("pet", R.string.nav_pet, Icons.Filled.Pets),
-    MORE("more", R.string.nav_more, Icons.Filled.MoreHoriz),
+    TODAY("today", R.string.nav_today, Icons.Filled.CheckCircle, Palette.Sky),
+    FOCUS("focus", R.string.nav_focus, Icons.Filled.Timer, Palette.Indigo),
+    PET("pet", R.string.nav_pet, Icons.Filled.Pets, Palette.Magenta),
+    MORE("more", R.string.nav_more, Icons.Filled.MoreHoriz, Palette.ChalkMuted),
 }
 
 @Composable
@@ -90,24 +109,18 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
     val currentDestination = backStackEntry?.destination
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            NavigationBar {
-                TopLevelDestination.entries.forEach { destination ->
-                    val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(destination.icon, contentDescription = null) },
-                        label = { Text(stringResource(destination.labelRes)) },
-                    )
-                }
-            }
+            BottomBar(
+                current = currentDestination,
+                onSelect = { destination ->
+                    navController.navigate(destination.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+            )
         },
     ) { innerPadding ->
         NavHost(
@@ -177,5 +190,84 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
                 )
             }
         }
+    }
+}
+
+/**
+ * Die untere Leiste schwebt über dem Inhalt statt ihn abzuschneiden.
+ *
+ * Der ausgewählte Eintrag bekommt eine Kapsel in seiner Bereichsfarbe — so weiß man
+ * ohne Hinsehen, wo man ist, und die Farbe stimmt mit den Karten darunter überein.
+ */
+@Composable
+private fun BottomBar(current: NavDestination?, onSelect: (TopLevelDestination) -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.extraLarge)
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .border(
+                    BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    MaterialTheme.shapes.extraLarge,
+                )
+                .padding(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            TopLevelDestination.entries.forEach { destination ->
+                val selected = current?.hierarchy?.any { it.route == destination.route } == true
+                BottomBarItem(
+                    destination = destination,
+                    selected = selected,
+                    onClick = { onSelect(destination) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BottomBarItem(
+    destination: TopLevelDestination,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = destination.accent
+    val background by animateColorAsState(
+        targetValue = if (selected) accent.copy(alpha = 0.16f) else Color.Transparent,
+        label = "navHintergrund",
+    )
+    val content by animateColorAsState(
+        targetValue = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "navInhalt",
+    )
+
+    Column(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.large)
+            .background(background)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Icon(
+            imageVector = destination.icon,
+            contentDescription = null,
+            tint = content,
+            modifier = Modifier.size(22.dp),
+        )
+        Text(
+            text = stringResource(destination.labelRes),
+            style = MaterialTheme.typography.labelSmall,
+            color = content,
+        )
     }
 }

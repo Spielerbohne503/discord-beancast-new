@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Der Verlauf des Symbols ist derselbe wie auf der Statustafel: Magenta über Violett.
+    Ein Symbol, das nicht nach der App aussieht, findet man auf dem Startbildschirm nicht.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:startX="0" android:startY="0"
+                android:endX="108" android:endY="108"
+                android:type="linear">
+                <item android:offset="0" android:color="#FF3D8A" />
+                <item android:offset="0.55" android:color="#B026FF" />
+                <item android:offset="1" android:color="#6F2DFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

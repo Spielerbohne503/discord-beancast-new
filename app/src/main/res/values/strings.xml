@@ -10,6 +10,11 @@
 
     <!-- Heute-Screen -->
     <string name="today_title">Heute</string>
+    <string name="today_greeting_morning">Guten Morgen</string>
+    <string name="today_greeting_day">Heute</string>
+    <string name="today_greeting_evening">Guten Abend</string>
+    <string name="today_progress">%1$d von %2$d erledigt</string>
+    <string name="today_progress_clear">Nichts fällig</string>
     <string name="section_overdue">Überfällig</string>
     <string name="section_today">Heute</string>
     <string name="section_later">Später und ohne Datum</string>
@@ -129,6 +134,7 @@
     <!-- Fokus-Timer -->
     <string name="focus_title">Fokus</string>
     <string name="focus_state_ready">Bereit</string>
+    <string name="focus_session_label">Sitzung</string>
     <string name="focus_phase_focus">Fokus</string>
     <string name="focus_phase_short_break">Pause</string>
     <string name="focus_phase_long_break">Lange Pause</string>
@@ -249,6 +255,7 @@
     <string name="pet_stage_sick">Krank</string>
     <string name="pet_stage_miserable">Elend</string>
 
+    <string name="pet_care_title">Pflege</string>
     <string name="pet_action_feed">Füttern</string>
     <string name="pet_action_play">Spielen</string>
     <string name="pet_action_pat">Streicheln</string>
@@ -259,6 +266,7 @@
     <string name="pet_xp">%1$d XP</string>
     <string name="pet_speech_dismiss">Verstanden</string>
 
+    <string name="pet_condition">Zustand</string>
     <string name="pet_load_title">Überfälligkeitslast</string>
     <string name="pet_load_none">Nichts überfällig — dein Pet erholt sich in Ruhe.</string>
     <string name="pet_load_some">%1$d überfällige Aufgabe(n). Die Werte fallen %2$s so schnell wie sonst.</string>

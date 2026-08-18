@@ -4,6 +4,7 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +37,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.runtime.DisposableEffect
 import uk.spielerbohne.petodo.R
+import uk.spielerbohne.petodo.ui.theme.Brand
+import uk.spielerbohne.petodo.ui.theme.GlassCard
+import uk.spielerbohne.petodo.ui.theme.GradientCard
+import uk.spielerbohne.petodo.ui.theme.Palette
 
 /**
  * Einmaliges Onboarding: erklärt die drei Berechtigungen, bevor es sie anfordert, und
@@ -66,19 +71,27 @@ fun OnboardingScreen(onFinished: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(
-            text = stringResource(R.string.onboarding_title),
-            style = MaterialTheme.typography.headlineSmall,
-        )
-        Text(
-            text = stringResource(R.string.onboarding_intro),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        // Der erste Bildschirm der App trägt die Farbe der App — hier entscheidet sich,
+        // ob man den Berechtigungen überhaupt zuhört.
+        GradientCard(colors = Brand.Pet, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.onboarding_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Palette.Chalk,
+                )
+                Text(
+                    text = stringResource(R.string.onboarding_intro),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Palette.Chalk.copy(alpha = 0.85f),
+                )
+            }
+        }
 
         PermissionCard(
             titleRes = R.string.onboarding_notifications_title,
@@ -137,7 +150,7 @@ private fun PermissionCard(
     granted: Boolean,
     onGrant: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -174,7 +187,7 @@ private fun PermissionCard(
 @Composable
 private fun ManufacturerHint() {
     val context = LocalContext.current
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),

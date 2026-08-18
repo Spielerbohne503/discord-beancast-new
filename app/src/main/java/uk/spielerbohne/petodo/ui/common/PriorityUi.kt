@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.domain.model.Priority
+import uk.spielerbohne.petodo.ui.theme.Palette
 
 /**
  * Darstellung der Priorität. Die Stufen selbst stehen in `domain/model/Priority`; hier
@@ -25,12 +26,18 @@ object PriorityUi {
         }
     )
 
-    /** Normal bekommt bewusst keine Farbe — sonst ist alles bunt und nichts fällt auf. */
+    /**
+     * Normal bekommt bewusst keine Farbe — sonst ist alles bunt und nichts fällt auf.
+     *
+     * Die drei übrigen kommen aus der Palette der App, nicht aus dem Material-Standard:
+     * Ein fremdes Rot neben dem Bernstein-Verlauf der überfälligen Aufgaben sieht aus
+     * wie ein Fehler.
+     */
     @Composable
     fun color(priority: Int): Color = when (Priority.coerce(priority)) {
-        Priority.URGENT -> Color(0xFFD32F2F)
-        Priority.HIGH -> Color(0xFFF57C00)
-        Priority.LOW -> Color(0xFF1976D2)
+        Priority.URGENT -> Palette.Ember
+        Priority.HIGH -> Palette.Amber
+        Priority.LOW -> Palette.Sky
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 

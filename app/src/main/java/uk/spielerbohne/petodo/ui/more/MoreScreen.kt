@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import uk.spielerbohne.petodo.BuildConfig
 import uk.spielerbohne.petodo.R
+import uk.spielerbohne.petodo.ui.theme.GlassCard
 import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.nag.QuietHours
 import java.time.LocalTime
@@ -64,7 +65,10 @@ fun MoreRoute(
         viewModel.clearBackupMessage()
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
     MoreScreen(
         modifier = Modifier.padding(padding),
         quietHours = quietHours,
@@ -126,10 +130,11 @@ fun MoreScreen(
     ) {
         Text(
             text = stringResource(R.string.settings_title),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.displaySmall,
+            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 4.dp),
         )
 
-        Card(modifier = Modifier.fillMaxWidth()) {
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -196,7 +201,7 @@ fun MoreScreen(
 
         BackupSection(onExport = onExport, onRestore = onRestore)
 
-        Card(modifier = Modifier.fillMaxWidth()) {
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),

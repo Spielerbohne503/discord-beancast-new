@@ -1,6 +1,21 @@
 package uk.spielerbohne.petodo.ui.today
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import uk.spielerbohne.petodo.ui.theme.Brand
+import uk.spielerbohne.petodo.ui.theme.CircleIconButton
+import uk.spielerbohne.petodo.ui.theme.CountBadge
+import uk.spielerbohne.petodo.ui.theme.GlassCard
+import uk.spielerbohne.petodo.ui.theme.Palette
+import uk.spielerbohne.petodo.ui.theme.ScreenGlow
+import uk.spielerbohne.petodo.ui.theme.SectionLabel
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,9 +38,6 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,12 +45,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -90,7 +99,6 @@ fun TodayRoute(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
     state: TodayUiState,
@@ -128,61 +136,119 @@ fun TodayScreen(
     val postponeLabel = stringResource(R.string.overdue_postpone_all)
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.today_title)) },
-                actions = {
-                    IconButton(onClick = onSearch) {
-                        Icon(
-                            Icons.Filled.Search,
-                            contentDescription = stringResource(R.string.browse_search),
-                        )
-                    }
-                },
-            )
-        },
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = { QuickAddBar(onAdd = onAdd) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         val board = state.board
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 16.dp),
-        ) {
-            petStrip?.let { streifen ->
-                item {
-                    Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { streifen() }
-                }
-            }
+        Box(Modifier.fillMaxSize()) {
+            // Der Lichtschein liegt hinter der Liste und wandert nicht mit — er gehört
+            // zum Bildschirm, nicht zum Inhalt.
+            ScreenGlow(colors = Brand.Cool, alpha = 0.16f, modifier = Modifier.align(Alignment.TopCenter))
 
-            if (board.isEmpty) {
-                item {
-                    Text(
-                        text = stringResource(R.string.today_empty),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(24.dp),
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item("kopf") {
+                    TodayHeader(
+                        done = board.doneToday.size,
+                        open = board.overdue.size + board.today.size,
+                        onSearch = onSearch,
                     )
                 }
-            }
 
-            taskSection(
-                titleRes = R.string.section_overdue,
-                tasks = board.overdue,
-                state = state,
-                emphasize = true,
-                // "Verschieben" räumt den ganzen Block auf einmal auf — die Fluchttür
-                // aus einer schlechten Woche.
-                bulkAction = if (board.overdue.isNotEmpty()) postponeLabel to onPostponeOverdue else null,
-                onToggle = onToggle,
-                onOpen = onOpenTask,
-            )
-            taskSection(R.string.section_today, board.today, state, onToggle = onToggle, onOpen = onOpenTask)
-            taskSection(R.string.section_later, board.later, state, onToggle = onToggle, onOpen = onOpenTask)
-            taskSection(R.string.section_done_today, board.doneToday, state, onToggle = onToggle, onOpen = onOpenTask)
+                petStrip?.let { streifen ->
+                    item("pet") {
+                        Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { streifen() }
+                    }
+                }
+
+                if (board.isEmpty) {
+                    item("leer") { EmptyState() }
+                }
+
+                taskSection(
+                    titleRes = R.string.section_overdue,
+                    tasks = board.overdue,
+                    state = state,
+                    accent = Palette.Amber,
+                    // "Verschieben" räumt den ganzen Block auf einmal auf — die Fluchttür
+                    // aus einer schlechten Woche.
+                    bulkAction = if (board.overdue.isNotEmpty()) postponeLabel to onPostponeOverdue else null,
+                    onToggle = onToggle,
+                    onOpen = onOpenTask,
+                )
+                taskSection(
+                    R.string.section_today, board.today, state,
+                    accent = Palette.Sky, onToggle = onToggle, onOpen = onOpenTask,
+                )
+                taskSection(
+                    R.string.section_later, board.later, state,
+                    onToggle = onToggle, onOpen = onOpenTask,
+                )
+                taskSection(
+                    R.string.section_done_today, board.doneToday, state,
+                    accent = Palette.Lime, onToggle = onToggle, onOpen = onOpenTask,
+                )
+            }
         }
+    }
+}
+
+/**
+ * Der Kopf: Anrede, Tagesstand, Suche.
+ *
+ * Statt einer Titelleiste, die auf jedem Bildschirm gleich aussieht, steht hier die eine
+ * Zahl, die zählt — wie viel von heute schon weg ist.
+ */
+@Composable
+private fun TodayHeader(done: Int, open: Int, onSearch: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 20.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.today_title),
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = if (done + open == 0) {
+                    stringResource(R.string.today_progress_clear)
+                } else {
+                    stringResource(R.string.today_progress, done, done + open)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        CircleIconButton(
+            icon = Icons.Filled.Search,
+            contentDescription = stringResource(R.string.browse_search),
+            onClick = onSearch,
+        )
+    }
+}
+
+@Composable
+private fun EmptyState() {
+    GlassCard(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Text(
+            text = stringResource(R.string.today_empty),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(24.dp),
+        )
     }
 }
 
@@ -190,7 +256,7 @@ private fun LazyListScope.taskSection(
     titleRes: Int,
     tasks: List<Task>,
     state: TodayUiState,
-    emphasize: Boolean = false,
+    accent: Color? = null,
     bulkAction: Pair<String, () -> Unit>? = null,
     onToggle: (Task) -> Unit,
     onOpen: (String) -> Unit,
@@ -198,47 +264,68 @@ private fun LazyListScope.taskSection(
     if (tasks.isEmpty()) return
 
     item(key = "header-$titleRes") {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                text = stringResource(titleRes),
-                style = MaterialTheme.typography.titleSmall,
-                color = if (emphasize) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                bulkAction?.let { (label, action) ->
-                    TextButton(onClick = action) { Text(label) }
-                }
-                Text(
-                    text = tasks.size.toString(),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        SectionHeader(
+            titleRes = titleRes,
+            count = tasks.size,
+            accent = accent,
+            bulkAction = bulkAction,
+        )
     }
     items(tasks, key = { it.id }) { task ->
-        TaskRow(
+        TaskCard(
             task = task,
             state = state,
+            accent = accent,
             onToggle = { onToggle(task) },
             onOpen = { onOpen(task.id) },
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 3.dp),
         )
-        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
     }
 }
 
 @Composable
-private fun TaskRow(
+private fun SectionHeader(
+    titleRes: Int,
+    count: Int,
+    accent: Color?,
+    bulkAction: Pair<String, () -> Unit>?,
+) {
+    val farbe = accent ?: MaterialTheme.colorScheme.onSurfaceVariant
+    SectionLabel(
+        text = stringResource(titleRes),
+        accent = farbe,
+        modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 18.dp, bottom = 6.dp),
+    ) {
+        bulkAction?.let { (label, action) ->
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = farbe,
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(onClick = action)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        }
+        CountBadge(count = count, accent = farbe)
+    }
+}
+
+/**
+ * Eine Aufgabe als eigene Karte statt als Zeile mit Trennlinie.
+ *
+ * Trennlinien erzeugen eine Tabelle; Karten erzeugen Gegenstände, die man anfassen kann.
+ * Der Preis sind ein paar Pixel Platz je Aufgabe — der Gewinn ist, dass Titel, Termin
+ * und Fahne zusammen als ein Ding lesbar sind.
+ */
+@Composable
+private fun TaskCard(
     task: Task,
     state: TodayUiState,
+    accent: Color?,
     onToggle: () -> Unit,
     onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val zone = state.zone
     val now = state.now
@@ -248,70 +335,127 @@ private fun TaskRow(
     val progress = state.subtaskProgress[task.id]
     val tags = state.tagsByTask[task.id].orEmpty()
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Farbstreifen der Liste — der schnellste Weg zu sehen, wohin etwas gehört.
-        Box(
+    GlassCard(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
+        Row(
             modifier = Modifier
-                .width(4.dp)
-                .fillMaxHeight()
-                .padding(vertical = 4.dp)
-                .background(
-                    color = listColor?.let(::Color) ?: Color.Transparent,
-                    shape = RoundedCornerShape(2.dp),
-                )
-        )
-        // Abhaken per Tippen auf die Zeile, Öffnen über den Titelbereich.
-        Checkbox(checked = task.isCompleted, onCheckedChange = { onToggle() })
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .clickable(onClickLabel = stringResource(R.string.task_open_details), onClick = onOpen)
-                .padding(vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = task.title,
-                style = MaterialTheme.typography.bodyLarge,
-                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
+            // Farbstreifen der Liste — der schnellste Weg zu sehen, wohin etwas gehört.
+            listColor?.let {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .fillMaxHeight()
+                        .background(Color(it))
+                )
+            }
+
+            CheckDot(
+                checked = task.isCompleted,
+                accent = accent ?: MaterialTheme.colorScheme.primary,
+                onClick = onToggle,
+                modifier = Modifier.padding(start = 14.dp, end = 12.dp),
             )
 
-            val details = buildList {
-                (overdue ?: due)?.let(::add)
-                if (progress != null && progress.hasSubtasks) {
-                    add(stringResource(R.string.detail_subtask_progress, progress.done, progress.total))
-                }
-                tags.forEach { add("#${it.name}") }
-                task.note?.takeIf { it.isNotBlank() }?.let { add(stringResource(R.string.task_note_indicator)) }
-            }
-            if (details.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClickLabel = stringResource(R.string.task_open_details), onClick = onOpen)
+                    .padding(vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
                 Text(
-                    text = details.joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (overdue != null) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = task.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                    color = if (task.isCompleted) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                )
+
+                val details = buildList {
+                    (overdue ?: due)?.let(::add)
+                    if (progress != null && progress.hasSubtasks) {
+                        add(stringResource(R.string.detail_subtask_progress, progress.done, progress.total))
+                    }
+                    tags.forEach { add(stringResource(R.string.tag_hash, it.name)) }
+                    task.note?.takeIf { it.isNotBlank() }?.let { add(stringResource(R.string.task_note_indicator)) }
+                }
+                if (details.isNotEmpty()) {
+                    Text(
+                        text = details.joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (overdue != null) Palette.Amber else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            if (task.rrule != null) {
+                Icon(
+                    imageVector = Icons.Filled.Repeat,
+                    contentDescription = stringResource(R.string.recurrence_label),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .size(16.dp),
+                )
+            }
+            if (PriorityUi.hasVisibleFlag(task.priority)) {
+                Icon(
+                    imageVector = Icons.Filled.Flag,
+                    contentDescription = PriorityUi.label(task.priority),
+                    tint = PriorityUi.color(task.priority),
+                    modifier = Modifier
+                        .padding(end = 16.dp)
+                        .size(16.dp),
                 )
             }
         }
-        if (task.rrule != null) {
+    }
+}
+
+/**
+ * Der Haken als Kreis.
+ *
+ * Die Material-Checkbox ist ein Quadrat mit eigener Umrandung und eigenem Anfasser —
+ * daneben sieht jede runde Karte falsch aus. Der Kreis füllt sich beim Abhaken mit der
+ * Abschnittsfarbe, damit man den Erfolg auch aus dem Augenwinkel sieht.
+ */
+@Composable
+private fun CheckDot(
+    checked: Boolean,
+    accent: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val fill by animateColorAsState(
+        targetValue = if (checked) accent else Color.Transparent,
+        label = "hakenFuellung",
+    )
+    val rand by animateColorAsState(
+        targetValue = if (checked) accent else MaterialTheme.colorScheme.outline,
+        label = "hakenRand",
+    )
+
+    Box(
+        modifier = modifier
+            .size(24.dp)
+            .clip(CircleShape)
+            .background(fill)
+            .border(BorderStroke(1.5.dp, rand), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (checked) {
             Icon(
-                imageVector = Icons.Filled.Repeat,
-                contentDescription = stringResource(R.string.recurrence_label),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(end = 4.dp),
-            )
-        }
-        if (PriorityUi.hasVisibleFlag(task.priority)) {
-            Icon(
-                imageVector = Icons.Filled.Flag,
-                contentDescription = PriorityUi.label(task.priority),
-                tint = PriorityUi.color(task.priority),
-                modifier = Modifier.padding(end = 12.dp),
+                imageVector = Icons.Filled.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.background,
+                modifier = Modifier.size(15.dp),
             )
         }
     }
@@ -325,7 +469,14 @@ private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit) {
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
     var priority by remember { mutableStateOf(uk.spielerbohne.petodo.domain.model.Priority.DEFAULT) }
 
-    Surface(tonalElevation = 3.dp) {
+    // Schwebt über dem Grund statt als Leiste anzukleben — dieselbe Sprache wie die
+    // Navigationsleiste darunter.
+    GlassCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = MaterialTheme.shapes.large,
+    ) {
         Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextField(
@@ -339,19 +490,35 @@ private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit) {
                         unfocusedContainerColor = Color.Transparent,
                     ),
                 )
-                IconButton(
-                    onClick = {
-                        onAdd(title, dueDate, dueTime, priority)
-                        title = ""
-                        dueDate = null
-                        dueTime = null
-                        priority = uk.spielerbohne.petodo.domain.model.Priority.DEFAULT
-                    },
-                    enabled = title.isNotBlank(),
+                // Der Knopf leuchtet erst, wenn es etwas anzulegen gibt.
+                val bereit = title.isNotBlank()
+                Box(
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (bereit) Brand.brush(Brand.Cool)
+                            else SolidColor(MaterialTheme.colorScheme.surfaceContainerHighest)
+                        )
+                        .clickable(enabled = bereit) {
+                            onAdd(title, dueDate, dueTime, priority)
+                            title = ""
+                            dueDate = null
+                            dueTime = null
+                            priority = uk.spielerbohne.petodo.domain.model.Priority.DEFAULT
+                        },
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.Send,
                         contentDescription = stringResource(R.string.quick_add_submit),
+                        tint = if (bereit) {
+                            MaterialTheme.colorScheme.background
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }

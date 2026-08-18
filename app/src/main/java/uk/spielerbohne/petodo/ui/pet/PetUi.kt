@@ -1,7 +1,6 @@
 package uk.spielerbohne.petodo.ui.pet
 
 import androidx.annotation.ArrayRes
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
@@ -12,6 +11,8 @@ import uk.spielerbohne.petodo.data.pet.emojiRes
 import uk.spielerbohne.petodo.domain.pet.HealthStage
 import uk.spielerbohne.petodo.domain.pet.PetSpeech
 import uk.spielerbohne.petodo.domain.pet.SpeechCategory
+import uk.spielerbohne.petodo.ui.theme.Brand
+import uk.spielerbohne.petodo.ui.theme.Palette
 import java.time.Duration
 import kotlin.random.Random
 
@@ -64,13 +65,23 @@ fun rememberSpeech(category: SpeechCategory?, previous: String? = null): String?
     }
 }
 
-/** Die Balkenfarbe folgt der Stufe, nicht dem einzelnen Wert — sonst leuchtet es bunt. */
-@Composable
-fun HealthStage.color(): Color = when (this) {
-    HealthStage.HEALTHY -> MaterialTheme.colorScheme.primary
-    HealthStage.WEAKENED -> MaterialTheme.colorScheme.tertiary
-    HealthStage.SICK, HealthStage.MISERABLE -> MaterialTheme.colorScheme.error
+/**
+ * Der Verlauf zur Krankheitsstufe.
+ *
+ * Er ist die eigentliche Anzeige: Gesund leuchtet magenta, geschwächt kühlt ins Violette
+ * ab, krank kippt ins Bernsteinfarbene, elend wird fast grau. Man erkennt den Zustand,
+ * bevor man ein Wort gelesen hat — und weil derselbe Verlauf im Heute-Streifen und im
+ * Lichtschein steckt, überall auf dieselbe Weise.
+ */
+fun HealthStage.gradient(): List<Color> = when (this) {
+    HealthStage.HEALTHY -> Brand.Pet
+    HealthStage.WEAKENED -> listOf(Palette.Violet, Palette.IndigoDeep)
+    HealthStage.SICK -> Brand.Overdue
+    HealthStage.MISERABLE -> listOf(Palette.Ember, Color(0xFF2A1520))
 }
+
+/** Die Akzentfarbe der Stufe — für Balken und Ränder außerhalb der Verlaufskarte. */
+fun HealthStage.accent(): Color = gradient().first()
 
 /** Restliche Sperrzeit als Text — Sekunden interessieren dabei niemanden. */
 @Composable

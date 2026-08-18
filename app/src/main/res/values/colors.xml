@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#B8E0C2</color>
+    <!-- Muss zur Palette in ui/theme/Palette.kt passen: sonst blitzt beim Start eine
+         andere Farbe auf als die, in der die App dann steht. -->
+    <color name="ic_launcher_background">#12081F</color>
+    <color name="window_background">#F6F5FA</color>
 </resources>

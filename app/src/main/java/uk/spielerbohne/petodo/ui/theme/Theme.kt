@@ -1,46 +1,112 @@
 package uk.spielerbohne.petodo.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
-private val LightColors = lightColorScheme(
-    primary = Color(0xFF2E7D32),
-    secondary = Color(0xFF00696E),
-    tertiary = Color(0xFF7B5800),
+/**
+ * Dunkel gedacht, hell mitgeliefert.
+ *
+ * **Kein Dynamic Color.** Die Systemfarben eines Geräts würden die drei Verläufe
+ * überschreiben, an denen man die Bereiche erkennt — dann sieht die App auf jedem Handy
+ * anders und auf keinem gut aus. Wer eine eigene Bildsprache hat, gibt sie nicht ab.
+ */
+private val DarkColors = darkColorScheme(
+    primary = Palette.Magenta,
+    onPrimary = Palette.Chalk,
+    primaryContainer = Palette.MagentaDeep,
+    onPrimaryContainer = Palette.Chalk,
+
+    secondary = Palette.Indigo,
+    onSecondary = Palette.Chalk,
+    secondaryContainer = Palette.IndigoDeep,
+    onSecondaryContainer = Palette.Chalk,
+
+    tertiary = Palette.Lime,
+    onTertiary = Palette.Ink,
+    tertiaryContainer = Palette.InkCard,
+    onTertiaryContainer = Palette.Lime,
+
+    background = Palette.Ink,
+    onBackground = Palette.Chalk,
+    surface = Palette.Ink,
+    onSurface = Palette.Chalk,
+    surfaceVariant = Palette.InkCard,
+    onSurfaceVariant = Palette.ChalkMuted,
+    surfaceContainer = Palette.InkElevated,
+    surfaceContainerHigh = Palette.InkCard,
+    surfaceContainerHighest = Palette.InkCard,
+    surfaceContainerLow = Palette.InkElevated,
+    surfaceContainerLowest = Palette.Ink,
+
+    outline = Palette.InkBorder,
+    outlineVariant = Palette.InkBorder,
+
+    error = Palette.Ember,
+    onError = Palette.Chalk,
+    errorContainer = Palette.Ember,
+    onErrorContainer = Palette.Chalk,
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFF9BD49B),
-    secondary = Color(0xFF4FD8E0),
-    tertiary = Color(0xFFF4BE48),
+private val LightColors = lightColorScheme(
+    primary = Palette.MagentaDeep,
+    onPrimary = Palette.Chalk,
+    primaryContainer = Palette.Magenta,
+    onPrimaryContainer = Palette.Chalk,
+
+    secondary = Palette.Indigo,
+    onSecondary = Palette.Chalk,
+    secondaryContainer = Palette.Indigo,
+    onSecondaryContainer = Palette.Chalk,
+
+    tertiary = Palette.PaperInk,
+    onTertiary = Palette.Chalk,
+
+    background = Palette.Paper,
+    onBackground = Palette.PaperInk,
+    surface = Palette.Paper,
+    onSurface = Palette.PaperInk,
+    surfaceVariant = Palette.PaperCard,
+    onSurfaceVariant = Palette.PaperMuted,
+    surfaceContainer = Palette.PaperCard,
+    surfaceContainerHigh = Palette.PaperCard,
+    surfaceContainerHighest = Palette.PaperCard,
+    surfaceContainerLow = Palette.PaperCard,
+    surfaceContainerLowest = Palette.PaperCard,
+
+    outline = Palette.PaperBorder,
+    outlineVariant = Palette.PaperBorder,
+
+    error = Palette.Ember,
+    onError = Palette.Chalk,
+)
+
+/**
+ * Große Radien. Der Unterschied zwischen 12 dp und 28 dp ist der Unterschied zwischen
+ * „Formular“ und „Gerät“ — und diese App ist ein Gerät.
+ */
+private val PetodoShapes = Shapes(
+    extraSmall = RoundedCornerShape(10.dp),
+    small = RoundedCornerShape(14.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(34.dp),
 )
 
 @Composable
 fun PetodoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = PetodoTypography,
+        shapes = PetodoShapes,
         content = content,
     )
 }

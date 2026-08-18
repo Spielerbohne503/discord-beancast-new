@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import uk.spielerbohne.petodo.R
+import uk.spielerbohne.petodo.ui.theme.GlassCard
 import uk.spielerbohne.petodo.domain.model.Tag
 import uk.spielerbohne.petodo.domain.model.TaskList
 
@@ -58,7 +59,7 @@ fun ListsSection(
 ) {
     var showNew by remember { mutableStateOf(false) }
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -195,7 +196,7 @@ private fun NewListDialog(
 
 @Composable
 fun TagsSection(tags: List<Tag>, onDelete: (String) -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),

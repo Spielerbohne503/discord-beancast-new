@@ -69,6 +69,33 @@ Die Felder `parentId`, `tags`/`task_tags` und `priority` haben seit v0.3 eine UI
 (Detailseite, Schnell-Eingabe, Mehr-Screen). `rrule` hat seit v0.4 eine UI
 (Wiederholungs-Chip auf der Detailseite); `reminders` liegt weiterhin ohne UI im Schema.
 
+## Gestaltung
+
+Das Designsystem liegt vollständig in `ui/theme/` und besteht aus vier Dateien:
+`Palette.kt` (Farbwerte), `Theme.kt` (Schemata, Radien), `Type.kt` (Schriftskala),
+`Surfaces.kt` (Bausteine). Eine Farbe, ein Radius oder eine Kartenfläche irgendwo anders
+im Code ist ein Fehler, auch wenn sie gut aussieht — dieselbe Regel wie für `Balance.kt`,
+nur fürs Bild.
+
+- **Kein Dynamic Color.** Die Systemfarben des Geräts würden die drei Bereichsverläufe
+  überschreiben, an denen man Pet, Fokus und Überfälliges auseinanderhält.
+- **Drei Verläufe, nicht mehr.** `Brand.Pet` (Magenta), `Brand.Focus` (Indigo),
+  `Brand.Overdue` (Bernstein). Wer einen vierten einführt, nimmt den drei vorhandenen
+  ihre Bedeutung. `Brand.Cool` ist kein vierter Bereich, sondern der neutrale Verlauf für
+  Zahlen und Fortschritt.
+- **Farbe steckt in den Karten, nicht in der Fläche.** Der Grund ist fast schwarz und
+  bleibt es; eine graue Erhöhung (`tonalElevation`) nähme den Verläufen die Leuchtkraft.
+  Höhe entsteht durch einen hellen Rand, nicht durch einen helleren Ton.
+- **Der Verlauf der Statustafel ist die Krankheitsstufe** (`HealthStage.gradient()`).
+  Dieselbe Farbe erscheint im Heute-Streifen, im Lichtschein und in der Navigationsleiste
+  — man erkennt den Zustand, bevor man ein Wort gelesen hat.
+- Bausteine statt Einzelbau: `GradientCard`, `GlassCard`, `SectionLabel`, `CountBadge`,
+  `CircleIconButton`, `ValueTrack`, `ScreenGlow`. Sobald eine Fläche „nur ein bisschen
+  anders“ gebaut wird, zerfällt das Bild in Einzelteile.
+
+`values/themes.xml` und `values-night/themes.xml` setzen die Hintergrundfarbe des
+Startfensters. Fehlt sie, blitzt beim Öffnen Weiß auf.
+
 ## Datenbankmigrationen
 
 `fallbackToDestructiveMigration` ist verboten — ein Schemafehler darf keine Aufgaben
