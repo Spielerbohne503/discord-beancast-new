@@ -24,7 +24,7 @@ sealed interface TextSegment {
 object MarkdownLinks {
 
     /** `[Text](Adresse)` — Beschriftung ohne Zeilenumbruch, Adresse ohne Leerzeichen. */
-    private val MARKDOWN = Regex("""\[([^\]\n]*)]\(\s*(\S+?)\s*\)""")
+    private val MARKDOWN = Regex("""\[([^\]\n]*)\]\(\s*(\S+?)\s*\)""")
 
     /** Nackte Adresse. Nur http(s): Alles andere fängt zu viele falsche Treffer. */
     private val BARE = Regex("""https?://\S+""", RegexOption.IGNORE_CASE)

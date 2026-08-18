@@ -195,15 +195,24 @@ object QuickAddParser {
     // -------------------------------------------------------------------- Wortlisten
 
     /**
-     * `(?U)` schaltet die Wortgrenzen auf Unicode.
+     * Wortgrenzen, die Umlaute kennen — ausgeschrieben statt über einen Schalter.
      *
-     * Ohne diesen Schalter zählt Java nur `[a-zA-Z0-9_]` als Wortzeichen — vor „ü“ steht
-     * dann **keine** Wortgrenze, und `\bübermorgen\b` findet nie etwas. Derselbe Fallstrick
-     * trifft „März“ und „nächsten“.
+     * Das Problem: `\b` zählt in Javas Regex nur `[a-zA-Z0-9_]` als Wortzeichen. Vor „ü“
+     * steht damit **keine** Wortgrenze, und `\bübermorgen\b` findet nie etwas. Derselbe
+     * Fallstrick trifft „März“ und „nächsten“.
+     *
+     * Die naheliegende Lösung `(?U)` ist eine **Falle**: Auf dem Rechner funktioniert sie,
+     * auf dem Telefon nicht. Android führt reguläre Ausdrücke seit Neuerem über ICU aus,
+     * und ICU kennt diesen Schalter nicht — der Ausdruck lässt sich dort nicht übersetzen,
+     * das ganze Objekt kommt nicht hoch, und die App startet nicht mehr. Ein JVM-Test
+     * bemerkt davon nichts, weil er Javas eigene Regex-Maschine benutzt.
+     *
+     * Vorausschau und Rückschau auf Unicode-Klassen können beide Maschinen.
      */
-    private const val UNICODE = "(?U)"
+    private const val WORD_START = """(?<![\p{L}\p{N}_])"""
+    private const val WORD_END = """(?![\p{L}\p{N}_])"""
 
-    private val OPTION = """(?:\b(?:am|an|bis|für)\s+)?"""
+    private val OPTION = """(?:$WORD_START(?:am|an|bis|für)\s+)?"""
 
     private val RELATIVE_DAYS: List<Pair<Regex, Long>> = listOf(
         word("übermorgen") to 2L,
@@ -212,12 +221,18 @@ object QuickAddParser {
         word("heute") to 0L,
     )
 
-    private val IN_N = Regex("""$UNICODE\bin\s+(\d{1,3})\s+(tagen|tage|tag|wochen|woche)\b""", RegexOption.IGNORE_CASE)
+    private val IN_N = Regex(
+        """${WORD_START}in\s+(\d{1,3})\s+(tagen|tage|tag|wochen|woche)$WORD_END""",
+        RegexOption.IGNORE_CASE,
+    )
 
-    private val NEXT_WEEK = Regex("""$UNICODE\bnächste[rn]?\s+woche\b""", RegexOption.IGNORE_CASE)
+    private val NEXT_WEEK = Regex(
+        """${WORD_START}nächste[rn]?\s+woche$WORD_END""",
+        RegexOption.IGNORE_CASE,
+    )
 
     private val WEEKDAY = Regex(
-        """$UNICODE$OPTION(nächsten|nächste|kommenden|kommende)?\s*\b(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonnabend|sonntag)\b""",
+        """$OPTION(nächsten|nächste|kommenden|kommende)?\s*$WORD_START(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonnabend|sonntag)$WORD_END""",
         RegexOption.IGNORE_CASE,
     )
 
@@ -234,13 +249,13 @@ object QuickAddParser {
 
     /** `12.8.`, `12.08.2026`, `1.9.26` */
     private val NUMERIC_DATE = Regex(
-        """$UNICODE$OPTION\b(\d{1,2})\.\s?(\d{1,2})\.(?:\s?(\d{2,4}))?""",
+        """$OPTION$WORD_START(\d{1,2})\.\s?(\d{1,2})\.(?:\s?(\d{2,4}))?""",
         RegexOption.IGNORE_CASE,
     )
 
     /** `12. August`, `3 Januar 2027` */
     private val MONTH_NAME_DATE = Regex(
-        """$UNICODE$OPTION\b(\d{1,2})\.?\s+(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)(?:\s+(\d{4}))?\b""",
+        """$OPTION$WORD_START(\d{1,2})\.?\s+(januar|februar|märz|maerz|april|mai|juni|juli|august|september|oktober|november|dezember)(?:\s+(\d{4}))?$WORD_END""",
         RegexOption.IGNORE_CASE,
     )
 
@@ -251,16 +266,19 @@ object QuickAddParser {
     )
 
     /** `14:30`, `um 9:05` */
-    private val CLOCK_TIME = Regex("""$UNICODE(?:\bum\s+)?\b(\d{1,2}):(\d{2})\b""", RegexOption.IGNORE_CASE)
+    private val CLOCK_TIME = Regex(
+        """(?:${WORD_START}um\s+)?$WORD_START(\d{1,2}):(\d{2})$WORD_END""",
+        RegexOption.IGNORE_CASE,
+    )
 
     /** `9 Uhr`, `um 9 Uhr`, `9.30 Uhr` */
     private val HOUR_ONLY = Regex(
-        """$UNICODE(?:\bum\s+)?\b(\d{1,2})(?:[.:](\d{2}))?\s*uhr\b""",
+        """(?:${WORD_START}um\s+)?$WORD_START(\d{1,2})(?:[.:](\d{2}))?\s*uhr$WORD_END""",
         RegexOption.IGNORE_CASE,
     )
 
     private val VAGUE_TIME = Regex(
-        """$UNICODE\b(morgens|vormittags|mittags|nachmittags|abends|nachts)\b""",
+        """$WORD_START(morgens|vormittags|mittags|nachmittags|abends|nachts)$WORD_END""",
         RegexOption.IGNORE_CASE,
     )
 
@@ -274,5 +292,5 @@ object QuickAddParser {
     )
 
     private fun word(text: String) =
-        Regex("""$UNICODE$OPTION\b$text\b""", RegexOption.IGNORE_CASE)
+        Regex("""$OPTION$WORD_START$text$WORD_END""", RegexOption.IGNORE_CASE)
 }

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.style.TextOverflow
+import uk.spielerbohne.petodo.domain.quickadd.ParsedQuickAdd
 import uk.spielerbohne.petodo.domain.quickadd.QuickAddParser
 import uk.spielerbohne.petodo.domain.text.MarkdownLinks
 import androidx.compose.ui.draw.clip
@@ -834,7 +835,13 @@ private fun QuickAddBar(
     // Auf die Minute genau muss das nicht sein — deshalb hängt die Auswertung an der
     // vollen Minute und nicht an jedem Tastendruck.
     val erkannt = remember(title, now.withSecond(0).withNano(0)) {
-        QuickAddParser.parse(title, now)
+        // Abgesichert, und zwar aus gegebenem Anlass: Ein einziges nicht übersetzbares
+        // Regex-Muster im Parser hat die App unstartbar gemacht — der Fehler entsteht
+        // beim Hochfahren des Objekts und schlägt hier durch, mitten im Aufbau des
+        // Bildschirms. Eine Bequemlichkeitsfunktion darf die App nie umbringen; im
+        // schlimmsten Fall wird eben nichts erkannt.
+        runCatching { QuickAddParser.parse(title, now) }
+            .getOrElse { ParsedQuickAdd(title.trim()) }
     }
 
     // Von Hand Gewähltes gewinnt: Wer die Kapsel angetippt hat, will nicht, dass ein

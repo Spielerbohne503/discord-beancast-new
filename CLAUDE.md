@@ -134,8 +134,14 @@ nächste, nie heute), „in N Tagen/Wochen“, `12.9.`, `3. September`, Uhrzeite
 gebräuchlichen Schreibweisen und ungefähre Tageszeiten. Die Regeln greifen nur an
 Wortgrenzen, sonst zerpflückt der Parser „Freitagsessen planen“.
 
-Die Regexe beginnen mit `(?U)`. Ohne diesen Schalter zählt Java nur `[a-zA-Z0-9_]` als
-Wortzeichen, vor „ü“ steht dann keine Wortgrenze — und `\bübermorgen\b` findet nie etwas.
+Wortgrenzen stehen **ausgeschrieben** als `(?<![\p{L}\p{N}_])` … `(?![\p{L}\p{N}_])`.
+Der Grund ist ein Absturz, der jede Fassung unstartbar machte: `\b` zählt in Javas Regex
+nur `[a-zA-Z0-9_]` als Wortzeichen, vor „ü“ steht damit keine Wortgrenze, und
+`\bübermorgen\b` findet nie etwas. Die naheliegende Abhilfe `(?U)` ist eine Falle —
+Android führt reguläre Ausdrücke über ICU aus, und ICU kennt diesen Schalter nicht. Das
+Muster lässt sich dort nicht übersetzen, das Objekt kommt nicht hoch, die App startet
+nicht mehr. **Ein JVM-Unit-Test bemerkt davon nichts**, weil er Javas eigene Maschine
+benutzt; `RegexPortabilityTest` prüft deshalb den Quelltext statt des Verhaltens.
 
 Die Uhrzeiten hinter „mittags“ und „abends“ stehen in `Balance.kt`, nicht im Parser.
 
