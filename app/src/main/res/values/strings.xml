@@ -226,6 +226,8 @@
     <string name="settings_about_title">Über</string>
     <string name="settings_about_body">PeTodo %1$s · vollständig offline, kein Konto, keine Telemetrie.</string>
     <!-- Pet: Statustafel -->
+    <string name="tag_hash">#%1$s</string>
+
     <string name="pet_title">Pet</string>
     <string name="pet_default_name">Knopf</string>
     <string name="pet_rename">Umbenennen</string>

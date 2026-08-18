@@ -212,7 +212,7 @@ fun TagsSection(tags: List<Tag>, onDelete: (String) -> Unit) {
 
             tags.forEach { tag ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("#${tag.name}", modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.tag_hash, tag.name), modifier = Modifier.weight(1f))
                     IconButton(onClick = { onDelete(tag.id) }) {
                         Icon(
                             Icons.Filled.Delete,
