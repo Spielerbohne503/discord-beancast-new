@@ -96,6 +96,21 @@ nur fürs Bild.
 `values/themes.xml` und `values-night/themes.xml` setzen die Hintergrundfarbe des
 Startfensters. Fehlt sie, blitzt beim Öffnen Weiß auf.
 
+## Erledigtes und Verweise
+
+Eine abgehakte Aufgabe bleibt den **ganzen Tag** im Block „Heute erledigt“ stehen — sonst
+verschwindet die gerade abgehakte Zeile sofort und man kann sie nicht zurückholen. Am
+nächsten Tag rutscht sie in den eingeklappten Rückblick unter der Liste und fällt nach
+`Balance.ARCHIVE_DAYS` auch daraus heraus. Der Rückblick ist bewusst leise gebaut: keine
+Karten, keine Farbe, kleinere Schrift. Erledigtes ist kein offener Punkt.
+
+Verweise in Titeln und Notizen benutzen die Markdown-Schreibweise (`domain/text/`).
+Erkannt werden `[Text](https://…)` und nackte `http(s)://`-Adressen — mehr nicht; eine
+Aufgabenverwaltung, die heimlich zum Markdown-Editor wird, kann am Ende beides halb.
+In Listen steht die Kurzform (`MarkdownLinks.plainText`), angetippt wird dort die Aufgabe.
+Anklickbar sind Verweise auf der Detailseite über `LinkAnnotation` — nicht über einen
+selbstgebauten Klickbereich, sonst fehlen die Bedienungshilfen.
+
 ## Datenbankmigrationen
 
 `fallbackToDestructiveMigration` ist verboten — ein Schemafehler darf keine Aufgaben

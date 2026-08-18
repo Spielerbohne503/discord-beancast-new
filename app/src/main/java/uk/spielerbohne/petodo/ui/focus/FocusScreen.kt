@@ -53,6 +53,7 @@ import uk.spielerbohne.petodo.domain.focus.FocusPhase
 import uk.spielerbohne.petodo.domain.focus.FocusState
 import uk.spielerbohne.petodo.domain.focus.FocusTimer
 import uk.spielerbohne.petodo.domain.model.Task
+import uk.spielerbohne.petodo.domain.text.MarkdownLinks
 import uk.spielerbohne.petodo.ui.theme.Brand
 import uk.spielerbohne.petodo.ui.theme.GradientCard
 import uk.spielerbohne.petodo.ui.theme.Palette
@@ -380,7 +381,7 @@ private fun LinkedTask(task: Task) {
             color = Palette.Chalk.copy(alpha = 0.7f),
         )
         Text(
-            text = task.title,
+            text = MarkdownLinks.plainText(task.title),
             style = MaterialTheme.typography.titleMedium,
             color = Palette.Chalk,
         )
@@ -413,7 +414,8 @@ private fun TaskPicker(
                 color = Palette.Chalk.copy(alpha = 0.65f),
             )
             Text(
-                text = selected?.title ?: stringResource(R.string.focus_no_task),
+                text = selected?.title?.let(MarkdownLinks::plainText)
+                    ?: stringResource(R.string.focus_no_task),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Palette.Chalk,
                 modifier = Modifier.padding(start = 10.dp),
@@ -430,7 +432,7 @@ private fun TaskPicker(
             )
             tasks.forEach { task ->
                 DropdownMenuItem(
-                    text = { Text(task.title) },
+                    text = { Text(MarkdownLinks.plainText(task.title)) },
                     onClick = {
                         onSelect(task.id)
                         expanded = false

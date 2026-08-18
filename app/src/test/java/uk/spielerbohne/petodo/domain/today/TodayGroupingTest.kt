@@ -181,4 +181,108 @@ class TodayGroupingTest {
         assertEquals(listOf("spaeter", "ohne"), board.later.map { it.id })
         assertEquals(4, board.openCount)
     }
+
+    // ------------------------------------------------------------------------- Archiv
+
+    @Test
+    fun heute_abgehaktes_bleibt_den_ganzen_tag_stehen() {
+        val board = TodayGrouping.group(
+            listOf(task(id = "a", completedAt = at("2026-08-17", "08:00"))),
+            jetzt,
+            BERLIN,
+        )
+        assertEquals(listOf("a"), board.doneToday.map { it.id })
+        assertTrue(board.doneEarlier.isEmpty())
+    }
+
+    @Test
+    fun am_naechsten_tag_rutscht_es_ins_archiv() {
+        // Der Punkt der ganzen Übung: Die Zeile verschwindet nicht, sie wandert nach
+        // unten. Wer abends abhakt, sieht es abends noch; am Morgen ist die Liste frei.
+        val board = TodayGrouping.group(
+            listOf(task(id = "a", completedAt = at("2026-08-16", "23:50"))),
+            jetzt,
+            BERLIN,
+        )
+        assertTrue(board.doneToday.isEmpty())
+        assertEquals(listOf("a"), board.doneEarlier.map { it.id })
+    }
+
+    @Test
+    fun der_tageswechsel_richtet_sich_nach_der_ortszeit_nicht_nach_utc() {
+        // 2026-08-17 00:30 Berliner Zeit ist noch der 16. in UTC. Wer um halb eins
+        // abhakt, soll seine Aufgabe am selben Abend nicht schon im Archiv finden.
+        val kurzNachMitternacht = at("2026-08-17", "00:30")
+        val board = TodayGrouping.group(
+            listOf(task(id = "a", completedAt = kurzNachMitternacht)),
+            at("2026-08-17", "09:00"),
+            BERLIN,
+        )
+        assertEquals(listOf("a"), board.doneToday.map { it.id })
+    }
+
+    @Test
+    fun nach_einer_woche_faellt_es_auch_aus_dem_archiv() {
+        val board = TodayGrouping.group(
+            listOf(
+                task(id = "frisch", completedAt = at("2026-08-15", "12:00")),
+                task(id = "grenze", completedAt = at("2026-08-11", "12:00")),
+                task(id = "alt", completedAt = at("2026-08-09", "12:00")),
+            ),
+            jetzt,
+            BERLIN,
+        )
+        // 17. minus 7 Tage = 10.; der 11. liegt noch drin, der 9. nicht mehr.
+        assertEquals(listOf("frisch", "grenze"), board.doneEarlier.map { it.id })
+    }
+
+    @Test
+    fun das_archiv_zeigt_das_zuletzt_erledigte_zuerst() {
+        val board = TodayGrouping.group(
+            listOf(
+                task(id = "vorgestern", completedAt = at("2026-08-15", "12:00")),
+                task(id = "gestern", completedAt = at("2026-08-16", "12:00")),
+            ),
+            jetzt,
+            BERLIN,
+        )
+        assertEquals(listOf("gestern", "vorgestern"), board.doneEarlier.map { it.id })
+    }
+
+    @Test
+    fun das_archiv_waechst_nicht_ins_endlose() {
+        val viele = (1..80).map { task(id = "t$it", completedAt = at("2026-08-16", "12:00")) }
+        val board = TodayGrouping.group(viele, jetzt, BERLIN)
+
+        assertEquals(uk.spielerbohne.petodo.domain.Balance.ARCHIVE_MAX_ROWS, board.doneEarlier.size)
+    }
+
+    @Test
+    fun ein_zeitstempel_aus_der_zukunft_landet_nicht_im_archiv() {
+        // Kommt von verstellten Uhren. Die Zeile gehört dann zu "heute erledigt"
+        // oder nirgendwohin — aber nicht in den Rückblick.
+        val board = TodayGrouping.group(
+            listOf(task(id = "a", completedAt = at("2026-08-19", "12:00"))),
+            jetzt,
+            BERLIN,
+        )
+        assertTrue(board.doneToday.isEmpty())
+        assertTrue(board.doneEarlier.isEmpty())
+    }
+
+    @Test
+    fun geloeschtes_bleibt_auch_im_archiv_unsichtbar() {
+        val board = TodayGrouping.group(
+            listOf(
+                task(
+                    id = "a",
+                    completedAt = at("2026-08-16", "12:00"),
+                    deletedAt = at("2026-08-16", "13:00"),
+                )
+            ),
+            jetzt,
+            BERLIN,
+        )
+        assertTrue(board.doneEarlier.isEmpty())
+    }
 }

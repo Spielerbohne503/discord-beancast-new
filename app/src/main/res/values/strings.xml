@@ -19,6 +19,14 @@
     <string name="section_today">Heute</string>
     <string name="section_later">Später und ohne Datum</string>
     <string name="section_done_today">Heute erledigt</string>
+    <string name="section_done_earlier">Erledigt</string>
+    <string name="done_earlier_expand">Rückblick öffnen</string>
+    <string name="done_earlier_collapse">Rückblick schließen</string>
+    <string name="done_earlier_hint">Die letzten sieben Tage. Ältere Aufgaben stehen unter „Erledigt“ in der Aufgabenliste.</string>
+    <string name="done_day_yesterday">Gestern</string>
+    <string name="task_has_link">Enthält einen Verweis</string>
+    <string name="task_open_link">Verweis öffnen</string>
+    <string name="task_edit_text">Text bearbeiten</string>
     <string name="today_empty">Nichts offen. Die Liste ist leer.</string>
     <string name="quick_add_hint">Neue Aufgabe …</string>
     <string name="quick_add_submit">Aufgabe anlegen</string>

@@ -11,6 +11,21 @@ package uk.spielerbohne.petodo.domain
  */
 object Balance {
 
+    // -------------------------------------------------------------------- Heute-Ansicht
+
+    /**
+     * Wie lange eine erledigte Aufgabe im Archiv unter der Heute-Liste sichtbar bleibt.
+     *
+     * Am Tag des Abhakens steht sie im Block „Heute erledigt“ — sonst verschwände die
+     * gerade abgehakte Zeile sofort und man könnte sie nicht zurückholen. Danach rutscht
+     * sie in das eingeklappte Archiv ganz unten und fällt nach einer Woche auch dort
+     * heraus; wer länger zurückschauen will, geht auf „Erledigt“ in der Aufgabenliste.
+     */
+    const val ARCHIVE_DAYS = 7L
+
+    /** Höchstens so viele Zeilen im Archiv — es ist ein Rückblick, keine zweite Liste. */
+    const val ARCHIVE_MAX_ROWS = 50
+
     // ---------------------------------------------------------------- Verfall (Phase 4)
 
     /** Basisstunden, in denen ein Wert ohne Ereignisse von 100 auf 0 fällt. */

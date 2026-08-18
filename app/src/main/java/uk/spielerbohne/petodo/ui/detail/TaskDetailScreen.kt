@@ -16,6 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextStyle
+import uk.spielerbohne.petodo.domain.text.MarkdownLinks
+import uk.spielerbohne.petodo.ui.common.LinkedText
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Checkbox
@@ -41,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -167,27 +173,24 @@ fun TaskDetailScreen(
                 }
             }
 
-            TextField(
+            LinkableField(
                 value = title,
                 onValueChange = {
                     title = it
                     onTitleChange(it)
                 },
                 textStyle = MaterialTheme.typography.headlineSmall,
-                colors = transparentFieldColors(),
-                modifier = Modifier.fillMaxWidth(),
             )
 
-            TextField(
+            LinkableField(
                 value = note,
                 onValueChange = {
                     note = it
                     onNoteChange(it)
                 },
-                placeholder = { Text(stringResource(R.string.detail_description_hint)) },
-                colors = transparentFieldColors(),
+                placeholder = stringResource(R.string.detail_description_hint),
+                textStyle = MaterialTheme.typography.bodyLarge,
                 minLines = 2,
-                modifier = Modifier.fillMaxWidth(),
             )
 
             DuePicker(
@@ -245,6 +248,68 @@ fun TaskDetailScreen(
             TagSection(tags = state.tags, onAdd = onAddTag, onRemove = onRemoveTag)
         }
     }
+}
+
+/**
+ * Ein Textfeld, das Verweise anklickbar macht.
+ *
+ * Solange kein Verweis drinsteht, ist es ein ganz gewöhnliches Eingabefeld — Tippen,
+ * Schreiben, fertig. Sobald einer drinsteht, zeigt es den Text gelesen an: Aus
+ * `[Reel](https://…)` wird ein anklickbares „Reel“, aus einer nackten Adresse eine
+ * kurze. Zum Ändern gibt es den Stift daneben.
+ *
+ * Der Grund für die zwei Zustände: Ein Textfeld kann keine anklickbaren Stellen haben,
+ * und ein Text, der gleichzeitig Verweis und Eingabefeld ist, trifft man nie richtig.
+ */
+@Composable
+private fun LinkableField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    textStyle: TextStyle,
+    placeholder: String? = null,
+    minLines: Int = 1,
+) {
+    // Nicht am Text hängen: Sonst kippt das Feld beim Tippen mitten im Wort zurück in
+    // die Leseansicht, sobald der eingegebene Text zum ersten Mal wie ein Verweis aussieht.
+    var editing by rememberSaveable { mutableStateOf(false) }
+    val hatVerweis = remember(value) { MarkdownLinks.hasLink(value) }
+
+    if (hatVerweis && !editing) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+        ) {
+            LinkedText(
+                text = value,
+                style = textStyle,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp, top = 14.dp, bottom = 14.dp),
+            )
+            IconButton(onClick = { editing = true }) {
+                Icon(
+                    imageVector = Icons.Filled.Edit,
+                    contentDescription = stringResource(R.string.task_edit_text),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        return
+    }
+
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = placeholder?.let { { Text(it) } },
+        textStyle = textStyle,
+        colors = transparentFieldColors(),
+        minLines = minLines,
+        modifier = Modifier
+            .fillMaxWidth()
+            // Weggetippt heißt fertig: Danach steht der Verweis wieder anklickbar da.
+            .onFocusChanged { if (!it.isFocused) editing = false },
+    )
 }
 
 @Composable

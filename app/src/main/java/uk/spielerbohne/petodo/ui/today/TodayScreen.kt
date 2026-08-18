@@ -7,6 +7,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.style.TextOverflow
+import uk.spielerbohne.petodo.domain.text.MarkdownLinks
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import uk.spielerbohne.petodo.ui.theme.Brand
@@ -135,6 +141,10 @@ fun TodayScreen(
 
     val postponeLabel = stringResource(R.string.overdue_postpone_all)
 
+    // Der Rückblick ist zugeklappt, bis jemand ihn aufmacht. Er soll die Liste nicht
+    // verlängern, sondern nur beweisen, dass nichts verlorengegangen ist.
+    var archiveOpen by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = { QuickAddBar(onAdd = onAdd) },
@@ -193,6 +203,15 @@ fun TodayScreen(
                 taskSection(
                     R.string.section_done_today, board.doneToday, state,
                     accent = Palette.Lime, onToggle = onToggle, onOpen = onOpenTask,
+                )
+
+                archiveSection(
+                    tasks = board.doneEarlier,
+                    state = state,
+                    expanded = archiveOpen,
+                    onToggleExpanded = { archiveOpen = !archiveOpen },
+                    onToggle = onToggle,
+                    onOpen = onOpenTask,
                 )
             }
         }
@@ -283,6 +302,131 @@ private fun LazyListScope.taskSection(
     }
 }
 
+/**
+ * Der Rückblick ganz unten: was an den Tagen davor erledigt wurde.
+ *
+ * Bewusst leise gebaut — keine Karten, keine Farbe, kleinere Schrift. Erledigtes ist
+ * kein offener Punkt und darf nicht so aussehen. Sichtbar bleibt es trotzdem, weil eine
+ * Aufgabe, die spurlos verschwindet, sich anfühlt wie eine verlorene Aufgabe.
+ */
+private fun LazyListScope.archiveSection(
+    tasks: List<Task>,
+    state: TodayUiState,
+    expanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    onToggle: (Task) -> Unit,
+    onOpen: (String) -> Unit,
+) {
+    if (tasks.isEmpty()) return
+
+    item(key = "archiv-kopf") {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleExpanded)
+                .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = stringResource(
+                    if (expanded) R.string.done_earlier_collapse else R.string.done_earlier_expand
+                ),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = stringResource(R.string.section_done_earlier).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 6.dp),
+            )
+            Text(
+                text = tasks.size.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp),
+            )
+        }
+    }
+
+    if (!expanded) return
+
+    // Nach Tagen gebündelt: „Gestern“ trägt mehr als sechs gleich aussehende Zeilen.
+    val byDay = tasks.groupBy { it.completedAt?.atZone(state.zone)?.toLocalDate() }
+
+    byDay.forEach { (day, dayTasks) ->
+        if (day == null) return@forEach
+
+        item(key = "archiv-tag-$day") {
+            Text(
+                text = completedDayLabel(day, state.now, state.zone),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 2.dp),
+            )
+        }
+        items(dayTasks, key = { "archiv-${it.id}" }) { task ->
+            ArchiveRow(
+                task = task,
+                onToggle = { onToggle(task) },
+                onOpen = { onOpen(task.id) },
+            )
+        }
+    }
+
+    item(key = "archiv-fuss") {
+        Text(
+            text = stringResource(R.string.done_earlier_hint),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp),
+        )
+    }
+}
+
+/** Eine Zeile im Rückblick: durchgestrichen, gedämpft, ohne Karte. */
+@Composable
+private fun ArchiveRow(task: Task, onToggle: () -> Unit, onOpen: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Der Haken bleibt bedienbar: Wer versehentlich abgehakt hat, macht es hier auf.
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f))
+                .clickable(onClick = onToggle),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = stringResource(R.string.task_toggle_done),
+                tint = MaterialTheme.colorScheme.background,
+                modifier = Modifier.size(12.dp),
+            )
+        }
+        Text(
+            text = MarkdownLinks.plainText(task.title),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            textDecoration = TextDecoration.LineThrough,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f)
+                .clickable(onClick = onOpen)
+                .padding(start = 12.dp, top = 6.dp, bottom = 6.dp),
+        )
+    }
+}
+
 @Composable
 private fun SectionHeader(
     titleRes: Int,
@@ -366,8 +510,11 @@ private fun TaskCard(
                     .padding(vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
+                // In der Liste steht die Kurzform: Aus `[Reel](https://…)` wird „Reel“,
+                // aus einer nackten Adresse „instagram.com/reel/…“. Angetippt wird hier
+                // die Aufgabe, nicht der Verweis — sonst trifft man ständig daneben.
                 Text(
-                    text = task.title,
+                    text = MarkdownLinks.plainText(task.title),
                     style = MaterialTheme.typography.bodyLarge,
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                     color = if (task.isCompleted) {
@@ -375,6 +522,8 @@ private fun TaskCard(
                     } else {
                         MaterialTheme.colorScheme.onSurface
                     },
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
                 )
 
                 val details = buildList {
@@ -394,6 +543,16 @@ private fun TaskCard(
                 }
             }
 
+            if (MarkdownLinks.hasLink(task.title) || MarkdownLinks.hasLink(task.note.orEmpty())) {
+                Icon(
+                    imageVector = Icons.Filled.Link,
+                    contentDescription = stringResource(R.string.task_has_link),
+                    tint = Palette.Sky,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .size(16.dp),
+                )
+            }
             if (task.rrule != null) {
                 Icon(
                     imageVector = Icons.Filled.Repeat,

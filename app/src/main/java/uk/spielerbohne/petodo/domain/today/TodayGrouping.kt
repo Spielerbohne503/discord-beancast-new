@@ -1,5 +1,6 @@
 package uk.spielerbohne.petodo.domain.today
 
+import uk.spielerbohne.petodo.domain.Balance
 import uk.spielerbohne.petodo.domain.model.Task
 import java.time.Instant
 import java.time.ZoneId
@@ -15,9 +16,17 @@ data class TodayBoard(
     val today: List<Task> = emptyList(),
     val later: List<Task> = emptyList(),
     val doneToday: List<Task> = emptyList(),
+    /**
+     * Früher erledigt — der Rückblick ganz unten.
+     *
+     * Absichtlich ein eigener Block und nicht bei [doneToday] dabei: Was heute geschafft
+     * wurde, ist der Tagesstand und gehört sichtbar dazu. Was gestern geschafft wurde,
+     * ist Vergangenheit und darf die Liste nicht mehr füllen.
+     */
+    val doneEarlier: List<Task> = emptyList(),
 ) {
     val openCount: Int get() = overdue.size + today.size + later.size
-    val isEmpty: Boolean get() = openCount == 0 && doneToday.isEmpty()
+    val isEmpty: Boolean get() = openCount == 0 && doneToday.isEmpty() && doneEarlier.isEmpty()
 }
 
 object TodayGrouping {
@@ -26,8 +35,10 @@ object TodayGrouping {
      * Sortiert offene Aufgaben in überfällig / heute / später.
      *
      * - Gelöschte Aufgaben (Tombstone) tauchen nirgends auf.
-     * - Erledigte Aufgaben erscheinen nur, wenn sie *heute* erledigt wurden — sonst
-     *   verschwindet die gerade abgehakte Zeile sofort und man kann sie nicht zurückholen.
+     * - Heute erledigte Aufgaben bleiben stehen — sonst verschwindet die gerade
+     *   abgehakte Zeile sofort und man kann sie nicht zurückholen.
+     * - Früher erledigte landen im Archiv ([TodayBoard.doneEarlier]) und fallen nach
+     *   [Balance.ARCHIVE_DAYS] Tagen auch daraus heraus.
      * - Aufgaben ohne Fälligkeit landen unter "später"; sonst wären sie unsichtbar.
      */
     fun group(tasks: List<Task>, now: Instant, zone: ZoneId): TodayBoard {
@@ -37,14 +48,21 @@ object TodayGrouping {
         val dueToday = mutableListOf<Task>()
         val later = mutableListOf<Task>()
         val doneToday = mutableListOf<Task>()
+        val doneEarlier = mutableListOf<Task>()
+        val archiveFrom = today.minusDays(Balance.ARCHIVE_DAYS)
 
         for (task in tasks) {
             if (task.isDeleted) continue
             // Unteraufgaben erscheinen unter ihrer Aufgabe, nicht als eigene Zeile.
             if (task.isSubtask) continue
             if (task.isCompleted) {
-                val completedDate = task.completedAt?.atZone(zone)?.toLocalDate()
-                if (completedDate == today) doneToday += task
+                val completedDate = task.completedAt?.atZone(zone)?.toLocalDate() ?: continue
+                when {
+                    completedDate == today -> doneToday += task
+                    // Nicht in der Zukunft (verstellte Uhr) und nicht zu alt.
+                    completedDate.isAfter(today) -> Unit
+                    completedDate.isAfter(archiveFrom) -> doneEarlier += task
+                }
                 continue
             }
             when {
@@ -59,6 +77,9 @@ object TodayGrouping {
             today = dueToday.sortedWith(byDueThenSortKey),
             later = later.sortedWith(byDueThenSortKey),
             doneToday = doneToday.sortedByDescending { it.completedAt },
+            doneEarlier = doneEarlier
+                .sortedByDescending { it.completedAt }
+                .take(Balance.ARCHIVE_MAX_ROWS),
         )
     }
 

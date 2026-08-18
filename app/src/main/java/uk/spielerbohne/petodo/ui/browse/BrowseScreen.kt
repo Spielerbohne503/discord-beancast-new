@@ -7,6 +7,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.ui.text.style.TextOverflow
+import uk.spielerbohne.petodo.domain.text.MarkdownLinks
 import androidx.compose.ui.draw.clip
 import uk.spielerbohne.petodo.ui.theme.Palette
 import androidx.compose.foundation.clickable
@@ -371,10 +374,12 @@ private fun BrowseRow(
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
-                text = task.title,
+                text = MarkdownLinks.plainText(task.title),
                 style = MaterialTheme.typography.bodyLarge,
                 textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                 color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else Color.Unspecified,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
             )
             (overdue ?: due)?.let { label ->
                 Text(
@@ -384,6 +389,16 @@ private fun BrowseRow(
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        if (MarkdownLinks.hasLink(task.title) || MarkdownLinks.hasLink(task.note.orEmpty())) {
+            Icon(
+                imageVector = Icons.Filled.Link,
+                contentDescription = stringResource(R.string.task_has_link),
+                tint = Palette.Sky,
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(16.dp),
+            )
         }
         if (task.rrule != null) {
             Icon(
