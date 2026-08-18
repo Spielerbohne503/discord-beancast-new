@@ -1,7 +1,11 @@
 package uk.spielerbohne.petodo.ui.focus
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -56,6 +60,7 @@ import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.domain.text.MarkdownLinks
 import uk.spielerbohne.petodo.ui.theme.Brand
 import uk.spielerbohne.petodo.ui.theme.GradientCard
+import uk.spielerbohne.petodo.ui.theme.Motion
 import uk.spielerbohne.petodo.ui.theme.Palette
 import uk.spielerbohne.petodo.ui.theme.ScreenGlow
 
@@ -143,7 +148,7 @@ private fun TimerDial(state: FocusUiState) {
         FocusState.Ready -> gesamt
     }
     val ziel = (rest.toFloat() / gesamt.toFloat()).coerceIn(0f, 1f)
-    val anteil by animateFloatAsState(targetValue = ziel, animationSpec = tween(600), label = "ringAnteil")
+    val anteil by animateFloatAsState(targetValue = ziel, animationSpec = Motion.slow(), label = "ringAnteil")
 
     val spurFarbe = MaterialTheme.colorScheme.surfaceContainerHighest
     val verlauf = Brush.sweepGradient(listOf(Palette.Sky, Palette.Indigo, Palette.Violet, Palette.Sky))
@@ -180,11 +185,21 @@ private fun TimerDial(state: FocusUiState) {
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = phaseLabel(state.state).uppercase(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            AnimatedContent(
+                targetState = phaseLabel(state.state).uppercase(),
+                transitionSpec = { fadeIn(Motion.standard()).togetherWith(fadeOut(Motion.quick())) },
+                label = "phase",
+            ) { name ->
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            // Bewusst ohne Animation: Die Zahl ändert sich jede Sekunde. Was sich jede
+            // Sekunde bewegt, ist kein Übergang mehr, sondern ein Flackern — und das auf
+            // dem einen Bildschirm, auf dem man nicht hinsehen soll. Die Bewegung
+            // übernimmt der Ring, der ohnehin weich läuft.
             Text(
                 text = remainingLabel(state),
                 style = MaterialTheme.typography.displayLarge,
@@ -222,11 +237,23 @@ private fun ControlCard(
     onSkip: () -> Unit,
 ) {
     GradientCard(colors = Brand.Focus, modifier = Modifier.fillMaxWidth()) {
+        // Die Bedienkarte wechselt ihren Inhalt, nicht ihre Gestalt: Der Kasten bleibt
+        // stehen, die Knöpfe darin tauschen sich weich aus. Sonst hüpft der halbe
+        // Bildschirm, sobald man auf Pause tippt.
+        AnimatedContent(
+            targetState = state.state,
+            transitionSpec = {
+                (fadeIn(Motion.standard()) + scaleIn(Motion.standard(), initialScale = 0.96f))
+                    .togetherWith(fadeOut(Motion.quick()))
+            },
+            contentAlignment = Alignment.Center,
+            label = "fokusBedienung",
+        ) { zustand ->
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            when (val aktuell = state.state) {
+            when (val aktuell = zustand) {
                 is FocusState.Ready, is FocusState.Elapsed -> {
                     TaskPicker(
                         tasks = state.openTasks,
@@ -283,6 +310,7 @@ private fun ControlCard(
                     }
                 }
             }
+        }
         }
     }
 }

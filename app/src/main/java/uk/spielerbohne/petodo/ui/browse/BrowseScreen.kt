@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.ui.text.style.TextOverflow
 import uk.spielerbohne.petodo.domain.text.MarkdownLinks
 import androidx.compose.ui.draw.clip
+import uk.spielerbohne.petodo.ui.theme.Motion
 import uk.spielerbohne.petodo.ui.theme.Palette
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -218,6 +219,14 @@ fun BrowseScreen(
                             .zIndex(if (dragged) 1f else 0f)
                             .graphicsLayer { translationY = reorderState.offsetFor(index) }
                             .padding(horizontal = 16.dp, vertical = 3.dp)
+                            // Nur ein- und ausblenden, kein Umziehen: Beim Ziehen setzt
+                            // die Liste die Zeilen selbst um, und zwei Kräfte an derselben
+                            // Zeile lassen sie zappeln.
+                            .animateItem(
+                                fadeInSpec = Motion.standard(),
+                                placementSpec = null,
+                                fadeOutSpec = Motion.quick(),
+                            )
                     ) {
                         BrowseRow(
                             task = task,

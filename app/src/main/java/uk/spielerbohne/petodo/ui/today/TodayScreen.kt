@@ -2,6 +2,17 @@ package uk.spielerbohne.petodo.ui.today
 
 import androidx.compose.foundation.background
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.graphics.graphicsLayer
+import uk.spielerbohne.petodo.ui.theme.Motion
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.size
@@ -238,16 +249,22 @@ private fun TodayHeader(done: Int, open: Int, onSearch: () -> Unit) {
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            Text(
-                text = if (done + open == 0) {
+            AnimatedContent(
+                targetState = if (done + open == 0) {
                     stringResource(R.string.today_progress_clear)
                 } else {
                     stringResource(R.string.today_progress, done, done + open)
                 },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp),
-            )
+                transitionSpec = { fadeIn(Motion.standard()).togetherWith(fadeOut(Motion.quick())) },
+                label = "tagesstand",
+            ) { text ->
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
         }
         CircleIconButton(
             icon = Icons.Filled.Search,
@@ -284,6 +301,7 @@ private fun LazyListScope.taskSection(
 
     item(key = "header-$titleRes") {
         SectionHeader(
+            modifier = Modifier.animateItem(placementSpec = Motion.slow()),
             titleRes = titleRes,
             count = tasks.size,
             accent = accent,
@@ -297,7 +315,16 @@ private fun LazyListScope.taskSection(
             accent = accent,
             onToggle = { onToggle(task) },
             onOpen = { onOpen(task.id) },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 3.dp),
+            // Abgehakt heißt: Die Zeile wandert sichtbar von "heute" nach "erledigt".
+            // Ohne diese Bewegung verschwindet sie an der einen Stelle und erscheint an
+            // der anderen — und man sucht kurz, was gerade passiert ist.
+            modifier = Modifier
+                .animateItem(
+                    fadeInSpec = Motion.standard(),
+                    placementSpec = Motion.slow(),
+                    fadeOutSpec = Motion.quick(),
+                )
+                .padding(horizontal = 16.dp, vertical = 3.dp),
         )
     }
 }
@@ -327,13 +354,22 @@ private fun LazyListScope.archiveSection(
                 .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Ein Pfeil, der sich dreht, statt zweier Pfeile, die sich abwechseln: Man
+            // sieht die Richtung der Bewegung und nicht nur ihr Ergebnis.
+            val drehung by animateFloatAsState(
+                targetValue = if (expanded) 180f else 0f,
+                animationSpec = Motion.standard(),
+                label = "rueckblickPfeil",
+            )
             Icon(
-                imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                imageVector = Icons.Filled.ExpandMore,
                 contentDescription = stringResource(
                     if (expanded) R.string.done_earlier_collapse else R.string.done_earlier_expand
                 ),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier
+                    .size(16.dp)
+                    .graphicsLayer { rotationZ = drehung },
             )
             Text(
                 text = stringResource(R.string.section_done_earlier).uppercase(),
@@ -365,7 +401,9 @@ private fun LazyListScope.archiveSection(
                 text = completedDayLabel(day, state.now, state.zone),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                modifier = Modifier.padding(start = 20.dp, top = 10.dp, bottom = 2.dp),
+                modifier = Modifier
+                    .animateItem(placementSpec = Motion.slow())
+                    .padding(start = 20.dp, top = 10.dp, bottom = 2.dp),
             )
         }
         items(dayTasks, key = { "archiv-${it.id}" }) { task ->
@@ -373,6 +411,11 @@ private fun LazyListScope.archiveSection(
                 task = task,
                 onToggle = { onToggle(task) },
                 onOpen = { onOpen(task.id) },
+                modifier = Modifier.animateItem(
+                    fadeInSpec = Motion.standard(),
+                    placementSpec = Motion.slow(),
+                    fadeOutSpec = Motion.quick(),
+                ),
             )
         }
     }
@@ -389,9 +432,14 @@ private fun LazyListScope.archiveSection(
 
 /** Eine Zeile im Rückblick: durchgestrichen, gedämpft, ohne Karte. */
 @Composable
-private fun ArchiveRow(task: Task, onToggle: () -> Unit, onOpen: () -> Unit) {
+private fun ArchiveRow(
+    task: Task,
+    onToggle: () -> Unit,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -433,12 +481,13 @@ private fun SectionHeader(
     count: Int,
     accent: Color?,
     bulkAction: Pair<String, () -> Unit>?,
+    modifier: Modifier = Modifier,
 ) {
     val farbe = accent ?: MaterialTheme.colorScheme.onSurfaceVariant
     SectionLabel(
         text = stringResource(titleRes),
         accent = farbe,
-        modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 18.dp, bottom = 6.dp),
+        modifier = modifier.padding(start = 20.dp, end = 16.dp, top = 18.dp, bottom = 6.dp),
     ) {
         bulkAction?.let { (label, action) ->
             Text(
@@ -591,12 +640,17 @@ private fun CheckDot(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val fill by animateColorAsState(
-        targetValue = if (checked) accent else Color.Transparent,
+    // Die Füllung wächst mit Überschwung aus der Mitte. Ein Haken, der einfach da ist,
+    // ist eine Zustandsänderung; einer, der kurz über seine Größe hinausschießt, ist
+    // eine Belohnung — und genau das soll Abhaken sein.
+    val fuellung by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = Motion.bouncy(),
         label = "hakenFuellung",
     )
     val rand by animateColorAsState(
         targetValue = if (checked) accent else MaterialTheme.colorScheme.outline,
+        animationSpec = Motion.standard(),
         label = "hakenRand",
     )
 
@@ -604,12 +658,25 @@ private fun CheckDot(
         modifier = modifier
             .size(24.dp)
             .clip(CircleShape)
-            .background(fill)
             .border(BorderStroke(1.5.dp, rand), CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        if (checked) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    scaleX = fuellung
+                    scaleY = fuellung
+                }
+                .clip(CircleShape)
+                .background(accent)
+        )
+        AnimatedVisibility(
+            visible = checked,
+            enter = scaleIn(Motion.bouncy()) + fadeIn(Motion.quick()),
+            exit = scaleOut(Motion.quick()) + fadeOut(Motion.quick()),
+        ) {
             Icon(
                 imageVector = Icons.Filled.Check,
                 contentDescription = null,
@@ -651,10 +718,21 @@ private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit) {
                 )
                 // Der Knopf leuchtet erst, wenn es etwas anzulegen gibt.
                 val bereit = title.isNotBlank()
+                // Der Knopf wächst, wenn es etwas anzulegen gibt. Ein Knopf, der nur
+                // seine Farbe wechselt, sieht aus wie ein Knopf, der nichts tut.
+                val groesse by animateFloatAsState(
+                    targetValue = if (bereit) 1f else 0.86f,
+                    animationSpec = Motion.bouncy(),
+                    label = "sendeKnopf",
+                )
                 Box(
                     modifier = Modifier
                         .padding(end = 4.dp)
                         .size(40.dp)
+                        .graphicsLayer {
+                            scaleX = groesse
+                            scaleY = groesse
+                        }
                         .clip(CircleShape)
                         .background(
                             if (bereit) Brand.brush(Brand.Cool)

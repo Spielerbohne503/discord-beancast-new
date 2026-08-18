@@ -96,6 +96,32 @@ nur fürs Bild.
 `values/themes.xml` und `values-night/themes.xml` setzen die Hintergrundfarbe des
 Startfensters. Fehlt sie, blitzt beim Öffnen Weiß auf.
 
+## Bewegung
+
+Dauern und Kurven stehen in `ui/theme/Motion.kt` — drei Dauern (`QUICK` 140,
+`STANDARD` 260, `SLOW` 480) und zwei Kurven, sonst nichts. Eine vierte Dauer ergibt eine
+App, in der jeder Bildschirm sein eigenes Tempo hat.
+
+**Animiert wird, was sich bewegt hat.** Eine Zeile, die von „heute“ nach „erledigt“
+wandert, wandert sichtbar (`Modifier.animateItem`). Ein Wert, der gestiegen ist, wächst
+sichtbar (`ValueTrack` animiert seinen Anteil). Alles andere bleibt still.
+
+Drei Regeln, die leicht kaputtgehen:
+
+- **Nichts, was sich jede Sekunde ändert, bekommt einen Übergang.** Die Restzeit des
+  Fokus-Timers steht deshalb ohne Animation da; die Bewegung übernimmt der Ring.
+- **Dauerhafte Animationen nur beim Pet.** Der wippende Begleiter und der atmende
+  Lichtschein sind das Einzige, was endlos läuft — v1 hat kein einziges Sprite, ohne sie
+  ist das Pet ein Zeichen auf einer Karte. Auf der Heute-Liste, die minutenlang offen
+  liegt, wäre dieselbe Bewegung verschwendeter Strom.
+- **`animationsEnabled()` fragen, bevor etwas endlos läuft.** Einzelne Übergänge drosselt
+  Compose selbst, wenn die Animationsskala des Geräts auf null steht; eine
+  `rememberInfiniteTransition` dreht sich trotzdem weiter.
+
+Der Zugewinn-Puls (`rememberGainPulse`) schlägt nur **nach oben** aus. Verfall passiert
+über Stunden — ihn zu blitzen wäre eine Strafe fürs Nichtstun, und die App bestraft
+niemanden.
+
 ## Erledigtes und Verweise
 
 Eine abgehakte Aufgabe bleibt den **ganzen Tag** im Block „Heute erledigt“ stehen — sonst

@@ -2,6 +2,11 @@ package uk.spielerbohne.petodo.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,8 +21,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
+import uk.spielerbohne.petodo.ui.theme.Motion
 import uk.spielerbohne.petodo.ui.theme.Palette
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -127,6 +134,14 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
             navController = navController,
             startDestination = TopLevelDestination.TODAY.route,
             modifier = Modifier.padding(innerPadding),
+            // Die vier Bereiche liegen nebeneinander, nicht hintereinander: Sie blenden
+            // ineinander über, statt sich seitlich zu schieben. Ein Schiebe-Übergang
+            // zwischen gleichrangigen Bildschirmen behauptet eine Richtung, die es nicht
+            // gibt — die Detailseite unten schiebt dagegen sehr wohl.
+            enterTransition = { fadeIn(Motion.standard()) },
+            exitTransition = { fadeOut(Motion.quick()) },
+            popEnterTransition = { fadeIn(Motion.standard()) },
+            popExitTransition = { fadeOut(Motion.quick()) },
         ) {
             composable(TopLevelDestination.TODAY.route) {
                 TodayRoute(
@@ -169,6 +184,14 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
             composable(
                 route = "task/{taskId}",
                 arguments = listOf(navArgument("taskId") { type = NavType.StringType }),
+                enterTransition = {
+                    slideInHorizontally(Motion.standard()) { breite -> breite / 4 } +
+                        fadeIn(Motion.standard())
+                },
+                popExitTransition = {
+                    slideOutHorizontally(Motion.standard()) { breite -> breite / 4 } +
+                        fadeOut(Motion.quick())
+                },
             ) { entry ->
                 TaskDetailRoute(
                     container = container,
@@ -242,11 +265,21 @@ private fun BottomBarItem(
     val accent = destination.accent
     val background by animateColorAsState(
         targetValue = if (selected) accent.copy(alpha = 0.16f) else Color.Transparent,
+        animationSpec = Motion.standard(),
         label = "navHintergrund",
     )
     val content by animateColorAsState(
         targetValue = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = Motion.standard(),
         label = "navInhalt",
+    )
+
+    // Das Zeichen wächst beim Wechsel kurz an. Ohne diese Bewegung ist ein Wechsel der
+    // Leiste nur ein Farbwechsel und geht im Augenwinkel unter.
+    val groesse by animateFloatAsState(
+        targetValue = if (selected) 1.12f else 1f,
+        animationSpec = Motion.bouncy(),
+        label = "navZeichen",
     )
 
     Column(
@@ -262,7 +295,12 @@ private fun BottomBarItem(
             imageVector = destination.icon,
             contentDescription = null,
             tint = content,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier
+                .size(22.dp)
+                .graphicsLayer {
+                    scaleX = groesse
+                    scaleY = groesse
+                },
         )
         Text(
             text = stringResource(destination.labelRes),

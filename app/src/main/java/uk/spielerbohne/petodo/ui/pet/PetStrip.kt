@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -50,12 +51,28 @@ fun PetStrip(container: AppContainer, onOpen: () -> Unit, modifier: Modifier = M
     val pet = state.snapshot.state
     val name = state.name.ifBlank { stringResource(R.string.pet_default_name) }
 
+    // Derselbe Puls wie auf der Statustafel: Man hakt eine Aufgabe ab und sieht hier,
+    // direkt über der Liste, dass es angekommen ist.
+    val puls = rememberGainPulse(pet.values.average)
+
     GradientCard(
         colors = pet.stage.gradient(),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                val wachstum = 1f + 0.02f * puls
+                scaleX = wachstum
+                scaleY = wachstum
+            },
         shape = MaterialTheme.shapes.large,
         onClick = onOpen,
     ) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .background(Color.White.copy(alpha = 0.22f * puls))
+        )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()

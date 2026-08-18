@@ -1,7 +1,11 @@
 package uk.spielerbohne.petodo.ui.pet
 
 import androidx.annotation.ArrayRes
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringArrayResource
@@ -12,6 +16,7 @@ import uk.spielerbohne.petodo.domain.pet.HealthStage
 import uk.spielerbohne.petodo.domain.pet.PetSpeech
 import uk.spielerbohne.petodo.domain.pet.SpeechCategory
 import uk.spielerbohne.petodo.ui.theme.Brand
+import uk.spielerbohne.petodo.ui.theme.Motion
 import uk.spielerbohne.petodo.ui.theme.Palette
 import java.time.Duration
 import kotlin.random.Random
@@ -94,3 +99,34 @@ fun formatCooldown(remaining: Duration): String {
         else -> stringResource(R.string.pet_duration_minutes, minutes)
     }
 }
+
+/**
+ * Ein kurzes Aufleuchten, wenn ein Wert gestiegen ist.
+ *
+ * Das ist die Belohnung, um die es in der ganzen App geht: Man hakt etwas ab, und das
+ * Pet *reagiert sichtbar*. Ohne diesen Moment ist die Kopplung zwischen Arbeit und
+ * Begleiter eine Behauptung im Datenmodell.
+ *
+ * Bewusst nur nach oben: Verfall passiert langsam und über Stunden — ihn zu blitzen wäre
+ * eine Strafe für Nichtstun, und die App bestraft niemanden.
+ *
+ * @return 0 im Ruhezustand, kurzzeitig bis 1 nach einem Zugewinn.
+ */
+@Composable
+fun rememberGainPulse(value: Double): Float {
+    val puls = remember { Animatable(0f) }
+    val vorher = remember { mutableStateOf(value) }
+
+    LaunchedEffect(value) {
+        if (value > vorher.value + SCHWELLE) {
+            puls.animateTo(1f, tween(durationMillis = Motion.QUICK, easing = Motion.Decelerate))
+            puls.animateTo(0f, tween(durationMillis = Motion.SLOW, easing = Motion.Emphasized))
+        }
+        vorher.value = value
+    }
+
+    return puls.value
+}
+
+/** Kleiner als eine Rundungsungenauigkeit soll nichts auslösen. */
+private const val SCHWELLE = 0.05

@@ -1,6 +1,25 @@
 package uk.spielerbohne.petodo.ui.pet
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import uk.spielerbohne.petodo.ui.theme.Motion
+import uk.spielerbohne.petodo.ui.theme.animationsEnabled
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -93,6 +112,7 @@ private fun PetScreen(
         ScreenGlow(
             colors = pet.stage.gradient(),
             alpha = 0.28f,
+            breathing = true,
             modifier = Modifier.align(Alignment.TopCenter),
         )
 
@@ -179,10 +199,30 @@ private fun StatusPanel(
     values: PetValues,
     speech: String?,
 ) {
-    GradientCard(colors = stage.gradient(), modifier = Modifier.fillMaxWidth()) {
+    val puls = rememberGainPulse(values.average)
+
+    GradientCard(
+        colors = stage.gradient(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                // Kaum zu sehen, deutlich zu spüren: zwei Prozent Größe reichen völlig.
+                val wachstum = 1f + 0.02f * puls
+                scaleX = wachstum
+                scaleY = wachstum
+            },
+    ) {
+        // Der Lichtblitz liegt über dem Verlauf, nicht darunter — sonst schluckt ihn
+        // die eigene Farbe der Karte.
+        Box(
+            Modifier
+                .matchParentSize()
+                .background(Color.White.copy(alpha = 0.20f * puls))
+        )
+
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = stage.emoji(), style = MaterialTheme.typography.displaySmall)
+                BobbingPet(stage)
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -207,26 +247,47 @@ private fun StatusPanel(
                     style = MaterialTheme.typography.labelSmall,
                     color = Palette.Chalk.copy(alpha = 0.7f),
                 )
+                // Die Zahl zählt hoch, statt zu springen: Man sieht, um wie viel es
+                // besser geworden ist, nicht nur, dass es anders ist.
+                val schnitt by animateIntAsState(
+                    targetValue = values.average.toInt(),
+                    animationSpec = Motion.slow(),
+                    label = "zustandszahl",
+                )
                 Text(
-                    text = stringResource(R.string.pet_value_percent, values.average.toInt()),
+                    text = stringResource(R.string.pet_value_percent, schnitt),
                     style = MaterialTheme.typography.displayLarge,
                     color = Palette.Chalk,
                 )
             }
 
-            speech?.let {
-                Box(
-                    modifier = Modifier
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(Color.Black.copy(alpha = 0.28f))
-                        .fillMaxWidth(),
-                ) {
-                    Text(
-                        text = "„$it“",
-                        modifier = Modifier.padding(14.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Palette.Chalk,
-                    )
+            // Die Blase wird eingeblendet, nicht eingesetzt — ein Gedanke kommt auf,
+            // er ist nicht plötzlich schon immer da gewesen.
+            AnimatedContent(
+                targetState = speech,
+                transitionSpec = {
+                    (fadeIn(Motion.standard()) +
+                        slideInVertically(Motion.standard()) { hoehe -> hoehe / 3 })
+                        .togetherWith(fadeOut(Motion.quick()))
+                },
+                label = "sprechblase",
+            ) { satz ->
+                if (satz == null) {
+                    Spacer(Modifier.height(0.dp))
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(Color.Black.copy(alpha = 0.28f))
+                            .fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "„$satz“",
+                            modifier = Modifier.padding(14.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Palette.Chalk,
+                        )
+                    }
                 }
             }
 
@@ -243,17 +304,37 @@ private fun StatusPanel(
 
 @Composable
 private fun LevelChip(level: Int) {
+    // Ein Levelaufstieg ist selten und soll auffallen — er ist der einzige Moment, in
+    // dem die App kurz stolz sein darf.
+    val aufstieg = rememberGainPulse(level.toDouble())
+
     Box(
         modifier = Modifier
+            .graphicsLayer {
+                val wachstum = 1f + 0.18f * aufstieg
+                scaleX = wachstum
+                scaleY = wachstum
+            }
             .clip(CircleShape)
             .background(Color.Black.copy(alpha = 0.3f))
             .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
-        Text(
-            text = stringResource(R.string.pet_level, level),
-            style = MaterialTheme.typography.labelLarge,
-            color = Palette.Chalk,
-        )
+        AnimatedContent(
+            targetState = level,
+            transitionSpec = {
+                (slideInVertically(Motion.standard()) { hoehe -> hoehe } + fadeIn(Motion.standard()))
+                    .togetherWith(
+                        slideOutVertically(Motion.standard()) { hoehe -> -hoehe } + fadeOut(Motion.quick())
+                    )
+            },
+            label = "level",
+        ) { stufe ->
+            Text(
+                text = stringResource(R.string.pet_level, stufe),
+                style = MaterialTheme.typography.labelLarge,
+                color = Palette.Chalk,
+            )
+        }
     }
 }
 
@@ -298,6 +379,52 @@ private fun LevelProgress(xp: Int, level: Int) {
             color = Palette.Chalk.copy(alpha = 0.7f),
         )
     }
+}
+
+/**
+ * Das Pet wippt.
+ *
+ * v1 zeigt kein einziges Sprite (Projektplan, Abschnitt 8.1) — ohne diese kleine
+ * Bewegung ist der Begleiter ein Zeichen auf einer Karte. Der Takt hängt an der Stufe:
+ * Ein gesundes Pet wippt zügig, ein elendes kaum noch. Das erzählt den Zustand ein
+ * zweites Mal, ohne ein weiteres Wort zu brauchen.
+ */
+@Composable
+private fun BobbingPet(stage: HealthStage) {
+    val takt = when (stage) {
+        HealthStage.HEALTHY -> 1_900
+        HealthStage.WEAKENED -> 2_600
+        HealthStage.SICK -> 3_400
+        HealthStage.MISERABLE -> 4_600
+    }
+    val weite = when (stage) {
+        HealthStage.HEALTHY -> 5f
+        HealthStage.WEAKENED -> 3.5f
+        HealthStage.SICK -> 2f
+        HealthStage.MISERABLE -> 1f
+    }
+
+    val hoehe = if (animationsEnabled()) {
+        val schwingung = rememberInfiniteTransition(label = "wippen")
+        val wert by schwingung.animateFloat(
+            initialValue = weite,
+            targetValue = -weite,
+            animationSpec = infiniteRepeatable(
+                animation = tween(takt, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "wippenHoehe",
+        )
+        wert
+    } else {
+        0f
+    }
+
+    Text(
+        text = stage.emoji(),
+        style = MaterialTheme.typography.displaySmall,
+        modifier = Modifier.graphicsLayer { translationY = hoehe },
+    )
 }
 
 /**
@@ -349,10 +476,22 @@ private fun CareTile(
         else -> Icons.Filled.Favorite
     }
 
+    val interaktion = remember { MutableInteractionSource() }
+    val gedrueckt by interaktion.collectIsPressedAsState()
+    val groesse by animateFloatAsState(
+        targetValue = if (gedrueckt) 0.95f else 1f,
+        animationSpec = Motion.quick(),
+        label = "kachelDruck",
+    )
+
     GlassCard(
-        modifier = modifier,
+        modifier = modifier.graphicsLayer {
+            scaleX = groesse
+            scaleY = groesse
+        },
         shape = MaterialTheme.shapes.large,
         onClick = if (bereit) onClick else null,
+        interactionSource = interaktion,
     ) {
         Column(
             modifier = Modifier
@@ -377,12 +516,18 @@ private fun CareTile(
                 },
                 textAlign = TextAlign.Center,
             )
-            Text(
-                text = if (bereit) "" else stringResource(R.string.pet_action_locked, formatCooldown(remaining)),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
+            AnimatedContent(
+                targetState = if (bereit) "" else stringResource(R.string.pet_action_locked, formatCooldown(remaining)),
+                transitionSpec = { fadeIn(Motion.standard()).togetherWith(fadeOut(Motion.quick())) },
+                label = "sperrzeit",
+            ) { text ->
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 }
