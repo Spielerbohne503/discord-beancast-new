@@ -78,16 +78,29 @@ class FocusViewModel(
         initialValue = FocusUiState(),
     )
 
-    /** Alle Befehle laufen über den Dienst — er ist der einzige Besitzer der Statuszeile. */
-    fun startFocus(taskId: String?) = FocusService.send(context, FocusAction.START_FOCUS, taskId)
+    /**
+     * Alle Befehle laufen über den Dienst — er ist der einzige Besitzer der Statuszeile.
+     * Verweigert Android den Start, passiert nichts; abstürzen darf davon nichts.
+     */
+    fun startFocus(taskId: String?) {
+        FocusService.send(context, FocusAction.START_FOCUS, taskId)
+    }
 
-    fun pause() = FocusService.send(context, FocusAction.PAUSE)
+    fun pause() {
+        FocusService.send(context, FocusAction.PAUSE)
+    }
 
-    fun resume() = FocusService.send(context, FocusAction.RESUME)
+    fun resume() {
+        FocusService.send(context, FocusAction.RESUME)
+    }
 
-    fun stop() = FocusService.send(context, FocusAction.STOP)
+    fun stop() {
+        FocusService.send(context, FocusAction.STOP)
+    }
 
-    fun skipBreak() = FocusService.send(context, FocusAction.SKIP)
+    fun skipBreak() {
+        FocusService.send(context, FocusAction.SKIP)
+    }
 
     fun setSettings(settings: FocusSettings) {
         viewModelScope.launch { settingsRepository.setFocusSettings(settings) }

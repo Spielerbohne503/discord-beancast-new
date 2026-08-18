@@ -202,9 +202,17 @@ class FocusService : Service() {
                 taskId?.let { putExtra(EXTRA_TASK_ID, it) }
             }
 
-        fun send(context: Context, action: FocusAction, taskId: String? = null) {
-            context.startForegroundService(intent(context, action, taskId))
-        }
+        /**
+         * Schickt einen Befehl an den Dienst.
+         *
+         * Gibt `false` zurück, wenn Android den Start verweigert — das passiert im
+         * Hintergrund und auf manchen Herstellergeräten. Ein Timer, der nicht startet,
+         * ist ärgerlich; eine App, die dabei abstürzt, ist schlimmer.
+         */
+        fun send(context: Context, action: FocusAction, taskId: String? = null): Boolean =
+            runCatching { context.startForegroundService(intent(context, action, taskId)) }
+                .onFailure { Log.w(TAG, "Fokus-Dienst konnte nicht gestartet werden", it) }
+                .isSuccess
 
         fun pendingIntent(context: Context, action: FocusAction): PendingIntent =
             PendingIntent.getForegroundService(
