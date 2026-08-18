@@ -32,15 +32,22 @@ import java.time.Instant
 class TodayWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        // Erst den Rahmen — der braucht keine Datenbank und steht sofort.
-        ids.forEach { id -> renderFrame(context, manager, id) }
-        // Die Zahlen der Kopfzeile kommen nach. onUpdate läuft auf dem Hauptfaden;
-        // dort die Datenbank zu lesen wäre ein hängender Startbildschirm.
-        updateHeader(context, manager, ids)
+        // Ein Widget-Fehler darf die App nicht mitreißen: Ein Provider läuft im Prozess
+        // der App, und eine Ausnahme hier beendet ihn — mitsamt der App, die man gerade
+        // öffnen wollte.
+        runCatching {
+            // Erst den Rahmen — der braucht keine Datenbank und steht sofort.
+            ids.forEach { id -> renderFrame(context, manager, id) }
+            // Die Zahlen der Kopfzeile kommen nach. onUpdate läuft auf dem Hauptfaden;
+            // dort die Datenbank zu lesen wäre ein hängender Startbildschirm.
+            updateHeader(context, manager, ids)
+        }.onFailure { Log.e(TAG, "Widget konnte nicht gezeichnet werden", it) }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
+        runCatching { super.onReceive(context, intent) }
+            .onFailure { Log.e(TAG, "Widget-Nachricht ${intent.action} fehlgeschlagen", it) }
+
         if (intent.action != ACTION_TOGGLE) return
 
         val taskId = intent.getStringExtra(EXTRA_TASK_ID) ?: return

@@ -38,6 +38,9 @@
     <string name="crash_body">Beim letzten Mal hat sich die App unerwartet beendet. Der Bericht liegt nur auf diesem Gerät.</string>
     <string name="crash_share">Bericht teilen</string>
     <string name="crash_clear">Verwerfen</string>
+    <string name="crash_safe_title">PeTodo startet nicht</string>
+    <string name="crash_safe_body">Die App hat sich beim letzten Start sofort beendet. Damit du nicht in einer Schleife feststeckst, wird hier zuerst der Bericht gezeigt — teile ihn, dann lässt sich der Fehler beheben.</string>
+    <string name="crash_safe_continue">Trotzdem starten</string>
 
     <!-- Rückblick -->
     <string name="stats_title">Rückblick</string>

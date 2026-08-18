@@ -8,6 +8,7 @@ import kotlinx.coroutines.SupervisorJob
 import uk.spielerbohne.petodo.data.alarm.AlarmScheduler
 import uk.spielerbohne.petodo.data.alarm.NagCoordinator
 import uk.spielerbohne.petodo.data.backup.BackupRepository
+import uk.spielerbohne.petodo.data.debug.CrashLog
 import uk.spielerbohne.petodo.data.db.PetodoDatabase
 import uk.spielerbohne.petodo.data.notify.NagNotifications
 import uk.spielerbohne.petodo.data.pet.PetRepository
@@ -43,6 +44,7 @@ class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone(
     val applicationScope = CoroutineScope(
         SupervisorJob() + CoroutineExceptionHandler { _, fehler ->
             Log.e("PetodoScope", "Unbehandelter Fehler im Hintergrund", fehler)
+            CrashLog.record(appContext, "Hintergrundarbeit", fehler)
         }
     )
 

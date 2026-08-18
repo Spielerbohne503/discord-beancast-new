@@ -243,9 +243,16 @@ Deshalb:
 - `applicationScope` hat einen `CoroutineExceptionHandler`. Ohne ihn beendet jede
   unbehandelte Ausnahme aus einer Hintergrundarbeit die ganze App.
 
-`data/debug/CrashLog.kt` hält den letzten Absturz in einer Datei fest und zeigt ihn unter
-„Mehr“ an. Bei einer App, die man sich selbst installiert, kommt sonst nirgends ein
-Bericht an.
+`data/debug/CrashLog.kt` hält den letzten Absturz in einer Datei fest. Lag er weniger als
+90 Sekunden zurück, zeigt `MainActivity` beim nächsten Start **statt der App** den
+Bericht (`ui/debug/CrashScreen`) — sonst startet sie wieder in denselben Fehler, und man
+kommt nie an die Information heran, die zur Behebung nötig wäre. In diesem Fall bleibt
+auch die Hintergrundarbeit in `PetodoApplication` aus.
+
+Jeder Schritt in `Application.onCreate` steht in einem `runCatching`. Eine einzige
+Ausnahme dort macht die App **unstartbar**: Der Prozess stirbt, bevor ein Bildschirm
+erscheint. Kein Baustein ist so wichtig, dass sein Ausfall das Öffnen verhindern darf —
+dasselbe gilt für `AppWidgetProvider.onUpdate`, der im Prozess der App läuft.
 
 ## Fokus-Timer
 
