@@ -33,6 +33,25 @@
     <string name="quick_add_pick_due">Fälligkeit wählen</string>
     <string name="quick_add_due_clear">Fälligkeit entfernen</string>
 
+    <!-- Rückblick -->
+    <string name="stats_title">Rückblick</string>
+    <string name="stats_open">Rückblick öffnen</string>
+    <string name="stats_streak_title">Serie</string>
+    <string name="stats_streak_days">%1$d Tage</string>
+    <string name="stats_streak_one_day">1 Tag</string>
+    <string name="stats_streak_none">Noch keine Serie</string>
+    <string name="stats_streak_hint">Ein erledigter Punkt am Tag hält sie am Leben. Der heutige Tag zählt nie gegen dich.</string>
+    <string name="stats_longest">Längste Serie: %1$d Tage</string>
+    <string name="stats_two_weeks">Die letzten 14 Tage</string>
+    <string name="stats_period_total">%1$d erledigt</string>
+    <string name="stats_busiest">Bester Tag: %1$s mit %2$d</string>
+    <string name="stats_total_title">Insgesamt erledigt</string>
+    <string name="stats_focus_title">Fokusrunden (30 Tage)</string>
+    <string name="stats_empty">Hier steht etwas, sobald du den ersten Punkt abhakst.</string>
+
+    <!-- Quick-Settings-Kachel -->
+    <string name="tile_label">Aufgabe erfassen</string>
+
     <!-- Homescreen-Widget -->
     <string name="widget_label">Heute</string>
     <string name="widget_description">Die Heute-Liste auf dem Startbildschirm. Antippen hakt ab.</string>

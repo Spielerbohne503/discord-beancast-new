@@ -12,6 +12,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -48,6 +51,7 @@ fun MoreRoute(
     container: AppContainer,
     onOpenPermissions: () -> Unit,
     onOpenList: (String) -> Unit,
+    onOpenStats: () -> Unit = {},
 ) {
     val viewModel: MoreViewModel = viewModel(factory = MoreViewModel.factory(container))
     val quietHours by viewModel.quietHours.collectAsStateWithLifecycle()
@@ -84,6 +88,7 @@ fun MoreRoute(
         onDeleteTag = viewModel::deleteTag,
         onOpenPermissions = onOpenPermissions,
         onOpenList = onOpenList,
+        onOpenStats = onOpenStats,
         onExport = viewModel::exportTo,
         onRestore = viewModel::restoreFrom,
     )
@@ -116,6 +121,7 @@ fun MoreScreen(
     onDeleteTag: (String) -> Unit,
     onOpenPermissions: () -> Unit,
     onOpenList: (String) -> Unit = {},
+    onOpenStats: () -> Unit = {},
     onExport: (android.net.Uri) -> Unit = {},
     onRestore: (android.net.Uri) -> Unit = {},
 ) {
@@ -200,6 +206,32 @@ fun MoreScreen(
         TagsSection(tags = tags, onDelete = onDeleteTag)
 
         BackupSection(onExport = onExport, onRestore = onRestore)
+
+        // Der Rückblick steht über den Einstellungen: Er ist etwas, das man anschaut,
+        // keins, das man einstellt.
+        GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onOpenStats) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.stats_title),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.stats_open),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
 
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(

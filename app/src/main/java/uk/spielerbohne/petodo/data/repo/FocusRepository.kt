@@ -41,6 +41,10 @@ class FocusRepository(
         return focusSessionDao.observeCompletedFocusCount(start, end)
     }
 
+    /** Abgeschlossene Fokusrunden seit einem Zeitpunkt — für den Rückblick. */
+    suspend fun completedRoundsSince(since: Instant): Int =
+        focusSessionDao.completedFocusCountSince(since.toEpochMilli())
+
     suspend fun completedRoundsToday(): Int {
         val today = LocalDate.now(clock)
         val start = today.atStartOfDay(clock.zone).toInstant().toEpochMilli()

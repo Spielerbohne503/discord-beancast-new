@@ -154,6 +154,20 @@ Wischgesten auf der Heute-Liste: rechts abhaken, links auf morgen. Die Karte spr
 zurück, statt wegzufliegen — sie verschwindet nicht, sie wandert in einen anderen
 Abschnitt, und das zeigt die Liste selbst. Löschen ist bewusst keine Geste.
 
+## Rückblick
+
+`domain/stats/Statistics.kt` rechnet über **Kalendertage**, nicht über Zeitpunkte — die
+Umrechnung in Ortszeit passiert vorher im ViewModel, sonst zerrisse eine Zeitzone die
+Serie.
+
+Die eine Regel, die zählt: **Der heutige Tag zählt nie gegen einen.** Wer gestern etwas
+geschafft hat und heute früh in die App schaut, hat seine Serie noch. Sonst stünde jeden
+Morgen eine Null da — und eine App, die einen jeden Morgen bei null anfangen lässt, macht
+keine Lust. Dieselbe Haltung wie beim Pet: Es gibt keine Strafe fürs Aufwachen.
+
+Leere Tage bleiben als Stummel im Diagramm stehen. Ein Diagramm, das nur die guten Tage
+zeigt, ist kein Rückblick, sondern eine Werbebroschüre.
+
 ## Homescreen-Widget
 
 `data/widget/` — bewusst mit `RemoteViews` statt mit einer Widget-Bibliothek: Die wäre

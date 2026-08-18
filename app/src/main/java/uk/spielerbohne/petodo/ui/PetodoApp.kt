@@ -64,6 +64,7 @@ import uk.spielerbohne.petodo.ui.focus.FocusRoute
 import uk.spielerbohne.petodo.ui.more.MoreRoute
 import uk.spielerbohne.petodo.ui.onboarding.OnboardingScreen
 import uk.spielerbohne.petodo.ui.pet.PetRoute
+import uk.spielerbohne.petodo.ui.stats.StatsRoute
 import uk.spielerbohne.petodo.ui.today.TodayRoute
 
 /**
@@ -227,7 +228,21 @@ private fun MainScaffold(
                     container = container,
                     onOpenPermissions = onOpenPermissions,
                     onOpenList = { listId -> navController.navigate("browse?listId=$listId") },
+                    onOpenStats = { navController.navigate("stats") },
                 )
+            }
+            composable(
+                route = "stats",
+                enterTransition = {
+                    slideInHorizontally(Motion.standard()) { breite -> breite / 4 } +
+                        fadeIn(Motion.standard())
+                },
+                popExitTransition = {
+                    slideOutHorizontally(Motion.standard()) { breite -> breite / 4 } +
+                        fadeOut(Motion.quick())
+                },
+            ) {
+                StatsRoute(container = container, onBack = { navController.popBackStack() })
             }
         }
     }

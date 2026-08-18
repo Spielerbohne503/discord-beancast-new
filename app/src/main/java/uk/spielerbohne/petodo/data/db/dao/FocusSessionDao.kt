@@ -39,6 +39,13 @@ interface FocusSessionDao {
     )
     fun observeCompletedFocusCount(since: Long, until: Long): Flow<Int>
 
+    /** Abgeschlossene Fokusrunden seit einem Zeitpunkt — für den Rückblick. */
+    @Query(
+        "SELECT COUNT(*) FROM focus_sessions WHERE deletedAt IS NULL AND kind = 'FOCUS' " +
+            "AND abortedAt IS NULL AND completedAt IS NOT NULL AND completedAt >= :since"
+    )
+    suspend fun completedFocusCountSince(since: Long): Int
+
     @Query(
         "SELECT COUNT(*) FROM focus_sessions WHERE deletedAt IS NULL AND kind = 'FOCUS' " +
             "AND abortedAt IS NULL AND completedAt IS NOT NULL AND completedAt >= :since AND completedAt < :until"
