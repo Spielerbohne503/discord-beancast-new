@@ -1,6 +1,8 @@
 package uk.spielerbohne.petodo.di
 
 import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import uk.spielerbohne.petodo.data.alarm.AlarmScheduler
@@ -32,8 +34,17 @@ class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone(
     /**
      * Lebt so lange wie der Prozess. Receiver benutzen ihn, damit ihre Arbeit nicht
      * abbricht, sobald `onReceive` zurückkehrt.
+     *
+     * Der Fehlerbehandler ist kein Beiwerk: Ohne ihn landet jede Ausnahme aus einer
+     * Hintergrundarbeit beim Standardbehandler von Android — und der beendet die App.
+     * Ein misslungener Datenbankzugriff im Hintergrund darf nicht dazu führen, dass sich
+     * die App nicht mehr öffnen lässt.
      */
-    val applicationScope = CoroutineScope(SupervisorJob())
+    val applicationScope = CoroutineScope(
+        SupervisorJob() + CoroutineExceptionHandler { _, fehler ->
+            Log.e("PetodoScope", "Unbehandelter Fehler im Hintergrund", fehler)
+        }
+    )
 
     val database: PetodoDatabase by lazy {
         PetodoDatabase.build(appContext) { clock.millis() }

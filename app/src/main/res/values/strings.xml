@@ -33,6 +33,12 @@
     <string name="quick_add_pick_due">Fälligkeit wählen</string>
     <string name="quick_add_due_clear">Fälligkeit entfernen</string>
 
+    <!-- Absturzprotokoll -->
+    <string name="crash_title">Letzter Absturz</string>
+    <string name="crash_body">Beim letzten Mal hat sich die App unerwartet beendet. Der Bericht liegt nur auf diesem Gerät.</string>
+    <string name="crash_share">Bericht teilen</string>
+    <string name="crash_clear">Verwerfen</string>
+
     <!-- Rückblick -->
     <string name="stats_title">Rückblick</string>
     <string name="stats_open">Rückblick öffnen</string>

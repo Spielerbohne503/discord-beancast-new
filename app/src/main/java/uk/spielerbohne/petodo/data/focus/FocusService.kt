@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -47,20 +48,33 @@ class FocusService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var ticker: Job? = null
 
+    /** Ob der Sprung in den Vordergrund geklappt hat. Ohne ihn darf der Dienst nicht laufen. */
+    private var imVordergrund = false
+
     override fun onCreate() {
         super.onCreate()
         container = (application as PetodoApplication).container
         status = FocusStatusNotification(this)
         // Sofort in den Vordergrund, sonst schießt Android den Dienst ab.
-        startForegroundCompat()
+        imVordergrund = startForegroundCompat()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Der Sprung in den Vordergrund ist misslungen — dann hört der Dienst von selbst
+        // auf. Bliebe er liegen, würde Android ihn abschießen und über START_STICKY
+        // wieder starten: eine Schleife, die sich als "App wird wiederholt beendet"
+        // zeigt und die App unbenutzbar macht.
+        if (!imVordergrund) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         val action = intent?.getStringExtra(EXTRA_ACTION)
             ?.let { runCatching { FocusAction.valueOf(it) }.getOrNull() }
 
         scope.launch {
-            action?.let { handle(it, intent.getStringExtra(EXTRA_TASK_ID)) }
+            runCatching { action?.let { handle(it, intent.getStringExtra(EXTRA_TASK_ID)) } }
+                .onFailure { Log.e(TAG, "Befehl $action fehlgeschlagen", it) }
             startTicking()
         }
         return START_STICKY
@@ -91,8 +105,27 @@ class FocusService : Service() {
     private fun startTicking() {
         if (ticker?.isActive == true) return
         ticker = scope.launch {
+            var fehlschlaege = 0
             while (true) {
-                val running = refresh()
+                // Ein Fehler beim Neuzeichnen darf den Prozess nicht mitreißen: Der
+                // Dienst läuft mit START_STICKY, Android würde ihn sofort wieder starten
+                // und der nächste Durchlauf scheiterte genauso.
+                val running = try {
+                    fehlschlaege = 0
+                    refresh()
+                } catch (abbruch: CancellationException) {
+                    throw abbruch
+                } catch (fehler: Throwable) {
+                    fehlschlaege++
+                    Log.e(TAG, "Statuszeile konnte nicht neu gezeichnet werden ($fehlschlaege)", fehler)
+                    if (fehlschlaege >= MAX_FEHLSCHLAEGE) {
+                        // Immer wieder derselbe Fehler: lieber ohne Statuszeile
+                        // weiterarbeiten als ununterbrochen scheitern.
+                        stopSelf()
+                        return@launch
+                    }
+                    false
+                }
                 delay(if (running) TICK_RUNNING_MILLIS else TICK_IDLE_MILLIS)
             }
         }
@@ -170,14 +203,31 @@ class FocusService : Service() {
         }
     }
 
-    private fun startForegroundCompat() {
-        val notification = status.build(FocusState.Ready, null, 0, 0)
+    /**
+     * Der Sprung in den Vordergrund.
+     *
+     * Ab Android 12 darf ein Dienst nicht aus dem Hintergrund in den Vordergrund
+     * springen. Der Aufruf wirft dann — und eine Ausnahme in `onCreate` reißt den ganzen
+     * Prozess mit. Genau das sah man als "PeTodo wird wiederholt beendet": Der Dienst
+     * startete, stürzte ab, wurde neu gestartet und stürzte wieder ab.
+     *
+     * @return ob es geklappt hat.
+     */
+    private fun startForegroundCompat(): Boolean {
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
         } else {
             0
         }
-        ServiceCompat.startForeground(this, NotificationIds.FOCUS_STATUS, notification, type)
+
+        return try {
+            val notification = status.build(FocusState.Ready, null, 0, 0)
+            ServiceCompat.startForeground(this, NotificationIds.FOCUS_STATUS, notification, type)
+            true
+        } catch (fehler: Throwable) {
+            Log.w(TAG, "Statuszeile konnte nicht in den Vordergrund gehen", fehler)
+            false
+        }
     }
 
     override fun onDestroy() {
@@ -192,6 +242,9 @@ class FocusService : Service() {
         private const val TAG = "FocusService"
         private const val TICK_RUNNING_MILLIS = 1_000L
         private const val TICK_IDLE_MILLIS = 60_000L
+
+        /** Nach so vielen Fehlversuchen in Folge gibt der Dienst auf, statt zu kreisen. */
+        private const val MAX_FEHLSCHLAEGE = 3
 
         const val EXTRA_ACTION = "uk.spielerbohne.petodo.extra.FOCUS_ACTION"
         const val EXTRA_TASK_ID = "uk.spielerbohne.petodo.extra.FOCUS_TASK_ID"

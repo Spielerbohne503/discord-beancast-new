@@ -222,6 +222,31 @@ Indizes mit `n+1.json`. Weicht etwas ab, würde Room beim Start des Nutzers abbr
 Balancing-Zahlen stehen ausschließlich in `domain/Balance.kt`. Eine Zahl mit fachlicher
 Bedeutung irgendwo anders im Code ist ein Fehler, auch wenn sie stimmt.
 
+## Foreground Service und Hintergrundstarts
+
+Ab Android 12 darf ein Foreground Service **nicht aus dem Hintergrund** starten. Das
+betrifft diese App direkt: `Application.onCreate` läuft auch dann, wenn der Prozess durch
+einen Alarm, das Widget oder `MY_PACKAGE_REPLACED` hochkommt. Startete man die Statuszeile
+dort, stirbt der Dienst — und `START_STICKY` startet ihn sofort wieder. Diese Schleife
+zeigt sich dem Nutzer als „App wird wiederholt beendet“, und die App lässt sich gar nicht
+mehr öffnen.
+
+Deshalb:
+
+- Die Statuszeile startet **nur aus `MainActivity`**. Dort ist die App garantiert im
+  Vordergrund. Nach einem Neustart des Geräts kommt sie beim nächsten Öffnen zurück; der
+  Timer verliert dabei nichts, sein Endzeitpunkt steht in der Datenbank.
+- `startForeground` steht in einem `try`. Misslingt es, beendet sich der Dienst selbst
+  (`START_NOT_STICKY`), statt abzustürzen.
+- Die Schleife, die die Statuszeile neu zeichnet, fängt jeden Fehler und gibt nach drei
+  Fehlversuchen in Folge auf.
+- `applicationScope` hat einen `CoroutineExceptionHandler`. Ohne ihn beendet jede
+  unbehandelte Ausnahme aus einer Hintergrundarbeit die ganze App.
+
+`data/debug/CrashLog.kt` hält den letzten Absturz in einer Datei fest und zeigt ihn unter
+„Mehr“ an. Bei einer App, die man sich selbst installiert, kommt sonst nirgends ein
+Bericht an.
+
 ## Fokus-Timer
 
 Der Timer speichert einen **absoluten Endzeitpunkt**, nie einen heruntergezählten Rest.

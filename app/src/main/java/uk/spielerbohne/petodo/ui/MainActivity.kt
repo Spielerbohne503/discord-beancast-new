@@ -9,6 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import uk.spielerbohne.petodo.PetodoApplication
+import uk.spielerbohne.petodo.data.focus.FocusAction
+import uk.spielerbohne.petodo.data.focus.FocusService
 import uk.spielerbohne.petodo.ui.theme.PetodoTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,6 +30,11 @@ class MainActivity : ComponentActivity() {
         quickAdd = intent?.getBooleanExtra(EXTRA_QUICK_ADD, false) == true
 
         val container = (application as PetodoApplication).container
+
+        // Hier — und nur hier — ist die App sicher im Vordergrund. Ab Android 12 ist das
+        // die Bedingung dafür, dass ein Foreground Service überhaupt starten darf.
+        FocusService.send(this, FocusAction.RESUME_DISPLAY)
+
         setContent {
             PetodoTheme {
                 PetodoApp(

@@ -38,6 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import uk.spielerbohne.petodo.BuildConfig
+import android.content.Intent
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import uk.spielerbohne.petodo.data.debug.CrashLog
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.ui.theme.GlassCard
 import uk.spielerbohne.petodo.di.AppContainer
@@ -207,6 +212,10 @@ fun MoreScreen(
 
         BackupSection(onExport = onExport, onRestore = onRestore)
 
+        // Ein Absturzbericht steht ganz oben — wenn es einen gibt, ist er das
+        // Wichtigste auf diesem Bildschirm.
+        CrashCard()
+
         // Der Rückblick steht über den Einstellungen: Er ist etwas, das man anschaut,
         // keins, das man einstellt.
         GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onOpenStats) {
@@ -305,3 +314,73 @@ private fun QuietHoursTimeDialog(
 }
 
 private val SHORT_TIME: DateTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+
+/**
+ * Der letzte Absturz, falls es einen gab.
+ *
+ * Bei einer App, die man sich selbst installiert, gibt es keinen Bericht, der irgendwo
+ * ankommt. Ohne diese Karte bleibt nach einem Absturz nur „App wird wiederholt beendet“,
+ * und das sagt nichts darüber, was schiefging.
+ */
+@Composable
+private fun CrashCard() {
+    val context = LocalContext.current
+    var bericht by remember { mutableStateOf(CrashLog.read(context)) }
+    val text = bericht ?: return
+
+    // Die Beschriftungen kommen aus dem Compose-Weg, nicht über den Context: Sonst
+    // bekommt ein Sprachwechsel sie nicht mit.
+    val betreff = stringResource(R.string.crash_title)
+    val teilenLabel = stringResource(R.string.crash_share)
+
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.crash_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+            Text(
+                text = stringResource(R.string.crash_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = text.lineSequence().take(CRASH_PREVIEW_LINES).joinToString("\n"),
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+            )
+            Row {
+                TextButton(
+                    onClick = {
+                        val teilen = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, betreff)
+                            putExtra(Intent.EXTRA_TEXT, text)
+                        }
+                        runCatching {
+                            context.startActivity(Intent.createChooser(teilen, teilenLabel))
+                        }
+                    },
+                ) { Text(stringResource(R.string.crash_share)) }
+
+                TextButton(
+                    onClick = {
+                        CrashLog.clear(context)
+                        bericht = null
+                    },
+                ) { Text(stringResource(R.string.crash_clear)) }
+            }
+        }
+    }
+}
+
+/** So viel vom Bericht steht in der Karte; der Rest kommt beim Teilen mit. */
+private const val CRASH_PREVIEW_LINES = 12

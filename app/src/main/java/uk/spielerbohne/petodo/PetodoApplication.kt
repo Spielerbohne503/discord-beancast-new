@@ -3,11 +3,11 @@ package uk.spielerbohne.petodo
 import android.app.Application
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import uk.spielerbohne.petodo.data.focus.FocusAction
-import uk.spielerbohne.petodo.data.focus.FocusService
+import uk.spielerbohne.petodo.data.debug.CrashLog
 import uk.spielerbohne.petodo.data.notify.Channels
 import uk.spielerbohne.petodo.data.widget.TodayWidgetProvider
 import uk.spielerbohne.petodo.data.work.AlarmSyncWorker
@@ -20,6 +20,11 @@ class PetodoApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Als Allererstes: Ab hier wird jeder Absturz festgehalten, auch einer, der beim
+        // Aufbauen der App selbst passiert.
+        CrashLog.install(this)
+
         container = AppContainer(this)
 
         // Kanäle existieren, bevor die erste Meldung kommt — sonst verschluckt Android sie.
@@ -28,9 +33,15 @@ class PetodoApplication : Application() {
         // Sicherheitsnetz gegen verlorene Alarme.
         AlarmSyncWorker.schedule(this)
 
-        // Die Statuszeile ist dauerhaft — sie zeigt auch ohne Timer den Tagesstand.
-        runCatching { FocusService.send(this, FocusAction.RESUME_DISPLAY) }
-            .onFailure { Log.w(TAG, "Statuszeile konnte nicht gestartet werden", it) }
+        // Die Statuszeile wird bewusst NICHT hier gestartet.
+        //
+        // `Application.onCreate` läuft auch dann, wenn der Prozess im Hintergrund
+        // hochkommt — durch einen Alarm, das Widget oder MY_PACKAGE_REPLACED direkt nach
+        // einem Update. Ein Foreground Service darf ab Android 12 aus dem Hintergrund
+        // nicht starten; der Dienst stirbt dann und wird über START_STICKY endlos neu
+        // gestartet. Das ist die Schleife, die sich als "App wird wiederholt beendet"
+        // zeigt. Die Statuszeile startet deshalb aus der Activity — dort ist die App
+        // garantiert im Vordergrund.
 
         // Beim Start einmal aufräumen: Alarme an den Datenbankstand angleichen und die
         // Sammelmeldung aktualisieren. Ein Fehler hier darf den Start nicht verhindern.
@@ -51,6 +62,8 @@ class PetodoApplication : Application() {
         container.applicationScope.launch(Dispatchers.IO) {
             container.taskRepository.observeTasks()
                 .distinctUntilChanged()
+                // Auch ein Fehler in der Quelle selbst darf die App nicht mitreißen.
+                .catch { fehler -> Log.e(TAG, "Aufgabenstrom für das Widget abgebrochen", fehler) }
                 // Während neu gezeichnet wird, fallen zwischenzeitliche Stände weg —
                 // gezeichnet wird ohnehin nur der letzte.
                 .conflate()
