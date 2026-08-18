@@ -33,6 +33,12 @@
     <string name="quick_add_pick_due">Fälligkeit wählen</string>
     <string name="quick_add_due_clear">Fälligkeit entfernen</string>
 
+    <!-- Homescreen-Widget -->
+    <string name="widget_label">Heute</string>
+    <string name="widget_description">Die Heute-Liste auf dem Startbildschirm. Antippen hakt ab.</string>
+    <string name="widget_progress">%1$d von %2$d erledigt</string>
+    <string name="widget_empty">Nichts offen.</string>
+
     <!-- Teilen an PeTodo -->
     <string name="share_title">Als Aufgabe sichern</string>
     <string name="share_label">Zu PeTodo</string>

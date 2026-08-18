@@ -91,6 +91,32 @@
             </intent-filter>
         </receiver>
 
+        <!--
+            Homescreen-Widget mit der Heute-Liste. Der Dienst füllt die Liste; er darf
+            nur vom System gebunden werden, deshalb die Berechtigung.
+        -->
+        <receiver
+            android:name=".data.widget.TodayWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_label">
+            <!--
+                Nur APPWIDGET_UPDATE steht hier. Das Abhaken kommt über einen Entwurf mit
+                ausdrücklich benanntem Empfänger und braucht deshalb keinen Filter — stünde
+                es hier, könnte jede fremde App Aufgaben abhaken.
+            -->
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_today_info" />
+        </receiver>
+
+        <service
+            android:name=".data.widget.TodayWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
         <!-- Alarme überleben keinen Neustart und kein App-Update. -->
         <receiver
             android:name=".data.alarm.BootReceiver"

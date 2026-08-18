@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kein android:tint: Der färbt alle Pfade gleich, und der Haken in der gefüllten
+     Fassung würde damit in seiner eigenen Fläche verschwinden. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="22dp" android:height="22dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/widget_muted"
+        android:strokeWidth="1.6"
+        android:pathData="M12,3.2a8.8,8.8 0 1,0 0.01,0z" />
+</vector>

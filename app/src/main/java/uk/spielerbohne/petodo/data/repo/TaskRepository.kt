@@ -236,6 +236,13 @@ class TaskRepository(
 
     // ------------------------------------------------------------------ Nag (Phase 2)
 
+    /**
+     * Alle nicht gelöschten Aufgaben, einmalig gelesen.
+     *
+     * Für das Homescreen-Widget: Es beobachtet nichts, sondern fragt einmal pro Neuzeichnen.
+     */
+    suspend fun allTasks(): List<Task> = taskDao.all().map(TaskEntity::toDomain)
+
     /** Alle offenen Aufgaben mit Fälligkeit — Grundlage fürs Neuregistrieren der Alarme. */
     suspend fun openTasksWithDueDate(): List<Task> =
         taskDao.openWithDueDate().map(TaskEntity::toDomain)

@@ -154,6 +154,27 @@ Wischgesten auf der Heute-Liste: rechts abhaken, links auf morgen. Die Karte spr
 zurück, statt wegzufliegen — sie verschwindet nicht, sie wandert in einen anderen
 Abschnitt, und das zeigt die Liste selbst. Löschen ist bewusst keine Geste.
 
+## Homescreen-Widget
+
+`data/widget/` — bewusst mit `RemoteViews` statt mit einer Widget-Bibliothek: Die wäre
+eine weitere Abhängigkeit für etwas, das die Plattform seit Jahren kann. Der Preis sind
+XML-Layouts, der Gewinn ist ein APK, das nicht wächst.
+
+Drei Regeln, die hier leicht kaputtgehen:
+
+- **`onUpdate` läuft auf dem Hauptfaden.** Dort wird nichts aus der Datenbank gelesen;
+  der Rahmen steht sofort, die Zahlen der Kopfzeile kommen über
+  `partiallyUpdateAppWidget` nach. Nur `RemoteViewsFactory.onDataSetChanged` darf
+  blockieren — die läuft auf einem Binder-Faden.
+- **Der Abhak-Befehl gehört nicht in den Intent-Filter.** Er kommt über einen Entwurf mit
+  ausdrücklich benanntem Empfänger; stünde er im Filter, könnte jede fremde App Aufgaben
+  abhaken.
+- **Abgehakt wird über `TaskRepository`**, nicht über den DAO — sonst zahlt der Weg vom
+  Startbildschirm nicht beim Pet ein.
+
+Neu gezeichnet wird über einen Beobachter in `PetodoApplication`, der an `observeTasks()`
+hängt. Damit ist es egal, wo eine Aufgabe geändert wurde.
+
 ## Erledigtes und Verweise
 
 Eine abgehakte Aufgabe bleibt den **ganzen Tag** im Block „Heute erledigt“ stehen — sonst

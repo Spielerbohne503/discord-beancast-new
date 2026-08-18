@@ -3,10 +3,13 @@ package uk.spielerbohne.petodo
 import android.app.Application
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import uk.spielerbohne.petodo.data.focus.FocusAction
 import uk.spielerbohne.petodo.data.focus.FocusService
 import uk.spielerbohne.petodo.data.notify.Channels
+import uk.spielerbohne.petodo.data.widget.TodayWidgetProvider
 import uk.spielerbohne.petodo.data.work.AlarmSyncWorker
 import uk.spielerbohne.petodo.di.AppContainer
 
@@ -39,6 +42,22 @@ class PetodoApplication : Application() {
             // danach nur noch bei Ereignissen.
             runCatching { container.petRepository.recompute() }
                 .onFailure { Log.e(TAG, "Pet-Zustand konnte nicht fortgeschrieben werden", it) }
+        }
+
+        // Das Widget hängt an derselben Quelle wie alles andere: Ändert sich eine
+        // Aufgabe — egal ob in der App, über eine Benachrichtigung oder vom
+        // Startbildschirm aus —, zeichnet es sich neu. Ein Widget, das die Liste von
+        // gestern zeigt, ist schlimmer als keins.
+        container.applicationScope.launch(Dispatchers.IO) {
+            container.taskRepository.observeTasks()
+                .distinctUntilChanged()
+                // Während neu gezeichnet wird, fallen zwischenzeitliche Stände weg —
+                // gezeichnet wird ohnehin nur der letzte.
+                .conflate()
+                .collect {
+                    runCatching { TodayWidgetProvider.refresh(this@PetodoApplication) }
+                        .onFailure { fehler -> Log.w(TAG, "Widget konnte nicht aktualisiert werden", fehler) }
+                }
         }
     }
 

@@ -17,6 +17,10 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE deletedAt IS NULL AND completedAt IS NULL AND dueAt IS NOT NULL")
     suspend fun openWithDueDate(): List<TaskEntity>
 
+    /** Alles Lebende auf einmal — für das Widget, das synchron liest und nicht beobachtet. */
+    @Query("SELECT * FROM tasks WHERE deletedAt IS NULL")
+    suspend fun all(): List<TaskEntity>
+
     @Query(
         "SELECT * FROM tasks WHERE parentId = :parentId AND deletedAt IS NULL ORDER BY sortKey"
     )
