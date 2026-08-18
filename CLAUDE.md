@@ -55,9 +55,9 @@ ViewModel ruft sie nur auf und führt das Ergebnis aus.
 | Sortierung als Fractional Index | `domain/sort/FractionalIndex.kt` |
 | Fälligkeit als UTC-Instant **plus** `dueTimeLocal` | `TaskEntity.dueAt` / `dueTimeLocal` |
 | Belohnungen als Append-only-Log | `reward_events`, nur INSERT |
-| Genau EINE reine Funktion berechnet den Wertestand | `domain/pet/PetSimulation.kt` (Phase 4) |
-| Benachrichtigungs-IDs deterministisch aus Task-UUID | `domain/notify/NotificationIds.kt` (Phase 2) |
-| Drei Notification Channels von Anfang an | `data/notify/Channels.kt` (Phase 2) |
+| Genau EINE reine Funktion berechnet den Wertestand | `domain/pet/PetSimulation.kt` |
+| Benachrichtigungs-IDs deterministisch aus Task-UUID | `domain/notify/NotificationIds.kt` |
+| Drei Notification Channels von Anfang an | `data/notify/Channels.kt` |
 | Alle Balancing-Zahlen in EINER Datei | `domain/Balance.kt` |
 | Alle Texte in `strings.xml` | `app/src/main/res/values/strings.xml` |
 | Unteraufgaben: `parentId` ohne UI | `TaskEntity.parentId` |
@@ -95,6 +95,33 @@ nichts mit — er zeichnet nur neu, was `domain/focus/FocusTimer` aus dem Endzei
 errechnet. Ein abgelaufener Endzeitpunkt heißt **fertig**, nicht "läuft noch".
 
 Die Statuszeile ist dauerhaft und zeigt auch ohne Timer den Tagesstand.
+
+## Das Pet
+
+Es tickt nichts. Gerechnet wird beim Start der App und bei jedem Ereignis — einmal, in
+`PetSimulation.compute`: erst der Verfall über die verstrichene Zeit, dann die Ereignisse
+in Zeitfolge. Die Zeile in `pet_state` ist ein **Zwischenstand**, kein zweiter Besitzer
+der Wahrheit; die Wahrheit ist das Append-only-Log plus die verstrichene Zeit.
+
+Wer eine zweite Stelle einbaut, an der Werte verändert werden, hat genau den Fehler
+eingebaut, den diese Regel verhindert.
+
+Belohnungen werden **im Repository** verbucht, nicht im ViewModel: Sonst zahlt der Weg
+über die Benachrichtigung („Erledigt“, „Morgen“) nicht ein. Damit dabei kein Ring
+entsteht — das Pet braucht die Aufgaben, die Aufgaben nicht das Pet — kommt die
+Belohnungssenke als faules Lambda in `TaskRepository` und `FocusRepository` herein
+(`data/pet/RewardSink.kt`).
+
+Zwei Regeln, die leicht kaputtgehen:
+
+- **Aufräumen zählt wie Erledigen.** Eine überfällige Aufgabe zu verschieben oder zu
+  löschen gibt Werte. Ohne diese Regel bestraft die App Ehrlichkeit.
+- **Sperrzeiten.** Ohne sie tippt man sich aus jeder Krankheit heraus, und die Kopplung
+  an die Arbeit ist wertlos. Der Knopf verschwindet dabei nie — er sagt, wie lange noch.
+
+Krankheit hängt ausschließlich an **überfälligen** Aufgaben, nie an offenen. Sonst wird
+Erfassen bestraft, und wer nichts mehr einträgt, benutzt die App nicht mehr. Es gibt
+keine Stufe unter „elend“: kein Tod, kein Punkt ohne Wiederkehr.
 
 ## Sicherung
 

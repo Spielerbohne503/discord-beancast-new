@@ -52,10 +52,6 @@
     <string name="due_overdue_one_day">1 Tag überfällig</string>
 
     <!-- Platzhalter-Screens (Phase 2-4) -->
-    <string name="placeholder_pet_title">Pet</string>
-    <string name="placeholder_pet_body">Das Pet kommt in Phase 4.</string>
-    <string name="placeholder_more_title">Mehr</string>
-    <string name="placeholder_more_body">Einstellungen kommen in Phase 2.</string>
 
     <!-- Startdaten -->
     <string name="list_inbox">Inbox</string>
