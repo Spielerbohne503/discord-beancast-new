@@ -39,13 +39,13 @@ import uk.spielerbohne.petodo.ui.detail.TaskDetailRoute
 import uk.spielerbohne.petodo.ui.focus.FocusRoute
 import uk.spielerbohne.petodo.ui.more.MoreRoute
 import uk.spielerbohne.petodo.ui.onboarding.OnboardingScreen
-import uk.spielerbohne.petodo.ui.placeholder.PlaceholderScreen
+import uk.spielerbohne.petodo.ui.pet.PetRoute
 import uk.spielerbohne.petodo.ui.today.TodayRoute
 
 /**
- * Untere Leiste mit vier Einträgen. Heute und Mehr funktionieren, Fokus und Pet sind
- * Platzhalter für die Phasen 3 und 4 — sie stehen aber von Anfang an da, damit die
- * Navigation nicht später umgebaut werden muss.
+ * Untere Leiste mit vier Einträgen. Sie steht seit Phase 1 unverändert da — die Einträge
+ * für Fokus und Pet waren erst Platzhalter, die Navigation musste dafür nicht umgebaut
+ * werden.
  */
 private enum class TopLevelDestination(
     val route: String,
@@ -120,6 +120,13 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
                     container = container,
                     onOpenTask = { taskId -> navController.navigate("task/$taskId") },
                     onSearch = { navController.navigate("browse?search=true") },
+                    onOpenPet = {
+                        navController.navigate(TopLevelDestination.PET.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                 )
             }
             composable(
@@ -160,10 +167,7 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
                 FocusRoute(container = container)
             }
             composable(TopLevelDestination.PET.route) {
-                PlaceholderScreen(
-                    titleRes = R.string.placeholder_pet_title,
-                    bodyRes = R.string.placeholder_pet_body,
-                )
+                PetRoute(container = container)
             }
             composable(TopLevelDestination.MORE.route) {
                 MoreRoute(

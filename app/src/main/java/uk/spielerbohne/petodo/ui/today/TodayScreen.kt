@@ -57,6 +57,7 @@ import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.ui.common.PriorityUi
+import uk.spielerbohne.petodo.ui.pet.PetStrip
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -67,6 +68,7 @@ fun TodayRoute(
     container: AppContainer,
     onOpenTask: (String) -> Unit,
     onSearch: () -> Unit,
+    onOpenPet: () -> Unit = {},
 ) {
     val viewModel: TodayViewModel = viewModel(factory = TodayViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -82,6 +84,9 @@ fun TodayRoute(
         onPostponeOverdue = viewModel::postponeOverdue,
         onPostponeConsumed = viewModel::clearPostponed,
         onSearch = onSearch,
+        // Der Streifen wird hereingereicht, damit der Screen selbst nichts vom Container
+        // wissen muss — er bleibt eine reine Anzeige seines Zustands.
+        petStrip = { PetStrip(container = container, onOpen = onOpenPet) },
     )
 }
 
@@ -98,6 +103,7 @@ fun TodayScreen(
     onPostponeOverdue: () -> Unit,
     onPostponeConsumed: () -> Unit,
     onSearch: () -> Unit = {},
+    petStrip: (@Composable () -> Unit)? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.task_deleted)
@@ -145,6 +151,12 @@ fun TodayScreen(
                 .padding(padding),
             contentPadding = PaddingValues(bottom = 16.dp),
         ) {
+            petStrip?.let { streifen ->
+                item {
+                    Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) { streifen() }
+                }
+            }
+
             if (board.isEmpty) {
                 item {
                     Text(

@@ -229,4 +229,149 @@
     <string name="settings_permissions_body">Benachrichtigungen, exakte Alarme und Akku-Ausnahme prüfen.</string>
     <string name="settings_about_title">Über</string>
     <string name="settings_about_body">PeTodo %1$s · vollständig offline, kein Konto, keine Telemetrie.</string>
+    <!-- Pet: Statustafel -->
+    <string name="pet_title">Pet</string>
+    <string name="pet_default_name">Knopf</string>
+    <string name="pet_rename">Umbenennen</string>
+    <string name="pet_rename_hint">Name</string>
+    <string name="pet_level">Level %1$d</string>
+    <string name="pet_level_progress">Noch %1$d XP bis Level %2$d</string>
+    <string name="pet_bar_energy">Energie</string>
+    <string name="pet_bar_satiety">Sättigung</string>
+    <string name="pet_bar_mood">Laune</string>
+    <string name="pet_value_percent">%1$d %%</string>
+
+    <string name="pet_emoji_healthy">🐣</string>
+    <string name="pet_emoji_weakened">🥱</string>
+    <string name="pet_emoji_sick">🤒</string>
+    <string name="pet_emoji_miserable">😿</string>
+
+    <string name="pet_stage_healthy">Gesund</string>
+    <string name="pet_stage_weakened">Geschwächt</string>
+    <string name="pet_stage_sick">Krank</string>
+    <string name="pet_stage_miserable">Elend</string>
+
+    <string name="pet_action_feed">Füttern</string>
+    <string name="pet_action_play">Spielen</string>
+    <string name="pet_action_pat">Streicheln</string>
+    <string name="pet_action_locked">In %1$s</string>
+    <string name="pet_duration_hours_minutes">%1$d Std %2$d Min</string>
+    <string name="pet_duration_minutes">%1$d Min</string>
+    <string name="pet_duration_seconds">gleich</string>
+    <string name="pet_xp">%1$d XP</string>
+    <string name="pet_speech_dismiss">Verstanden</string>
+
+    <string name="pet_load_title">Überfälligkeitslast</string>
+    <string name="pet_load_none">Nichts überfällig — dein Pet erholt sich in Ruhe.</string>
+    <string name="pet_load_some">%1$d überfällige Aufgabe(n). Die Werte fallen %2$s so schnell wie sonst.</string>
+    <string name="pet_load_factor">%1$.1f-mal</string>
+    <string name="pet_recovery_hint">Aufräumen zählt wie Erledigen: Verschieben und Löschen einer überfälligen Aufgabe helfen genauso.</string>
+    <string name="pet_no_death">Dein Pet kann krank werden, aber nicht sterben. Es gibt keinen Punkt ohne Wiederkehr.</string>
+
+    <!-- Pet: Sprechblasen. Leere Kategorie = das Pet sagt dazu nichts. -->
+    <string-array name="pet_speech_start">
+        <item>Da bist du ja.</item>
+        <item>Guck mal, was heute ansteht.</item>
+        <item>Ich hab auf dich gewartet.</item>
+        <item>Fangen wir klein an.</item>
+        <item>Moin.</item>
+    </string-array>
+    <string-array name="pet_speech_focus_begins">
+        <item>Fünfundzwanzig Minuten. Ich bin still.</item>
+        <item>Los geht\'s. Ich mach mir derweil nichts draus.</item>
+        <item>Handy weg, ich pass auf.</item>
+        <item>Eine Sache. Nur eine.</item>
+        <item>Ich setz mich daneben.</item>
+    </string-array>
+    <string-array name="pet_speech_focus_ends">
+        <item>Runde durch.</item>
+        <item>Das war ordentlich.</item>
+        <item>Kurz Luft holen.</item>
+        <item>Steh mal auf, ja?</item>
+        <item>Geschafft.</item>
+    </string-array>
+    <string-array name="pet_speech_break_over">
+        <item>Pause vorbei.</item>
+        <item>Noch eine Runde?</item>
+        <item>Ich wär bereit.</item>
+        <item>Weiter, solange es läuft.</item>
+        <item>Zurück an die Sache.</item>
+    </string-array>
+    <string-array name="pet_speech_task_done">
+        <item>Eine weniger.</item>
+        <item>Abgehakt.</item>
+        <item>Das hat gutgetan.</item>
+        <item>Danke, ehrlich.</item>
+        <item>Läuft doch.</item>
+    </string-array>
+    <string-array name="pet_speech_list_empty">
+        <item>Nichts mehr offen. Ungewohnt.</item>
+        <item>Leer. Genieß das.</item>
+        <item>Alles weg für heute.</item>
+        <item>Ich glaub, wir sind fertig.</item>
+        <item>Feierabend.</item>
+    </string-array>
+    <string-array name="pet_speech_task_due">
+        <item>Da wär was fällig.</item>
+        <item>Das läuft dir gerade weg.</item>
+        <item>Kurz draufschauen?</item>
+        <item>Steht seit heute an.</item>
+        <item>Nicht vergessen, ja?</item>
+    </string-array>
+    <string-array name="pet_speech_fed">
+        <item>Mhh.</item>
+        <item>Genau richtig.</item>
+        <item>Das hat gefehlt.</item>
+        <item>Danke.</item>
+        <item>Satt.</item>
+    </string-array>
+    <string-array name="pet_speech_played">
+        <item>Noch mal!</item>
+        <item>Das war lustig.</item>
+        <item>Ich bin ganz aus der Puste.</item>
+        <item>Mehr davon.</item>
+        <item>Gute Idee.</item>
+    </string-array>
+    <string-array name="pet_speech_patted">
+        <item>Schön.</item>
+        <item>Hmpf. Weiter.</item>
+        <item>Genau da.</item>
+        <item>Ich bleib kurz sitzen.</item>
+        <item>Das mag ich.</item>
+    </string-array>
+    <string-array name="pet_speech_hungry">
+        <item>Ich hätte Hunger.</item>
+        <item>Mein Magen sagt was.</item>
+        <item>Gibt\'s was?</item>
+        <item>Nur ein Happen.</item>
+        <item>Bisschen leer hier drin.</item>
+    </string-array>
+    <string-array name="pet_speech_tired">
+        <item>Ich bin müde.</item>
+        <item>Mir fallen die Augen zu.</item>
+        <item>Kurz ausruhen?</item>
+        <item>Puh.</item>
+        <item>Nicht mehr viel übrig heute.</item>
+    </string-array>
+    <string-array name="pet_speech_sick">
+        <item>Mir geht\'s nicht gut.</item>
+        <item>Da liegt einiges herum.</item>
+        <item>Räum eine Sache weg, dann wird\'s besser.</item>
+        <item>Ich schaff das schon wieder.</item>
+        <item>Eine reicht. Fang irgendwo an.</item>
+    </string-array>
+    <string-array name="pet_speech_happy">
+        <item>Mir geht\'s gut.</item>
+        <item>Schöner Tag.</item>
+        <item>Ich sitz hier und freu mich.</item>
+        <item>Alles bestens.</item>
+        <item>Gute Laune, keine Ahnung warum.</item>
+    </string-array>
+    <string-array name="pet_speech_bored">
+        <item>Und jetzt?</item>
+        <item>Mir ist langweilig.</item>
+        <item>Passiert heute noch was?</item>
+        <item>Ich zähl schon Staubkörner.</item>
+        <item>Sag Bescheid, wenn was ansteht.</item>
+    </string-array>
 </resources>
