@@ -124,6 +124,21 @@ niemanden.
 
 ## Erfassen
 
+Die Schnell-Eingabe liest deutsche Zeitangaben (`domain/quickadd/QuickAddParser`):
+„morgen 9 Uhr Zahnarzt“ ergibt die Aufgabe „Zahnarzt“ mit Termin. **Was erkannt wird,
+verschwindet aus dem Titel** — ein Termin daneben und derselbe Text noch einmal im Titel
+wäre schlimmer als keine Erkennung. Von Hand Gewähltes gewinnt immer über Erkanntes.
+
+Erkannt wird eine überschaubare Liste: heute/morgen/übermorgen, Wochentage (immer der
+nächste, nie heute), „in N Tagen/Wochen“, `12.9.`, `3. September`, Uhrzeiten in den
+gebräuchlichen Schreibweisen und ungefähre Tageszeiten. Die Regeln greifen nur an
+Wortgrenzen, sonst zerpflückt der Parser „Freitagsessen planen“.
+
+Die Regexe beginnen mit `(?U)`. Ohne diesen Schalter zählt Java nur `[a-zA-Z0-9_]` als
+Wortzeichen, vor „ü“ steht dann keine Wortgrenze — und `\bübermorgen\b` findet nie etwas.
+
+Die Uhrzeiten hinter „mittags“ und „abends“ stehen in `Balance.kt`, nicht im Parser.
+
 „Teilen an PeTodo“ (`ui/share/ShareTargetActivity`) nimmt `ACTION_SEND` mit `text/plain`
 entgegen. Was daraus Titel und was Notiz wird, entscheidet `domain/text/ShareCapture` —
 Betreff plus alleinstehende Adresse ergeben `[Betreff](Adresse)`, damit in der Liste der

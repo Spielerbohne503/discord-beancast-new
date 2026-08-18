@@ -28,7 +28,7 @@
     <string name="task_open_link">Verweis öffnen</string>
     <string name="task_edit_text">Text bearbeiten</string>
     <string name="today_empty">Nichts offen. Die Liste ist leer.</string>
-    <string name="quick_add_hint">Neue Aufgabe …</string>
+    <string name="quick_add_hint">Neue Aufgabe … „morgen 9 Uhr“</string>
     <string name="quick_add_submit">Aufgabe anlegen</string>
     <string name="quick_add_pick_due">Fälligkeit wählen</string>
     <string name="quick_add_due_clear">Fälligkeit entfernen</string>

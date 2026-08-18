@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.style.TextOverflow
+import uk.spielerbohne.petodo.domain.quickadd.QuickAddParser
 import uk.spielerbohne.petodo.domain.text.MarkdownLinks
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
@@ -94,6 +95,7 @@ import uk.spielerbohne.petodo.ui.common.PriorityUi
 import uk.spielerbohne.petodo.ui.pet.PetStrip
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -177,6 +179,7 @@ fun TodayScreen(
         bottomBar = {
             QuickAddBar(
                 onAdd = onAdd,
+                now = state.now.atZone(state.zone).toLocalDateTime(),
                 requestFocus = quickAdd,
                 onFocusConsumed = onQuickAddConsumed,
             )
@@ -816,6 +819,7 @@ private fun CheckDot(
 @Composable
 private fun QuickAddBar(
     onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit,
+    now: LocalDateTime,
     requestFocus: Boolean = false,
     onFocusConsumed: () -> Unit = {},
 ) {
@@ -824,6 +828,20 @@ private fun QuickAddBar(
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
     var priority by remember { mutableStateOf(uk.spielerbohne.petodo.domain.model.Priority.DEFAULT) }
     val focusRequester = remember { FocusRequester() }
+
+    // "morgen 9 Uhr Zahnarzt" wird beim Tippen gelesen: Die Kapsel darunter zeigt sofort,
+    // was verstanden wurde, und beim Anlegen bleibt nur "Zahnarzt" als Titel übrig.
+    // Auf die Minute genau muss das nicht sein — deshalb hängt die Auswertung an der
+    // vollen Minute und nicht an jedem Tastendruck.
+    val erkannt = remember(title, now.withSecond(0).withNano(0)) {
+        QuickAddParser.parse(title, now)
+    }
+
+    // Von Hand Gewähltes gewinnt: Wer die Kapsel angetippt hat, will nicht, dass ein
+    // Wort im Titel seine Auswahl wieder überschreibt.
+    var manuellGewaehlt by remember { mutableStateOf(false) }
+    val wirksamesDatum = if (manuellGewaehlt) dueDate else erkannt.date
+    val wirksameZeit = if (manuellGewaehlt) dueTime else erkannt.time
 
     // Aus der Statuszeile heraus: Tastatur auf, ohne dass jemand noch einmal tippen muss.
     LaunchedEffect(requestFocus) {
@@ -856,7 +874,7 @@ private fun QuickAddBar(
                     ),
                 )
                 // Der Knopf leuchtet erst, wenn es etwas anzulegen gibt.
-                val bereit = title.isNotBlank()
+                val bereit = erkannt.title.isNotBlank()
                 // Der Knopf wächst, wenn es etwas anzulegen gibt. Ein Knopf, der nur
                 // seine Farbe wechselt, sieht aus wie ein Knopf, der nichts tut.
                 val groesse by animateFloatAsState(
@@ -878,10 +896,11 @@ private fun QuickAddBar(
                             else SolidColor(MaterialTheme.colorScheme.surfaceContainerHighest)
                         )
                         .clickable(enabled = bereit) {
-                            onAdd(title, dueDate, dueTime, priority)
+                            onAdd(erkannt.title, wirksamesDatum, wirksameZeit, priority)
                             title = ""
                             dueDate = null
                             dueTime = null
+                            manuellGewaehlt = false
                             priority = uk.spielerbohne.petodo.domain.model.Priority.DEFAULT
                         },
                     contentAlignment = Alignment.Center,
@@ -900,10 +919,20 @@ private fun QuickAddBar(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 DuePicker(
-                    dueDate = dueDate,
-                    dueTime = dueTime,
-                    onDueDateChange = { dueDate = it },
-                    onDueTimeChange = { dueTime = it },
+                    dueDate = wirksamesDatum,
+                    dueTime = wirksameZeit,
+                    onDueDateChange = {
+                        manuellGewaehlt = true
+                        dueDate = it
+                        // Die erkannte Uhrzeit soll nicht verlorengehen, nur weil das
+                        // Datum von Hand kommt.
+                        if (dueTime == null) dueTime = erkannt.time
+                    },
+                    onDueTimeChange = {
+                        manuellGewaehlt = true
+                        dueTime = it
+                        if (dueDate == null) dueDate = erkannt.date
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .padding(bottom = 4.dp),

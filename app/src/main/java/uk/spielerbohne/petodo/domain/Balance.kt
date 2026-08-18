@@ -139,6 +139,19 @@ object Balance {
     /** Vorgabe-Uhrzeit, wenn zu einem Tagestermin eine Uhrzeit gewählt wird. */
     const val DEFAULT_DUE_HOUR = 9
 
+    /**
+     * Ungefähre Tageszeiten für die Schnell-Eingabe: „morgens“, „mittags“, „nachmittags“,
+     * „abends“, „nachts“.
+     *
+     * Zahlen mit fachlicher Bedeutung — sie entscheiden, wann gemahnt wird, und gehören
+     * deshalb hierher und nicht in den Parser.
+     */
+    const val VAGUE_MORNING_HOUR = 8
+    const val VAGUE_NOON_HOUR = 12
+    const val VAGUE_AFTERNOON_HOUR = 15
+    const val VAGUE_EVENING_HOUR = 18
+    const val VAGUE_NIGHT_HOUR = 21
+
     /** Aufschub durch den "+1 Std"-Knopf. */
     const val SNOOZE_MINUTES = 60L
 
