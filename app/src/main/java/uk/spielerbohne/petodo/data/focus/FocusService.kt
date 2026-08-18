@@ -77,7 +77,7 @@ class FocusService : Service() {
             // Abbrechen und Überspringen enden beide im Bereitzustand; die Statuszeile
             // bleibt stehen, sie ist keine Timer-Anzeige, sondern der Tagesstand.
             FocusAction.STOP, FocusAction.SKIP -> focus.abort()
-            // Nichts ändern, nur weiterzeichnen.
+            // "+ Aufgabe" geht direkt an die App, nicht über den Dienst.
             FocusAction.ADD_TASK, FocusAction.RESUME_DISPLAY -> Unit
         }
     }

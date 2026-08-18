@@ -31,10 +31,30 @@
             android:name=".ui.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.PeTodo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            "Teilen an PeTodo": der schnellste Weg, einen Link oder einen Gedanken aus
+            einer anderen App hereinzubekommen. Ein Dialog über der teilenden App, kein
+            eigener Bildschirm — man will dorthin zurück, wo man war.
+        -->
+        <activity
+            android:name=".ui.share.ShareTargetActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:label="@string/share_label"
+            android:noHistory="true"
+            android:theme="@style/Theme.PeTodo.Transparent">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
 

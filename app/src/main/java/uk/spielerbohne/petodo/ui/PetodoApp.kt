@@ -85,7 +85,12 @@ private enum class TopLevelDestination(
 }
 
 @Composable
-fun PetodoApp(container: AppContainer) {
+fun PetodoApp(
+    container: AppContainer,
+    /** Aus der Statuszeile: Das Eingabefeld soll gleich den Finger bekommen. */
+    quickAdd: Boolean = false,
+    onQuickAddConsumed: () -> Unit = {},
+) {
     val onboardingCompleted by container.settingsRepository.onboardingCompleted
         .collectAsStateWithLifecycle(initialValue = true)
     val scope = rememberCoroutineScope()
@@ -106,11 +111,21 @@ fun PetodoApp(container: AppContainer) {
         return
     }
 
-    MainScaffold(container = container, onOpenPermissions = { showOnboarding = true })
+    MainScaffold(
+        container = container,
+        onOpenPermissions = { showOnboarding = true },
+        quickAdd = quickAdd,
+        onQuickAddConsumed = onQuickAddConsumed,
+    )
 }
 
 @Composable
-private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit) {
+private fun MainScaffold(
+    container: AppContainer,
+    onOpenPermissions: () -> Unit,
+    quickAdd: Boolean,
+    onQuickAddConsumed: () -> Unit,
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -146,6 +161,8 @@ private fun MainScaffold(container: AppContainer, onOpenPermissions: () -> Unit)
             composable(TopLevelDestination.TODAY.route) {
                 TodayRoute(
                     container = container,
+                    quickAdd = quickAdd,
+                    onQuickAddConsumed = onQuickAddConsumed,
                     onOpenTask = { taskId -> navController.navigate("task/$taskId") },
                     onSearch = { navController.navigate("browse?search=true") },
                     onOpenPet = {

@@ -122,6 +122,23 @@ Der Zugewinn-Puls (`rememberGainPulse`) schlägt nur **nach oben** aus. Verfall 
 über Stunden — ihn zu blitzen wäre eine Strafe fürs Nichtstun, und die App bestraft
 niemanden.
 
+## Erfassen
+
+„Teilen an PeTodo“ (`ui/share/ShareTargetActivity`) nimmt `ACTION_SEND` mit `text/plain`
+entgegen. Was daraus Titel und was Notiz wird, entscheidet `domain/text/ShareCapture` —
+Betreff plus alleinstehende Adresse ergeben `[Betreff](Adresse)`, damit in der Liste der
+Titel steht und nicht die Kennung. Die Activity ist ein Dialog über der teilenden App
+(`noHistory`, durchsichtiges Thema) und schreibt im `applicationScope` weiter, nachdem
+sie sich geschlossen hat.
+
+„+ Aufgabe“ in der Fokus-Statuszeile öffnet `MainActivity` mit `EXTRA_QUICK_ADD` und
+setzt den Finger ins Eingabefeld — nicht über den Dienst, der kann kein Fenster öffnen.
+`MainActivity` ist deshalb `singleTop` und liest das Extra auch in `onNewIntent`.
+
+Wischgesten auf der Heute-Liste: rechts abhaken, links auf morgen. Die Karte springt
+zurück, statt wegzufliegen — sie verschwindet nicht, sie wandert in einen anderen
+Abschnitt, und das zeigt die Liste selbst. Löschen ist bewusst keine Geste.
+
 ## Erledigtes und Verweise
 
 Eine abgehakte Aufgabe bleibt den **ganzen Tag** im Block „Heute erledigt“ stehen — sonst

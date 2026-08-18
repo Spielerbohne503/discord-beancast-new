@@ -173,6 +173,20 @@ class TodayViewModel(
         }
     }
 
+    /**
+     * Eine einzelne Aufgabe auf morgen schieben — die Wischgeste nach links.
+     *
+     * Zählt für das Pet wie Aufräumen, wenn die Aufgabe überfällig war; das entscheidet
+     * das Repository, nicht dieser Aufruf.
+     */
+    fun postpone(task: Task) {
+        viewModelScope.launch {
+            repository.postponeToTomorrow(task.id)
+            syncAlarm(task.id)
+            lastPostponed.value = 1
+        }
+    }
+
     fun clearPostponed() {
         lastPostponed.value = null
     }

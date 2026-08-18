@@ -56,7 +56,13 @@ class FocusStatusNotification(private val context: Context) {
                         context.getString(R.string.focus_rounds_today, completedRounds, openTasks),
                     )
                 )
-                builder.addAction(action(FocusAction.ADD_TASK, R.string.focus_add_task))
+                builder.addAction(
+                    NotificationCompat.Action.Builder(
+                        0,
+                        context.getString(R.string.focus_add_task),
+                        quickAdd(),
+                    ).build()
+                )
                 builder.addAction(action(FocusAction.START_FOCUS, R.string.focus_phase_focus))
             }
 
@@ -114,6 +120,22 @@ class FocusStatusNotification(private val context: Context) {
             context.getString(labelRes),
             FocusService.pendingIntent(context, action),
         ).build()
+
+    /**
+     * „+ Aufgabe“ öffnet die App mit dem Eingabefeld im Zugriff.
+     *
+     * Bewusst kein Umweg über den Dienst: Der könnte kein Fenster öffnen, und ein Knopf,
+     * der nichts tut, ist schlimmer als kein Knopf.
+     */
+    private fun quickAdd(): PendingIntent = PendingIntent.getActivity(
+        context,
+        NotificationIds.requestCodeForFocus(FocusAction.ADD_TASK.name),
+        Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(MainActivity.EXTRA_QUICK_ADD, true)
+        },
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     private fun openApp(): PendingIntent = PendingIntent.getActivity(
         context,

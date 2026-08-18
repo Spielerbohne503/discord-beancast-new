@@ -33,9 +33,19 @@
     <string name="quick_add_pick_due">Fälligkeit wählen</string>
     <string name="quick_add_due_clear">Fälligkeit entfernen</string>
 
+    <!-- Teilen an PeTodo -->
+    <string name="share_title">Als Aufgabe sichern</string>
+    <string name="share_label">Zu PeTodo</string>
+    <string name="share_note_hint">Notiz</string>
+    <string name="share_save">Sichern</string>
+    <string name="share_saved">Aufgabe angelegt</string>
+    <string name="share_empty">Nichts zu sichern.</string>
+
     <!-- Aufgabe -->
     <string name="task_toggle_done">Abhaken</string>
     <string name="task_open_details">Aufgabe öffnen</string>
+    <string name="task_swipe_done">Erledigt</string>
+    <string name="task_swipe_tomorrow">Morgen</string>
     <string name="task_edit_title">Aufgabe bearbeiten</string>
     <string name="task_field_title">Titel</string>
     <string name="task_field_note">Notiz</string>

@@ -1,6 +1,6 @@
 package uk.spielerbohne.petodo.ui.today
 
-import androidx.compose.foundation.background
+import android.os.SystemClock
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -11,6 +11,8 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import uk.spielerbohne.petodo.ui.theme.Motion
 import androidx.compose.foundation.BorderStroke
@@ -33,6 +35,7 @@ import uk.spielerbohne.petodo.ui.theme.GlassCard
 import uk.spielerbohne.petodo.ui.theme.Palette
 import uk.spielerbohne.petodo.ui.theme.ScreenGlow
 import uk.spielerbohne.petodo.ui.theme.SectionLabel
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +61,10 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -68,6 +75,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -95,6 +103,8 @@ fun TodayRoute(
     onOpenTask: (String) -> Unit,
     onSearch: () -> Unit,
     onOpenPet: () -> Unit = {},
+    quickAdd: Boolean = false,
+    onQuickAddConsumed: () -> Unit = {},
 ) {
     val viewModel: TodayViewModel = viewModel(factory = TodayViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -102,6 +112,7 @@ fun TodayRoute(
     TodayScreen(
         state = state,
         onToggle = viewModel::toggleCompleted,
+        onPostpone = viewModel::postpone,
         onAdd = viewModel::addTask,
         onOpenTask = onOpenTask,
         onDelete = viewModel::deleteTask,
@@ -113,6 +124,8 @@ fun TodayRoute(
         // Der Streifen wird hereingereicht, damit der Screen selbst nichts vom Container
         // wissen muss — er bleibt eine reine Anzeige seines Zustands.
         petStrip = { PetStrip(container = container, onOpen = onOpenPet) },
+        quickAdd = quickAdd,
+        onQuickAddConsumed = onQuickAddConsumed,
     )
 }
 
@@ -120,6 +133,7 @@ fun TodayRoute(
 fun TodayScreen(
     state: TodayUiState,
     onToggle: (Task) -> Unit,
+    onPostpone: (Task) -> Unit = {},
     onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit,
     onOpenTask: (String) -> Unit,
     onDelete: (String) -> Unit,
@@ -129,6 +143,8 @@ fun TodayScreen(
     onPostponeConsumed: () -> Unit,
     onSearch: () -> Unit = {},
     petStrip: (@Composable () -> Unit)? = null,
+    quickAdd: Boolean = false,
+    onQuickAddConsumed: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val deletedMessage = stringResource(R.string.task_deleted)
@@ -158,7 +174,13 @@ fun TodayScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = { QuickAddBar(onAdd = onAdd) },
+        bottomBar = {
+            QuickAddBar(
+                onAdd = onAdd,
+                requestFocus = quickAdd,
+                onFocusConsumed = onQuickAddConsumed,
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         val board = state.board
@@ -197,6 +219,7 @@ fun TodayScreen(
                     tasks = board.overdue,
                     state = state,
                     accent = Palette.Amber,
+                    onPostpone = onPostpone,
                     // "Verschieben" räumt den ganzen Block auf einmal auf — die Fluchttür
                     // aus einer schlechten Woche.
                     bulkAction = if (board.overdue.isNotEmpty()) postponeLabel to onPostponeOverdue else null,
@@ -205,11 +228,12 @@ fun TodayScreen(
                 )
                 taskSection(
                     R.string.section_today, board.today, state,
-                    accent = Palette.Sky, onToggle = onToggle, onOpen = onOpenTask,
+                    accent = Palette.Sky, onPostpone = onPostpone,
+                    onToggle = onToggle, onOpen = onOpenTask,
                 )
                 taskSection(
                     R.string.section_later, board.later, state,
-                    onToggle = onToggle, onOpen = onOpenTask,
+                    onPostpone = onPostpone, onToggle = onToggle, onOpen = onOpenTask,
                 )
                 taskSection(
                     R.string.section_done_today, board.doneToday, state,
@@ -294,6 +318,7 @@ private fun LazyListScope.taskSection(
     state: TodayUiState,
     accent: Color? = null,
     bulkAction: Pair<String, () -> Unit>? = null,
+    onPostpone: ((Task) -> Unit)? = null,
     onToggle: (Task) -> Unit,
     onOpen: (String) -> Unit,
 ) {
@@ -309,12 +334,10 @@ private fun LazyListScope.taskSection(
         )
     }
     items(tasks, key = { it.id }) { task ->
-        TaskCard(
+        SwipeableTask(
             task = task,
-            state = state,
-            accent = accent,
-            onToggle = { onToggle(task) },
-            onOpen = { onOpen(task.id) },
+            onDone = { onToggle(task) },
+            onPostpone = onPostpone?.takeIf { !task.isCompleted }?.let { { it(task) } },
             // Abgehakt heißt: Die Zeile wandert sichtbar von "heute" nach "erledigt".
             // Ohne diese Bewegung verschwindet sie an der einen Stelle und erscheint an
             // der anderen — und man sucht kurz, was gerade passiert ist.
@@ -325,9 +348,111 @@ private fun LazyListScope.taskSection(
                     fadeOutSpec = Motion.quick(),
                 )
                 .padding(horizontal = 16.dp, vertical = 3.dp),
+        ) {
+            TaskCard(
+                task = task,
+                state = state,
+                accent = accent,
+                onToggle = { onToggle(task) },
+                onOpen = { onOpen(task.id) },
+            )
+        }
+    }
+}
+
+/**
+ * Wischen statt Zielen.
+ *
+ * Nach rechts abhaken, nach links auf morgen — die beiden Handlungen, die man den ganzen
+ * Tag macht, ohne den 24 dp großen Kreis treffen zu müssen.
+ *
+ * Die Karte springt danach zurück, statt weggewischt zu werden: Sie verschwindet nicht,
+ * sie wandert in einen anderen Abschnitt, und dieses Wandern zeigt die Liste selbst.
+ * Wegfliegen und gleichzeitig woanders auftauchen wären zwei Bewegungen für eine Sache.
+ *
+ * Beide Gesten sind rücknehmbar — abhaken durch nochmal antippen, verschieben über die
+ * Rückmeldung unten. Deshalb ist keine Sicherheitsabfrage nötig; Löschen wäre etwas
+ * anderes und bleibt bewusst der Detailseite vorbehalten.
+ */
+@Composable
+private fun SwipeableTask(
+    task: Task,
+    onDone: () -> Unit,
+    onPostpone: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    // Ein Schwung kann die Schwelle zweimal überfahren. Beim Abhaken wäre der zweite
+    // Treffer ein sofortiges Zurücknehmen — man sähe die Aufgabe kurz gehen und
+    // wiederkommen und wüsste nicht, warum.
+    var zuletzt by remember { mutableLongStateOf(0L) }
+
+    val zustand = rememberSwipeToDismissBoxState(
+        confirmValueChange = { ziel ->
+            val jetzt = SystemClock.elapsedRealtime()
+            if (ziel != SwipeToDismissBoxValue.Settled && jetzt - zuletzt > SWIPE_SPERRE_MILLIS) {
+                zuletzt = jetzt
+                when (ziel) {
+                    SwipeToDismissBoxValue.StartToEnd -> onDone()
+                    SwipeToDismissBoxValue.EndToStart -> onPostpone?.invoke()
+                    SwipeToDismissBoxValue.Settled -> Unit
+                }
+            }
+            // Immer false: Die Karte kehrt zurück, die Liste ordnet sie um.
+            false
+        },
+        positionalThreshold = { breite -> breite * SWIPE_ANTEIL },
+    )
+
+    SwipeToDismissBox(
+        state = zustand,
+        modifier = modifier,
+        enableDismissFromStartToEnd = !task.isCompleted,
+        enableDismissFromEndToStart = onPostpone != null,
+        backgroundContent = { SwipeBackground(zustand.dismissDirection) },
+        content = { content() },
+    )
+}
+
+/** Was hinter der Karte sichtbar wird, während man zieht. */
+@Composable
+private fun SwipeBackground(direction: SwipeToDismissBoxValue) {
+    if (direction == SwipeToDismissBoxValue.Settled) return
+
+    val nachRechts = direction == SwipeToDismissBoxValue.StartToEnd
+    val farbe = if (nachRechts) Palette.Lime else Palette.Amber
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(MaterialTheme.shapes.medium)
+            .background(farbe.copy(alpha = 0.16f))
+            .padding(horizontal = 22.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (nachRechts) Arrangement.Start else Arrangement.End,
+    ) {
+        Icon(
+            imageVector = if (nachRechts) Icons.Filled.Check else Icons.Filled.Schedule,
+            contentDescription = null,
+            tint = farbe,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(
+            text = stringResource(
+                if (nachRechts) R.string.task_swipe_done else R.string.task_swipe_tomorrow
+            ),
+            style = MaterialTheme.typography.labelMedium,
+            color = farbe,
+            modifier = Modifier.padding(horizontal = 8.dp),
         )
     }
 }
+
+/** Wie weit gezogen werden muss, damit es zählt. Weniger löst versehentlich aus. */
+private const val SWIPE_ANTEIL = 0.35f
+
+/** Sperre gegen den doppelten Treffer eines einzigen Schwungs. */
+private const val SWIPE_SPERRE_MILLIS = 600L
 
 /**
  * Der Rückblick ganz unten: was an den Tagen davor erledigt wurde.
@@ -689,11 +814,23 @@ private fun CheckDot(
 
 /** Schnell-Eingabe unten: Titel, Fälligkeit, Priorität — die drei Angaben mit Tagesnutzen. */
 @Composable
-private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit) {
+private fun QuickAddBar(
+    onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit,
+    requestFocus: Boolean = false,
+    onFocusConsumed: () -> Unit = {},
+) {
     var title by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf<LocalDate?>(null) }
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
     var priority by remember { mutableStateOf(uk.spielerbohne.petodo.domain.model.Priority.DEFAULT) }
+    val focusRequester = remember { FocusRequester() }
+
+    // Aus der Statuszeile heraus: Tastatur auf, ohne dass jemand noch einmal tippen muss.
+    LaunchedEffect(requestFocus) {
+        if (!requestFocus) return@LaunchedEffect
+        runCatching { focusRequester.requestFocus() }
+        onFocusConsumed()
+    }
 
     // Schwebt über dem Grund statt als Leiste anzukleben — dieselbe Sprache wie die
     // Navigationsleiste darunter.
@@ -710,7 +847,9 @@ private fun QuickAddBar(onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit) {
                     onValueChange = { title = it },
                     placeholder = { Text(stringResource(R.string.quick_add_hint)) },
                     singleLine = true,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .focusRequester(focusRequester),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
