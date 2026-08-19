@@ -78,6 +78,10 @@ object PetSpeech {
         if (roll < Balance.BUBBLE_REPEAT_CHANCE) return candidate
 
         val alternatives = texts.filter { it != previous }
+        // Stehen in einer Kategorie nur gleiche Texte, gibt es nichts zu wechseln —
+        // dann lieber wiederholen als aus einer leeren Liste zu würfeln.
+        if (alternatives.isEmpty()) return candidate
+
         return alternatives[chooser(alternatives.size).coerceIn(alternatives.indices)]
     }
 }

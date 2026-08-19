@@ -91,7 +91,7 @@ class TaskRepository(
     ): String {
         val now = Instant.now(clock)
         val id = UUID.randomUUID().toString()
-        val sortKey = FractionalIndex.after(taskDao.highestSortKey())
+        val sortKey = FractionalIndex.afterOrInitial(taskDao.highestSortKey())
         val dueAt = dueDate?.let { date ->
             (dueTime?.let { date.atTime(it) } ?: date.atStartOfDay())
                 .atZone(zone)

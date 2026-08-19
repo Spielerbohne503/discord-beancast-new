@@ -70,7 +70,7 @@ class HabitRepository(
                 name = name.trim(),
                 scheduleMask = schedule.mask,
                 colorArgb = colorArgb,
-                sortKey = FractionalIndex.after(habitDao.highestSortKey()),
+                sortKey = FractionalIndex.afterOrInitial(habitDao.highestSortKey()),
                 createdAt = now,
                 updatedAt = now,
             )

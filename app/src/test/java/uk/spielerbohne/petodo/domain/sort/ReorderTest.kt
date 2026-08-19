@@ -86,4 +86,20 @@ class ReorderTest {
         assertEquals(original, Reorder.move(original, from = 0, to = 5))
         assertEquals(original, Reorder.move(original, from = -1, to = 1))
     }
+
+    @Test
+    fun ein_beschaedigter_nachbarschluessel_kostet_den_zug_nicht_die_app() {
+        val keys = listOf("a", "ÜBERRASCHUNG", "c")
+
+        // Statt einer Ausnahme kommt nichts zurück — dann wird auch nichts geschrieben.
+        assertNull(Reorder.keyForMove(keys, from = 2, to = 1))
+    }
+
+    @Test
+    fun eine_verdrehte_reihenfolge_wird_nicht_erzwungen() {
+        // Kann nur aus einer beschädigten Datenbank kommen: b steht vor a.
+        val keys = listOf("b", "a", "c")
+
+        assertNull(Reorder.keyForMove(keys, from = 2, to = 1))
+    }
 }

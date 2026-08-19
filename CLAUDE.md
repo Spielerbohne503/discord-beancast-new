@@ -212,6 +212,19 @@ Drei Regeln, die hier leicht kaputtgehen:
 Neu gezeichnet wird über einen Beobachter in `PetodoApplication`, der an `observeTasks()`
 hängt. Damit ist es egal, wo eine Aufgabe geändert wurde.
 
+## Löschen und Rückgängig
+
+Die zuletzt gelöschte Aufgabe steht in `TaskRepository.lastDeleted`, nicht in einem
+ViewModel. Der Grund: Gelöscht wird auf der Detailseite, zurückgeholt wird unten auf der
+Heute-Liste — zwei Bildschirme, zwei ViewModels. Ohne diese gemeinsame Stelle ist die
+Rückgängig-Leiste totes Beiwerk, und Löschen die einzige Handlung ohne Rückweg.
+
+Titel und Notiz auf der Detailseite werden **verzögert** gespeichert (400 ms nach dem
+letzten Zeichen, sofort beim Verlassen). Bei jedem Tastendruck zu schreiben kostet eine
+Datenbankänderung und ein Widget-Neuzeichnen pro Zeichen — und der zurückfließende Wert
+kann den Schreibcursor springen lassen. Das Eingabefeld hängt deshalb nur an der
+Aufgabenkennung, nicht am Text.
+
 ## Erledigtes und Verweise
 
 Eine abgehakte Aufgabe bleibt den **ganzen Tag** im Block „Heute erledigt“ stehen — sonst

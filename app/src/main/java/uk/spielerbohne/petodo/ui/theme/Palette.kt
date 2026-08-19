@@ -43,6 +43,9 @@ object Palette {
     val Amber = Color(0xFFFF8A3D)
     val Ember = Color(0xFFE0264F)
 
+    /** Das Ende des Verlaufs für ein elendes Pet: fast erloschen, aber nicht schwarz. */
+    val EmberDeep = Color(0xFF2A1520)
+
     /** Erledigtes und Serien — der einzige Akzent, der nicht aus einem Verlauf kommt. */
     val Lime = Color(0xFFC8FF52)
 

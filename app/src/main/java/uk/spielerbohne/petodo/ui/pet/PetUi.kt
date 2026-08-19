@@ -82,7 +82,7 @@ fun HealthStage.gradient(): List<Color> = when (this) {
     HealthStage.HEALTHY -> Brand.Pet
     HealthStage.WEAKENED -> listOf(Palette.Violet, Palette.IndigoDeep)
     HealthStage.SICK -> Brand.Overdue
-    HealthStage.MISERABLE -> listOf(Palette.Ember, Color(0xFF2A1520))
+    HealthStage.MISERABLE -> listOf(Palette.Ember, Palette.EmberDeep)
 }
 
 /** Die Akzentfarbe der Stufe — für Balken und Ränder außerhalb der Verlaufskarte. */

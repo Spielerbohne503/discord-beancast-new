@@ -46,7 +46,7 @@ class TagRepository(
             id = UUID.randomUUID().toString(),
             name = name,
             colorArgb = null,
-            sortKey = FractionalIndex.after(tagDao.highestSortKey()),
+            sortKey = FractionalIndex.afterOrInitial(tagDao.highestSortKey()),
             createdAt = now,
             updatedAt = now,
         )

@@ -74,6 +74,17 @@ object FractionalIndex {
     /** Schlüssel hinter dem letzten Element. */
     fun after(last: String?): String = between(last, null)
 
+    /**
+     * Schlüssel hinter dem letzten Element, auch wenn der unbrauchbar ist.
+     *
+     * [between] besteht zu Recht auf gültigen Schlüsseln — es ist eine reine Funktion mit
+     * einer Vorbedingung. An der Grenze zur Datenbank gilt aber etwas anderes: Dort kann
+     * ein beschädigter Wert liegen, etwa aus einer von Hand bearbeiteten Sicherung. Dann
+     * kostet das die Reihenfolge, aber nicht die Fähigkeit, überhaupt etwas anzulegen.
+     */
+    fun afterOrInitial(last: String?): String =
+        if (last == null || !isValid(last)) initial() else after(last)
+
     /** Schlüssel vor dem ersten Element. */
     fun before(first: String?): String = between(null, first)
 

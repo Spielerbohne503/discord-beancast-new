@@ -139,6 +139,15 @@ class PetSpeechTest {
         }
     }
 
+    @Test
+    fun eine_kategorie_aus_lauter_gleichen_texten_stuerzt_nicht_ab() {
+        // Kommt in den mitgelieferten Texten nicht vor, wäre aber ein Absturz beim Pet:
+        // Ohne Alternative würfelte der Code aus einer leeren Liste.
+        val gleich = listOf("Hallo", "Hallo", "Hallo")
+
+        assertEquals("Hallo", PetSpeech.pick(gleich, previous = "Hallo", roll = 0.9, chooser = { 0 }))
+    }
+
     /** Kategorie-Schlüssel → Anzahl der Texte, gelesen aus `res/values/strings.xml`. */
     private fun speechArrays(): Map<String, Int> {
         val datei = listOf("src/main/res/values/strings.xml", "app/src/main/res/values/strings.xml")

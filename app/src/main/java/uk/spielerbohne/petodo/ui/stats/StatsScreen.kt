@@ -222,7 +222,7 @@ private fun DayBar(day: DayCount, max: Int, modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(hoehe)
-                    .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 2.dp, bottomEnd = 2.dp))
+                    .clip(BALKEN_FORM)
                     .background(
                         if (day.count == 0) {
                             Brush.verticalGradient(
@@ -276,7 +276,7 @@ private fun TotalTile(label: String, value: Int, accent: Color, modifier: Modifi
                 modifier = Modifier
                     .width(20.dp)
                     .height(3.dp)
-                    .clip(RoundedCornerShape(2.dp))
+                    .clip(MARKE_FORM)
                     .background(accent)
             )
             Text(
@@ -295,3 +295,18 @@ private fun TotalTile(label: String, value: Int, accent: Color, modifier: Modifi
 
 /** Ein leerer Tag ist trotzdem ein Tag — er behält diesen Anteil der Höhe. */
 private const val MIN_ANTEIL = 0.04f
+
+/**
+ * Die Geometrie des Diagramms.
+ *
+ * Bewusst hier und nicht im Designsystem: Das sind keine Flächen der App, sondern die
+ * Form eines Balkens. Ein Kartenradius gehört nach `Theme.kt`, die Rundung einer
+ * Diagrammspitze gehört zum Diagramm.
+ */
+private val BALKEN_FORM = RoundedCornerShape(
+    topStart = 6.dp,
+    topEnd = 6.dp,
+    bottomStart = 2.dp,
+    bottomEnd = 2.dp,
+)
+private val MARKE_FORM = RoundedCornerShape(2.dp)

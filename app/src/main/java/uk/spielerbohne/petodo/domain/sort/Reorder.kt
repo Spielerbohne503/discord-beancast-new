@@ -28,6 +28,13 @@ object Reorder {
         val previous = remaining.getOrNull(to - 1)
         val next = remaining.getOrNull(to)
 
+        // Ein beschädigter Schlüssel — etwa aus einer von Hand bearbeiteten Sicherung —
+        // kostet diesen einen Zug, nicht die App: [FractionalIndex.between] besteht zu
+        // Recht auf gültigen Nachbarn, also wird hier vorher nachgesehen.
+        if (previous != null && !FractionalIndex.isValid(previous)) return null
+        if (next != null && !FractionalIndex.isValid(next)) return null
+        if (previous != null && next != null && previous >= next) return null
+
         return FractionalIndex.between(previous, next)
     }
 

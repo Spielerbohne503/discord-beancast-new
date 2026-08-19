@@ -111,4 +111,17 @@ class FractionalIndexTest {
         assertEquals(keys.distinct().size, keys.size)
         assertEquals(keys.sorted(), keys)
     }
+
+    @Test
+    fun ein_beschaedigter_schluessel_verhindert_das_anlegen_nicht() {
+        // Kommt aus einer von Hand bearbeiteten Sicherung. Die Reihenfolge ist dann
+        // dahin — die Fähigkeit, überhaupt etwas anzulegen, darf es nicht sein.
+        assertTrue(FractionalIndex.isValid(FractionalIndex.afterOrInitial("ÜBERRASCHUNG")))
+        assertTrue(FractionalIndex.isValid(FractionalIndex.afterOrInitial("")))
+        assertTrue(FractionalIndex.isValid(FractionalIndex.afterOrInitial(null)))
+
+        // Ein gültiger Schlüssel wird ganz normal fortgeschrieben.
+        val gueltig = FractionalIndex.initial()
+        assertEquals(FractionalIndex.after(gueltig), FractionalIndex.afterOrInitial(gueltig))
+    }
 }

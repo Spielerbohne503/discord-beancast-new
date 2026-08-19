@@ -31,7 +31,7 @@ class TaskListRepository(
         val trimmed = name.trim().takeIf { it.isNotEmpty() } ?: return null
         val now = Instant.now(clock).toEpochMilli()
         val id = UUID.randomUUID().toString()
-        val sortKey = FractionalIndex.after(taskListDao.all().maxByOrNull { it.sortKey }?.sortKey)
+        val sortKey = FractionalIndex.afterOrInitial(taskListDao.all().maxByOrNull { it.sortKey }?.sortKey)
 
         taskListDao.insertIfAbsent(
             TaskListEntity(
