@@ -1,0 +1,104 @@
+/**
+ * Kalenderrechnung in Ortszeit.
+ *
+ * Der Unterschied zwischen *Zeitpunkt* und *Tag* zieht sich durch die ganze App: Eine
+ * Fälligkeit ist ein Zeitpunkt, ein Haken an einer Gewohnheit ist ein Tag. Wer beides
+ * vermischt, verschiebt bei einem Zeitzonenwechsel Einträge auf den Vortag.
+ *
+ * Alle Funktionen hier sind rein: Sie lesen nie die Uhr, sondern bekommen `now` gereicht.
+ */
+
+export const MS_PER_MINUTE = 60_000;
+export const MS_PER_HOUR = 3_600_000;
+export const MS_PER_DAY = 86_400_000;
+
+/** Der Kalendertag eines Zeitpunkts als Tage seit dem 1.1.1970, in Ortszeit. */
+export function dayOf(millis) {
+  const date = new Date(millis);
+  return epochDayOf(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/** Tagesbeginn (00:00 Ortszeit) eines Kalendertags als Zeitpunkt. */
+export function startOfDay(day) {
+  const date = fromEpochDay(day);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+/** Tagesende, also der Beginn des Folgetags. */
+export function endOfDay(day) {
+  return startOfDay(day + 1);
+}
+
+/** Ein Zeitpunkt an einem Tag zu einer Uhrzeit. */
+export function atTime(day, hour, minute = 0) {
+  const date = fromEpochDay(day);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute, 0, 0).getTime();
+}
+
+/** Kalendertag aus Jahr/Monat/Tag — Monat ist nullbasiert wie in `Date`. */
+export function epochDayOf(year, monthIndex, dayOfMonth) {
+  // Über UTC rechnen, damit Sommerzeit die Tagesgrenze nicht verschiebt: Es geht hier
+  // um die Nummer des Kalendertags, nicht um eine Dauer.
+  return Math.floor(Date.UTC(year, monthIndex, dayOfMonth) / MS_PER_DAY);
+}
+
+/** Ein `Date` in Ortszeit (Mittag), das diesen Kalendertag darstellt. */
+export function fromEpochDay(day) {
+  const utc = new Date(day * MS_PER_DAY);
+  // Mittag statt Mitternacht: So kann keine Zeitumstellung den Tag kippen.
+  return new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate(), 12);
+}
+
+/** Wochentag: 1 = Montag … 7 = Sonntag (wie ISO, nicht wie `Date.getDay()`). */
+export function isoWeekday(day) {
+  const weekday = fromEpochDay(day).getDay();
+  return weekday === 0 ? 7 : weekday;
+}
+
+/** Der Montag der Woche, in der [day] liegt. */
+export function startOfWeek(day) {
+  return day - (isoWeekday(day) - 1);
+}
+
+/** Tage zwischen zwei Kalendertagen. */
+export function daysBetween(from, to) {
+  return to - from;
+}
+
+/** `YYYY-MM-DD` — für Sicherungen und Tests lesbar. */
+export function isoDate(day) {
+  const date = fromEpochDay(day);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const dayOfMonth = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${dayOfMonth}`;
+}
+
+/** Umkehrung von [isoDate]. */
+export function dayFromIso(iso) {
+  const [year, month, dayOfMonth] = iso.split("-").map(Number);
+  return epochDayOf(year, month - 1, dayOfMonth);
+}
+
+/** Minuten seit Mitternacht eines Zeitpunkts, in Ortszeit. */
+export function minutesOfDay(millis) {
+  const date = new Date(millis);
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+/** `HH:MM` aus Minuten seit Mitternacht. */
+export function formatHhMm(minutes) {
+  const hour = Math.floor(minutes / 60) % 24;
+  const minute = minutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/** Minuten seit Mitternacht aus `HH:MM`; `null`, wenn unlesbar. */
+export function parseHhMm(text) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(text ?? "").trim());
+  if (!match) return null;
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+  return hour * 60 + minute;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "petodo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Aufgabenverwaltung mit Begleiter — als Webseite, offline, ohne Konto.",
+  "scripts": {
+    "test": "node --test test/",
+    "serve": "python3 tools/serve.py",
+    "shots": "node tools/screenshots.mjs"
+  }
+}

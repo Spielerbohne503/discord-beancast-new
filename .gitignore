@@ -1,18 +1,4 @@
-*.iml
-.gradle/
-/local.properties
-/.idea/
+node_modules/
+.screenshots/
+*.log
 .DS_Store
-/build
-/app/build
-/captures
-.externalNativeBuild
-.cxx
-
-# Signaturschlüssel — gehört nie ins Repository
-keystore.properties
-*.jks
-*.keystore
-
-# Gebaute APKs
-/dist
