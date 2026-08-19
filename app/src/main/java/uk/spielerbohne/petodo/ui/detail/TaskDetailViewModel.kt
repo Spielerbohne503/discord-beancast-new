@@ -5,7 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -49,7 +52,12 @@ class TaskDetailViewModel(
     private val tagRepository: TagRepository,
     private val nagCoordinator: NagCoordinator,
     private val clock: Clock,
+    /** Überlebt den Bildschirm — für Eingaben, die beim Verlassen noch anstehen. */
+    private val applicationScope: CoroutineScope,
 ) : ViewModel() {
+
+    private var titleJob: Job? = null
+    private var noteJob: Job? = null
 
     val state: StateFlow<TaskDetailUiState> = combine(
         taskRepository.observeTask(taskId),
@@ -73,7 +81,24 @@ class TaskDetailViewModel(
         initialValue = TaskDetailUiState(zone = clock.zone, now = Instant.now(clock)),
     )
 
-    fun setTitle(title: String) = edit { task ->
+    /**
+     * Titel und Notiz werden **verzögert** gespeichert.
+     *
+     * Bei jedem Tastendruck zu schreiben hat drei Nachteile auf einmal: Die Datenbank
+     * bekommt pro Zeichen eine Änderung, das Widget zeichnet sich pro Zeichen neu, und
+     * der zurückfließende Wert kann den Schreibcursor im Feld springen lassen. Nach einer
+     * kurzen Pause reicht völlig — beim Verlassen des Bildschirms wird ohnehin gespeichert.
+     */
+    fun setTitle(title: String) {
+        titleJob?.cancel()
+        titleJob = viewModelScope.launch {
+            delay(SAVE_DELAY_MILLIS)
+            saveTitle(title)
+        }
+    }
+
+    private suspend fun saveTitle(title: String) {
+        val task = state.value.task ?: return
         taskRepository.updateTask(
             id = task.id,
             title = title,
@@ -81,9 +106,19 @@ class TaskDetailViewModel(
             dueDate = task.dueDate(clock.zone),
             dueTime = if (task.hasTime) task.dueAt?.atZone(clock.zone)?.toLocalTime() else null,
         )
+        syncAlarmFor(task.id)
     }
 
-    fun setNote(note: String) = edit { task ->
+    fun setNote(note: String) {
+        noteJob?.cancel()
+        noteJob = viewModelScope.launch {
+            delay(SAVE_DELAY_MILLIS)
+            saveNote(note)
+        }
+    }
+
+    private suspend fun saveNote(note: String) {
+        val task = state.value.task ?: return
         taskRepository.updateTask(
             id = task.id,
             title = task.title,
@@ -91,6 +126,23 @@ class TaskDetailViewModel(
             dueDate = task.dueDate(clock.zone),
             dueTime = if (task.hasTime) task.dueAt?.atZone(clock.zone)?.toLocalTime() else null,
         )
+    }
+
+    /** Beim Verlassen des Bildschirms: Was noch in der Warteschlange steht, kommt sofort. */
+    fun flushPendingEdits(title: String, note: String) {
+        titleJob?.cancel()
+        noteJob?.cancel()
+        // Absichtlich im Anwendungsbereich: Der Bildschirm ist im Begriff zu verschwinden,
+        // sein eigener Bereich wird gleich abgeräumt — die Eingabe darf das überleben.
+        applicationScope.launch {
+            val task = state.value.task ?: return@launch
+            // Wurde gerade gelöscht, darf die nachgereichte Eingabe die Aufgabe nicht
+            // wieder aus dem Papierkorb holen.
+            if (task.isDeleted || state.value.gone) return@launch
+
+            if (title != task.title) saveTitle(title)
+            if (note != task.note.orEmpty()) saveNote(note)
+        }
     }
 
     fun setDue(date: LocalDate?, time: LocalTime?) = edit { task ->
@@ -115,6 +167,10 @@ class TaskDetailViewModel(
         withContext(Dispatchers.IO) {
             if (completed) nagCoordinator.onTaskCompleted(task.id) else nagCoordinator.syncTask(task.id)
         }
+    }
+
+    private suspend fun syncAlarmFor(id: String) {
+        withContext(Dispatchers.IO) { nagCoordinator.syncTask(id) }
     }
 
     fun delete() {
@@ -173,6 +229,14 @@ class TaskDetailViewModel(
     companion object {
         private const val STOP_TIMEOUT_MILLIS = 5_000L
 
+        /**
+         * So lange wird nach dem letzten Tastendruck gewartet.
+         *
+         * Kurz genug, dass ein Wechsel in eine andere App nichts verliert; lang genug,
+         * dass beim Schreiben eines Satzes nicht dreißig Änderungen anfallen.
+         */
+        private const val SAVE_DELAY_MILLIS = 400L
+
         fun factory(container: AppContainer, taskId: String): ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
@@ -183,6 +247,7 @@ class TaskDetailViewModel(
                         tagRepository = container.tagRepository,
                         nagCoordinator = container.nagCoordinator,
                         clock = container.clock,
+                        applicationScope = container.applicationScope,
                     )
                 }
             }

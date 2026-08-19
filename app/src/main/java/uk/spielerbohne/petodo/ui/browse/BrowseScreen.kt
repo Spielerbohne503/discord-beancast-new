@@ -67,6 +67,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import uk.spielerbohne.petodo.domain.model.TaskList
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.filter.TaskScope
@@ -251,7 +252,7 @@ fun BrowseScreen(
 @Composable
 private fun ScopeChips(
     current: TaskScope,
-    lists: List<uk.spielerbohne.petodo.domain.model.TaskList>,
+    lists: List<TaskList>,
     onScopeChange: (TaskScope) -> Unit,
 ) {
     Column(modifier = Modifier.padding(horizontal = 8.dp)) {

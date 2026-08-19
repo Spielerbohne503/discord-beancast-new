@@ -87,7 +87,13 @@ class BrowseViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-        initialValue = BrowseUiState(scope = initialScope, zone = clock.zone),
+        // Mit dem Vorgabewert Instant.EPOCH stünde im ersten Bild an jeder Aufgabe
+        // "20000 Tage überfällig".
+        initialValue = BrowseUiState(
+            scope = initialScope,
+            zone = clock.zone,
+            now = Instant.now(clock),
+        ),
     )
 
     fun setScope(newScope: TaskScope) {

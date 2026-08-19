@@ -94,7 +94,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
+import uk.spielerbohne.petodo.domain.model.Priority
 import uk.spielerbohne.petodo.domain.model.Task
+import uk.spielerbohne.petodo.ui.common.PriorityPicker
 import uk.spielerbohne.petodo.ui.common.PriorityUi
 import uk.spielerbohne.petodo.ui.habits.HabitStrip
 import uk.spielerbohne.petodo.ui.pet.PetStrip
@@ -123,7 +125,6 @@ fun TodayRoute(
         onPostpone = viewModel::postpone,
         onAdd = viewModel::addTask,
         onOpenTask = onOpenTask,
-        onDelete = viewModel::deleteTask,
         onUndoDelete = viewModel::undoDelete,
         onUndoConsumed = viewModel::clearUndo,
         onPostponeOverdue = viewModel::postponeOverdue,
@@ -145,7 +146,6 @@ fun TodayScreen(
     onPostpone: (Task) -> Unit = {},
     onAdd: (String, LocalDate?, LocalTime?, Int) -> Unit,
     onOpenTask: (String) -> Unit,
-    onDelete: (String) -> Unit,
     onUndoDelete: () -> Unit,
     onUndoConsumed: () -> Unit,
     onPostponeOverdue: () -> Unit,
@@ -856,7 +856,7 @@ private fun QuickAddBar(
     var title by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf<LocalDate?>(null) }
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
-    var priority by remember { mutableIntStateOf(uk.spielerbohne.petodo.domain.model.Priority.DEFAULT) }
+    var priority by remember { mutableIntStateOf(Priority.DEFAULT) }
     val focusRequester = remember { FocusRequester() }
 
     // "morgen 9 Uhr Zahnarzt" wird beim Tippen gelesen: Die Kapsel darunter zeigt sofort,
@@ -937,7 +937,7 @@ private fun QuickAddBar(
                             dueDate = null
                             dueTime = null
                             manuellGewaehlt = false
-                            priority = uk.spielerbohne.petodo.domain.model.Priority.DEFAULT
+                            priority = Priority.DEFAULT
                         },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -973,7 +973,7 @@ private fun QuickAddBar(
                         .weight(1f)
                         .padding(bottom = 4.dp),
                 )
-                uk.spielerbohne.petodo.ui.common.PriorityPicker(
+                PriorityPicker(
                     priority = priority,
                     onPriorityChange = { priority = it },
                 )

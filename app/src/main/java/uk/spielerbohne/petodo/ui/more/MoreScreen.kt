@@ -43,6 +43,9 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import uk.spielerbohne.petodo.data.debug.CrashLog
+import uk.spielerbohne.petodo.domain.focus.FocusSettings
+import uk.spielerbohne.petodo.domain.model.Tag
+import uk.spielerbohne.petodo.domain.model.TaskList
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.ui.theme.GlassCard
 import uk.spielerbohne.petodo.di.AppContainer
@@ -115,11 +118,11 @@ private fun BackupMessage.toText(context: android.content.Context): String = whe
 fun MoreScreen(
     modifier: Modifier = Modifier,
     quietHours: QuietHours,
-    lists: List<uk.spielerbohne.petodo.domain.model.TaskList>,
-    tags: List<uk.spielerbohne.petodo.domain.model.Tag>,
-    focusSettings: uk.spielerbohne.petodo.domain.focus.FocusSettings =
-        uk.spielerbohne.petodo.domain.focus.FocusSettings.DEFAULT,
-    onFocusSettingsChange: (uk.spielerbohne.petodo.domain.focus.FocusSettings) -> Unit = {},
+    lists: List<TaskList>,
+    tags: List<Tag>,
+    focusSettings: FocusSettings =
+        FocusSettings.DEFAULT,
+    onFocusSettingsChange: (FocusSettings) -> Unit = {},
     onQuietHoursChange: (LocalTime, LocalTime, Boolean) -> Unit,
     onCreateList: (String, Int?, Boolean) -> Unit,
     onListColorChange: (String, Int) -> Unit,

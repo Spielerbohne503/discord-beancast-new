@@ -44,10 +44,12 @@ import uk.spielerbohne.petodo.ui.theme.GlassCard
 import uk.spielerbohne.petodo.ui.theme.Palette
 import uk.spielerbohne.petodo.ui.theme.SectionLabel
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,6 +62,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import uk.spielerbohne.petodo.domain.model.Tag
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.model.Task
@@ -100,6 +103,7 @@ fun TaskDetailRoute(container: AppContainer, taskId: String, onBack: () -> Unit)
             onRecurrenceChange = viewModel::setRecurrence,
             onListChange = viewModel::moveToList,
             onToggleCompleted = viewModel::toggleCompleted,
+            onLeave = viewModel::flushPendingEdits,
             onDelete = {
                 viewModel.delete()
                 onBack()
@@ -127,14 +131,25 @@ fun TaskDetailScreen(
     onListChange: (String) -> Unit,
     onToggleCompleted: () -> Unit,
     onDelete: () -> Unit,
+    onLeave: (String, String) -> Unit,
     onAddSubtask: (String) -> Unit,
     onToggleSubtask: (Task) -> Unit,
     onDeleteSubtask: (String) -> Unit,
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
 ) {
-    var title by remember(task.id, task.title) { mutableStateOf(task.title) }
-    var note by remember(task.id, task.note) { mutableStateOf(task.note.orEmpty()) }
+    // Nur an der Aufgabenkennung hängen, nicht am Text: Sonst setzt der aus der Datenbank
+    // zurückfließende Wert das Feld beim Tippen neu und der Schreibcursor springt.
+    var title by remember(task.id) { mutableStateOf(task.title) }
+    var note by remember(task.id) { mutableStateOf(task.note.orEmpty()) }
+
+    // Was beim Verlassen noch in der Warteschlange steht, wird sofort gespeichert.
+    // Ohne das verlöre man die letzten Zeichen, wenn man schnell zurückgeht.
+    val letzterTitel by rememberUpdatedState(title)
+    val letzteNotiz by rememberUpdatedState(note)
+    DisposableEffect(task.id) {
+        onDispose { onLeave(letzterTitel, letzteNotiz) }
+    }
     val zone = state.zone
 
     Scaffold(
@@ -463,7 +478,7 @@ private fun SubtaskSection(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TagSection(
-    tags: List<uk.spielerbohne.petodo.domain.model.Tag>,
+    tags: List<Tag>,
     onAdd: (String) -> Unit,
     onRemove: (String) -> Unit,
 ) {

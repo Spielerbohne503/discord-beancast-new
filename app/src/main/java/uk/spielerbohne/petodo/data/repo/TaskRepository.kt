@@ -1,6 +1,9 @@
 package uk.spielerbohne.petodo.data.repo
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import uk.spielerbohne.petodo.data.db.dao.TaskDao
 import uk.spielerbohne.petodo.data.db.dao.TaskListDao
@@ -43,6 +46,21 @@ class TaskRepository(
      */
     private val rewards: () -> RewardSink? = { null },
 ) {
+
+    /**
+     * Die zuletzt gelöschte Aufgabe — für das Rückgängigmachen.
+     *
+     * Sie steht hier und nicht in einem ViewModel, weil gelöscht an mehreren Stellen wird
+     * (Detailseite, später vielleicht mehr) und die Rückfrage an einer ganz anderen
+     * erscheint: unten auf der Heute-Liste. Ohne diese gemeinsame Stelle wäre die
+     * Rückgängig-Leiste dort totes Beiwerk — genau das war sie.
+     */
+    private val _lastDeleted = MutableStateFlow<String?>(null)
+    val lastDeleted: StateFlow<String?> = _lastDeleted.asStateFlow()
+
+    fun clearLastDeleted() {
+        _lastDeleted.value = null
+    }
 
     fun observeTasks(): Flow<List<Task>> =
         taskDao.observeAll().map { entities -> entities.map(TaskEntity::toDomain) }
@@ -322,6 +340,7 @@ class TaskRepository(
         val now = Instant.now(clock)
         val warUeberfaellig = task.isOpen && task.isOverdue(now, clock.zone)
         taskDao.update(entity.copy(deletedAt = now.toEpochMilli(), updatedAt = now.toEpochMilli()))
+        _lastDeleted.value = id
         // Löschen gibt dasselbe wie Verschieben. Sonst bestraft die App Ehrlichkeit.
         if (warUeberfaellig) rewards()?.onTaskCleaned(task)
     }
@@ -331,5 +350,6 @@ class TaskRepository(
         val entity = taskDao.findById(id) ?: return
         val now = Instant.now(clock).toEpochMilli()
         taskDao.update(entity.copy(deletedAt = null, updatedAt = now))
+        if (_lastDeleted.value == id) _lastDeleted.value = null
     }
 }

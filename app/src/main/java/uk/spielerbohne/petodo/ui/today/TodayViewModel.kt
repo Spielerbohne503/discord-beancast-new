@@ -55,7 +55,9 @@ class TodayViewModel(
 ) : ViewModel() {
 
     private val now = MutableStateFlow(Instant.now(clock))
-    private val lastDeleted = MutableStateFlow<String?>(null)
+    // Kommt aus dem Repository: Gelöscht wird auch auf der Detailseite, und die
+    // Rückgängig-Leiste erscheint hier.
+    private val lastDeleted = repository.lastDeleted
     private val lastPostponed = MutableStateFlow<Int?>(null)
 
     init {
@@ -136,25 +138,16 @@ class TodayViewModel(
         }
     }
 
-    fun deleteTask(id: String) {
-        viewModelScope.launch {
-            repository.delete(id)
-            lastDeleted.value = id
-            withContext(Dispatchers.IO) { nagCoordinator.onTaskCompleted(id) }
-        }
-    }
-
     fun undoDelete() {
         val id = lastDeleted.value ?: return
         viewModelScope.launch {
             repository.restore(id)
-            lastDeleted.value = null
             syncAlarm(id)
         }
     }
 
     fun clearUndo() {
-        lastDeleted.value = null
+        repository.clearLastDeleted()
     }
 
     /**

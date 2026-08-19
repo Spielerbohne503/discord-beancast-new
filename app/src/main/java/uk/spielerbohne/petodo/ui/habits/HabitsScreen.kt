@@ -440,7 +440,10 @@ private fun DayToggle(day: DayOfWeek, selected: Boolean, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+            // SHORT statt NARROW: Auf Deutsch ergibt NARROW "M D M D F S S" — Montag und
+            // Mittwoch sehen gleich aus, Dienstag und Donnerstag auch. Zwei Buchstaben
+            // sind eindeutig und passen immer noch in den Kreis.
+            text = day.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
             style = MaterialTheme.typography.labelMedium,
             color = if (selected) Palette.Sky else MaterialTheme.colorScheme.onSurfaceVariant,
         )
