@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Aufgabenverwaltung mit Begleiter — als Webseite, offline, ohne Konto.",
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test",
     "serve": "python3 tools/serve.py",
     "shots": "node tools/screenshots.mjs"
   }

@@ -66,10 +66,10 @@ export const Balance = Object.freeze({
 
   // ------------------------------------------------------------------ Erinnerungen
 
-  /** Tage bis zur nächsten Eskalationsstufe der Nag-Kette. */
-  NAG_DAYS_QUIET: 2,
-  NAG_DAYS_LOUD: 4,
-  NAG_DAYS_CLEANUP: 7,
+  /** Ab welchem Erinnerungstag die nächste Eskalationsstufe gilt. */
+  NAG_DAY_AGAIN: 2,
+  NAG_DAY_LOUD: 4,
+  NAG_DAY_CLEANUP: 7,
 
   /** Ab so vielen überfälligen Aufgaben eine Sammelmeldung statt vieler einzelner. */
   NAG_GROUP_THRESHOLD: 3,

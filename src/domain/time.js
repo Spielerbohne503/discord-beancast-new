@@ -102,3 +102,31 @@ export function parseHhMm(text) {
   if (hour > 23 || minute > 59) return null;
   return hour * 60 + minute;
 }
+
+/**
+ * Monate weiterrücken, mit **Abschneiden am Monatsende**.
+ *
+ * Der 31. Januar wird im Februar zum 28. (bzw. 29.), nicht ausgelassen. Für eine
+ * Aufgabenverwaltung ist das die nützlichere Auslegung — eine Monatsaufgabe soll auch im
+ * Februar erscheinen.
+ */
+export function plusMonths(day, months) {
+  const date = fromEpochDay(day);
+  const year = date.getFullYear();
+  const monthIndex = date.getMonth() + months;
+  const dayOfMonth = Math.min(date.getDate(), daysInMonth(year, monthIndex));
+  return epochDayOf(year, monthIndex, dayOfMonth);
+}
+
+/** Jahre weiterrücken. Der 29. Februar wird im Normaljahr zum 28. */
+export function plusYears(day, years) {
+  const date = fromEpochDay(day);
+  const year = date.getFullYear() + years;
+  const dayOfMonth = Math.min(date.getDate(), daysInMonth(year, date.getMonth()));
+  return epochDayOf(year, date.getMonth(), dayOfMonth);
+}
+
+/** Länge eines Monats; `monthIndex` darf über 11 hinaus- oder unter 0 gehen. */
+export function daysInMonth(year, monthIndex) {
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+}
