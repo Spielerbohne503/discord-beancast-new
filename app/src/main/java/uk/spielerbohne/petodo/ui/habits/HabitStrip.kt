@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -53,10 +54,16 @@ fun HabitStrip(container: AppContainer, onOpen: () -> Unit, modifier: Modifier =
     val state by viewModel.state.collectAsStateWithLifecycle()
     val heute = state.dueToday
 
+    // Ohne Gewohnheiten für heute erscheint gar nichts — auch kein leerer Abstand.
+    // Deshalb bringt der Streifen seinen eigenen Rand mit, statt ihn vom Aufrufer zu
+    // bekommen: Ein Kasten mit Rand und ohne Inhalt ist eine Lücke, die aussieht wie ein
+    // Fehler.
     if (heute.isEmpty()) return
 
-    androidx.compose.foundation.layout.Column(
-        modifier = modifier.fillMaxWidth(),
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         SectionLabel(

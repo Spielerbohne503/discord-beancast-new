@@ -123,4 +123,42 @@ class MarkdownLinksTest {
         assertEquals("", MarkdownLinks.plainText(""))
         assertFalse(MarkdownLinks.hasLink(""))
     }
+
+    @Test
+    fun eine_adresse_mit_klammern_ueberlebt_die_markdown_schreibweise() {
+        // Ohne Sonderbehandlung endete der Verweis bei der ersten schließenden Klammer,
+        // und der abgeschnittene Link führte ins Leere.
+        val stuecke = MarkdownLinks.parse(
+            "[Kotlin](https://de.wikipedia.org/wiki/Kotlin_(Programmiersprache))"
+        )
+
+        assertEquals(
+            TextSegment.Link("Kotlin", "https://de.wikipedia.org/wiki/Kotlin_(Programmiersprache)"),
+            stuecke.single(),
+        )
+    }
+
+    @Test
+    fun text_hinter_einem_verweis_mit_klammern_bleibt_erhalten() {
+        val stuecke = MarkdownLinks.parse("[A](https://example.org/x_(y)) und weiter")
+
+        assertEquals("https://example.org/x_(y)", (stuecke[0] as TextSegment.Link).url)
+        assertEquals(TextSegment.Plain(" und weiter"), stuecke[1])
+    }
+
+    @Test
+    fun geteilte_adressen_aus_dem_alltag_werden_sauber_gelesen() {
+        val faelle = listOf(
+            "https://youtu.be/dQw4w9WgXcQ" to "youtu.be/dQw4w9WgXcQ",
+            "https://www.instagram.com/reel/DbBO_fiCJm8/?igsh=MWtqano2am95" to "instagram.com/reel/…",
+            "https://github.com/user/repo/issues/42" to "github.com/user/…",
+            "https://example.org" to "example.org",
+        )
+
+        faelle.forEach { (adresse, erwartet) ->
+            val link = MarkdownLinks.parse(adresse).single() as TextSegment.Link
+            assertEquals("Adresse $adresse", adresse, link.url)
+            assertEquals("Kurzform von $adresse", erwartet, link.label)
+        }
+    }
 }

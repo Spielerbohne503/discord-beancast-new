@@ -1,5 +1,6 @@
 package uk.spielerbohne.petodo.ui.focus
 
+import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -40,7 +41,13 @@ data class FocusUiState(
  * könnte.
  */
 class FocusViewModel(
-    private val context: Context,
+    /**
+     * Die Application, nicht irgendein Context.
+     *
+     * Ein ViewModel überlebt die Activity; hielte es deren Context fest, hinge der ganze
+     * Bildschirm im Speicher. Die Application lebt ohnehin so lange wie der Prozess.
+     */
+    private val context: Application,
     private val focusRepository: FocusRepository,
     private val taskRepository: TaskRepository,
     private val settingsRepository: SettingsRepository,
@@ -115,7 +122,7 @@ class FocusViewModel(
             viewModelFactory {
                 initializer {
                     FocusViewModel(
-                        context = context.applicationContext,
+                        context = context.applicationContext as Application,
                         focusRepository = container.focusRepository,
                         taskRepository = container.taskRepository,
                         settingsRepository = container.settingsRepository,

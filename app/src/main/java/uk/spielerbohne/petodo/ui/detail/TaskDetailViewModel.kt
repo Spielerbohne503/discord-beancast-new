@@ -25,6 +25,7 @@ import uk.spielerbohne.petodo.domain.recurrence.RecurrenceRule
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Instant
 import java.time.ZoneId
 
 data class TaskDetailUiState(
@@ -33,6 +34,8 @@ data class TaskDetailUiState(
     val tags: List<Tag> = emptyList(),
     val lists: List<TaskList> = emptyList(),
     val zone: ZoneId = ZoneId.systemDefault(),
+    /** Kommt aus der Uhr des Containers — der Bildschirm liest nie die Systemuhr. */
+    val now: Instant = Instant.EPOCH,
     val gone: Boolean = false,
 ) {
     val progress: SubtaskProgress get() = SubtaskProgress.of(subtasks)
@@ -60,13 +63,14 @@ class TaskDetailViewModel(
             tags = tagsByTask[taskId].orEmpty(),
             lists = lists,
             zone = clock.zone,
+            now = Instant.now(clock),
             // Gelöscht oder verschwunden: der Screen schließt sich, statt leer dazustehen.
             gone = task == null || task.isDeleted,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-        initialValue = TaskDetailUiState(zone = clock.zone),
+        initialValue = TaskDetailUiState(zone = clock.zone, now = Instant.now(clock)),
     )
 
     fun setTitle(title: String) = edit { task ->

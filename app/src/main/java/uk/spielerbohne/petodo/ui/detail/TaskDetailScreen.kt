@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
@@ -69,7 +70,10 @@ import uk.spielerbohne.petodo.ui.common.RecurrencePicker
 import uk.spielerbohne.petodo.ui.today.DuePicker
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.Instant
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun TaskDetailRoute(container: AppContainer, taskId: String, onBack: () -> Unit) {
@@ -171,7 +175,7 @@ fun TaskDetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleCompleted() })
-                    DueSummary(task = task, zone = zone)
+                    DueSummary(task = task, zone = zone, now = state.now)
                 }
             }
 
@@ -219,8 +223,11 @@ fun TaskDetailScreen(
             }
             if (task.missedCount > 0) {
                 Text(
-                    text = androidx.compose.ui.platform.LocalContext.current.resources
-                        .getQuantityString(R.plurals.recurrence_missed, task.missedCount, task.missedCount),
+                    text = pluralStringResource(
+                        R.plurals.recurrence_missed,
+                        task.missedCount,
+                        task.missedCount,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -345,16 +352,12 @@ private fun LinkableField(
 }
 
 @Composable
-private fun DueSummary(task: Task, zone: ZoneId) {
-    val overdue = task.overdueDays(java.time.Instant.now(), zone)
+private fun DueSummary(task: Task, zone: ZoneId, now: Instant) {
+    val overdue = task.overdueDays(now, zone)
     val text = task.dueDate(zone)?.let { date ->
-        val base = date.format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.MEDIUM))
+        val base = date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
         if (overdue > 0) {
-            "$base · " + if (overdue == 1L) {
-                stringResource(R.string.due_overdue_one_day)
-            } else {
-                stringResource(R.string.due_overdue_days, overdue.toInt())
-            }
+            "$base · " + pluralStringResource(R.plurals.due_overdue, overdue.toInt(), overdue.toInt())
         } else {
             base
         }
@@ -425,7 +428,9 @@ private fun SubtaskSection(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = subtask.isCompleted, onCheckedChange = { onToggle(subtask) })
                 Text(
-                    text = subtask.title,
+                    // Auch hier die Kurzform: Eine Unteraufgabe, die aus einer
+                    // dreizeiligen Adresse besteht, sprengt die Liste.
+                    text = MarkdownLinks.plainText(subtask.title),
                     modifier = Modifier.weight(1f),
                     textDecoration = if (subtask.isCompleted) TextDecoration.LineThrough else null,
                     color = if (subtask.isCompleted) {

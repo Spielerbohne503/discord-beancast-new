@@ -5,7 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringArrayResource
@@ -115,14 +115,14 @@ fun formatCooldown(remaining: Duration): String {
 @Composable
 fun rememberGainPulse(value: Double): Float {
     val puls = remember { Animatable(0f) }
-    val vorher = remember { mutableStateOf(value) }
+    val vorher = remember { mutableDoubleStateOf(value) }
 
     LaunchedEffect(value) {
-        if (value > vorher.value + SCHWELLE) {
+        if (value > vorher.doubleValue + SCHWELLE) {
             puls.animateTo(1f, tween(durationMillis = Motion.QUICK, easing = Motion.Decelerate))
             puls.animateTo(0f, tween(durationMillis = Motion.SLOW, easing = Motion.Emphasized))
         }
-        vorher.value = value
+        vorher.doubleValue = value
     }
 
     return puls.value

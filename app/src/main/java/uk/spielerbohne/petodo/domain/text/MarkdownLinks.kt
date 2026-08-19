@@ -23,8 +23,15 @@ sealed interface TextSegment {
  */
 object MarkdownLinks {
 
-    /** `[Text](Adresse)` — Beschriftung ohne Zeilenumbruch, Adresse ohne Leerzeichen. */
-    private val MARKDOWN = Regex("""\[([^\]\n]*)\]\(\s*(\S+?)\s*\)""")
+    /**
+     * `[Text](Adresse)` — Beschriftung ohne Zeilenumbruch, Adresse ohne Leerzeichen.
+     *
+     * Die Adresse darf **eine Ebene Klammern** enthalten. Ohne diese Ausnahme endet ein
+     * Verweis auf `…/Kotlin_(Programmiersprache)` mitten im Wort, weil die erste
+     * schließende Klammer als Ende des Verweises gelesen wird — und der abgeschnittene
+     * Link führt ins Leere.
+     */
+    private val MARKDOWN = Regex("""\[([^\]\n]*)\]\(\s*((?:[^()\s]|\([^()\s]*\))+)\s*\)""")
 
     /** Nackte Adresse. Nur http(s): Alles andere fängt zu viele falsche Treffer. */
     private val BARE = Regex("""https?://\S+""", RegexOption.IGNORE_CASE)

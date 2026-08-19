@@ -10,9 +10,6 @@
 
     <!-- Heute-Screen -->
     <string name="today_title">Heute</string>
-    <string name="today_greeting_morning">Guten Morgen</string>
-    <string name="today_greeting_day">Heute</string>
-    <string name="today_greeting_evening">Guten Abend</string>
     <string name="today_progress">%1$d von %2$d erledigt</string>
     <string name="today_progress_clear">Nichts fällig</string>
     <string name="section_overdue">Überfällig</string>
@@ -24,14 +21,11 @@
     <string name="done_earlier_collapse">Rückblick schließen</string>
     <string name="done_earlier_hint">Die letzten sieben Tage. Ältere Aufgaben stehen unter „Erledigt“ in der Aufgabenliste.</string>
     <string name="done_day_yesterday">Gestern</string>
-    <string name="task_has_link">Enthält einen Verweis</string>
     <string name="task_open_link">Verweis öffnen</string>
     <string name="task_edit_text">Text bearbeiten</string>
     <string name="today_empty">Nichts offen. Die Liste ist leer.</string>
     <string name="quick_add_hint">Neue Aufgabe … „morgen 9 Uhr“</string>
     <string name="quick_add_submit">Aufgabe anlegen</string>
-    <string name="quick_add_pick_due">Fälligkeit wählen</string>
-    <string name="quick_add_due_clear">Fälligkeit entfernen</string>
 
     <!-- Absturzprotokoll -->
     <string name="crash_title">Letzter Absturz</string>
@@ -52,8 +46,10 @@
     <string name="habits_edit">Bearbeiten</string>
     <string name="habits_empty">Noch keine Gewohnheit. Eine reicht für den Anfang.</string>
     <string name="habits_hint">Gewohnheiten werden nie überfällig und mahnen nie. Ein ausgelassener Tag ist ein Tag ohne Haken — mehr nicht.</string>
-    <string name="habits_streak">%1$d Tage Serie</string>
-    <string name="habits_streak_one">1 Tag Serie</string>
+    <plurals name="habits_streak">
+        <item quantity="one">1 Tag Serie</item>
+        <item quantity="other">%1$d Tage Serie</item>
+    </plurals>
     <string name="habits_streak_none">Noch keine Serie</string>
     <string name="habits_week">%1$d von %2$d diese Woche</string>
     <string name="habits_free_today">Heute frei</string>
@@ -65,11 +61,16 @@
     <string name="stats_title">Rückblick</string>
     <string name="stats_open">Rückblick öffnen</string>
     <string name="stats_streak_title">Serie</string>
-    <string name="stats_streak_days">%1$d Tage</string>
-    <string name="stats_streak_one_day">1 Tag</string>
+    <plurals name="stats_streak_days">
+        <item quantity="one">1 Tag</item>
+        <item quantity="other">%1$d Tage</item>
+    </plurals>
     <string name="stats_streak_none">Noch keine Serie</string>
     <string name="stats_streak_hint">Ein erledigter Punkt am Tag hält sie am Leben. Der heutige Tag zählt nie gegen dich.</string>
-    <string name="stats_longest">Längste Serie: %1$d Tage</string>
+    <plurals name="stats_longest">
+        <item quantity="one">Längste Serie: 1 Tag</item>
+        <item quantity="other">Längste Serie: %1$d Tage</item>
+    </plurals>
     <string name="stats_two_weeks">Die letzten 14 Tage</string>
     <string name="stats_period_total">%1$d erledigt</string>
     <string name="stats_busiest">Bester Tag: %1$s mit %2$d</string>
@@ -99,16 +100,11 @@
     <string name="task_open_details">Aufgabe öffnen</string>
     <string name="task_swipe_done">Erledigt</string>
     <string name="task_swipe_tomorrow">Morgen</string>
-    <string name="task_edit_title">Aufgabe bearbeiten</string>
-    <string name="task_field_title">Titel</string>
-    <string name="task_field_note">Notiz</string>
-    <string name="task_field_due">Fällig</string>
     <string name="task_no_due">ohne Fälligkeit</string>
     <string name="task_pick_date">Datum</string>
     <string name="task_pick_time">Uhrzeit</string>
     <string name="task_clear_due">Fälligkeit löschen</string>
     <string name="task_delete">Löschen</string>
-    <string name="task_reopen">Wieder öffnen</string>
     <string name="task_deleted">Aufgabe gelöscht</string>
     <string name="task_note_indicator">Notiz</string>
 
@@ -117,37 +113,32 @@
     <string name="action_cancel">Abbrechen</string>
     <string name="action_ok">OK</string>
     <string name="action_undo">Rückgängig</string>
-    <string name="action_close">Schließen</string>
 
     <!-- Datums- und Zeitformate -->
     <string name="due_today_at">Heute %1$s</string>
     <string name="due_tomorrow_at">Morgen %1$s</string>
     <string name="due_yesterday_at">Gestern %1$s</string>
     <string name="due_date_at">%1$s %2$s</string>
-    <string name="due_overdue_days">%1$d Tage überfällig</string>
-    <string name="due_overdue_one_day">1 Tag überfällig</string>
+    <plurals name="due_overdue">
+        <item quantity="one">1 Tag überfällig</item>
+        <item quantity="other">%1$d Tage überfällig</item>
+    </plurals>
 
     <!-- Platzhalter-Screens (Phase 2-4) -->
 
     <!-- Startdaten -->
-    <string name="list_inbox">Inbox</string>
-    <string name="list_someday">Irgendwann</string>
 
     <!-- Aufgaben-Detailseite -->
-    <string name="detail_title">Aufgabe</string>
     <string name="detail_description_hint">Beschreibung</string>
     <string name="detail_subtask_hint">Unteraufgabe hinzufügen</string>
     <string name="detail_subtasks">Unteraufgaben</string>
     <string name="detail_subtask_progress">%1$d von %2$d</string>
     <string name="detail_tags">Etiketten</string>
     <string name="detail_tag_hint">Etikett eingeben</string>
-    <string name="detail_tag_add">Etikett hinzufügen</string>
     <string name="detail_tag_remove">Etikett entfernen</string>
     <string name="detail_list">Liste</string>
     <string name="detail_priority">Priorität</string>
-    <string name="detail_due">Fälligkeit</string>
     <string name="detail_back">Zurück</string>
-    <string name="detail_saved">Gespeichert</string>
 
     <!-- Wiederholung -->
     <string name="recurrence_label">Wiederholung</string>
@@ -169,7 +160,6 @@
     <string name="priority_normal">Normal</string>
     <string name="priority_high">Hoch</string>
     <string name="priority_urgent">Dringend</string>
-    <string name="priority_none_hint">Keine Priorität</string>
 
     <!-- Überfällig-Block -->
     <string name="overdue_postpone_all">Verschieben</string>
@@ -199,8 +189,6 @@
     <string name="lists_name_hint">Name der Liste</string>
     <string name="lists_exclude_from_nag">Nicht mahnen (Druckventil)</string>
     <string name="lists_delete">Liste löschen</string>
-    <string name="lists_inbox_protected">Die Inbox bleibt bestehen.</string>
-    <string name="lists_color">Farbe</string>
 
     <!-- Fokus-Timer -->
     <string name="focus_title">Fokus</string>
@@ -216,7 +204,6 @@
     <string name="focus_skip">Überspringen</string>
     <string name="focus_add_task">+ Aufgabe</string>
     <string name="focus_linked_task">Verknüpfte Aufgabe</string>
-    <string name="focus_link_task">Aufgabe verknüpfen</string>
     <string name="focus_no_task">Ohne Aufgabe</string>
     <string name="focus_rounds_today">%1$d von %2$d heute</string>
     <string name="focus_settings_title">Fokus-Zeiten</string>
@@ -334,13 +321,14 @@
     <string name="pet_duration_hours_minutes">%1$d Std %2$d Min</string>
     <string name="pet_duration_minutes">%1$d Min</string>
     <string name="pet_duration_seconds">gleich</string>
-    <string name="pet_xp">%1$d XP</string>
-    <string name="pet_speech_dismiss">Verstanden</string>
 
     <string name="pet_condition">Zustand</string>
     <string name="pet_load_title">Überfälligkeitslast</string>
     <string name="pet_load_none">Nichts überfällig — dein Pet erholt sich in Ruhe.</string>
-    <string name="pet_load_some">%1$d überfällige Aufgabe(n). Die Werte fallen %2$s so schnell wie sonst.</string>
+    <plurals name="pet_load_some">
+        <item quantity="one">1 überfällige Aufgabe. Die Werte fallen %2$s so schnell wie sonst.</item>
+        <item quantity="other">%1$d überfällige Aufgaben. Die Werte fallen %2$s so schnell wie sonst.</item>
+    </plurals>
     <string name="pet_load_factor">%1$.1f-mal</string>
     <string name="pet_recovery_hint">Aufräumen zählt wie Erledigen: Verschieben und Löschen einer überfälligen Aufgabe helfen genauso.</string>
     <string name="pet_no_death">Dein Pet kann krank werden, aber nicht sterben. Es gibt keinen Punkt ohne Wiederkehr.</string>

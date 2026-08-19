@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -55,8 +56,16 @@ class HabitsViewModel(
 
     private val today = MutableStateFlow(LocalDate.now(clock))
 
-    fun refreshToday() {
-        today.value = LocalDate.now(clock)
+    init {
+        // Minütlich nachziehen. Wer die App über Mitternacht offen liegen lässt, sieht
+        // sonst weiter die Gewohnheiten von gestern — samt falscher Haken.
+        viewModelScope.launch {
+            while (true) {
+                delay(TICK_MILLIS)
+                val heute = LocalDate.now(clock)
+                if (heute != today.value) today.value = heute
+            }
+        }
     }
 
     val state: StateFlow<HabitsUiState> = combine(
@@ -108,6 +117,7 @@ class HabitsViewModel(
     }
 
     companion object {
+        private const val TICK_MILLIS = 60_000L
         private const val STOP_TIMEOUT_MILLIS = 5_000L
 
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {

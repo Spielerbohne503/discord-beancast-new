@@ -15,6 +15,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,7 +52,7 @@ internal fun ShareSheet(
     var note by remember { mutableStateOf(initial.note.orEmpty()) }
     var dueDate by remember { mutableStateOf<LocalDate?>(null) }
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
-    var priority by remember { mutableStateOf(Priority.DEFAULT) }
+    var priority by remember { mutableIntStateOf(Priority.DEFAULT) }
 
     Box(
         modifier = Modifier

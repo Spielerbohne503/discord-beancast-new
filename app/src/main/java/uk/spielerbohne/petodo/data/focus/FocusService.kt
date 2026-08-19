@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
@@ -50,6 +51,11 @@ class FocusService : Service() {
 
     /** Ob der Sprung in den Vordergrund geklappt hat. Ohne ihn darf der Dienst nicht laufen. */
     private var imVordergrund = false
+
+    private var zwischengespeicherterStand: Pair<Int, Int> = 0 to 0
+    private var standGelesenAt = 0L
+    private var zwischengespeicherteStufe: HealthStage = HealthStage.HEALTHY
+    private var stufeGelesenAt = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -143,9 +149,35 @@ class FocusService : Service() {
         }
 
         val taskTitle = session?.taskId?.let { container.taskRepository.findTask(it)?.title }
-        notify(state, taskTitle, todayCounts(), container.petRepository.storedState().stage)
+        notify(state, taskTitle, tagesstand(), petStufe())
         return state is FocusState.Running
     }
+
+    /**
+     * Tagesstand und Pet-Zustand ändern sich nicht im Sekundentakt.
+     *
+     * Beides jede Sekunde aus der Datenbank zu holen wäre bei einem Dienst, der Stunden
+     * läuft, verschwendeter Strom — die Uhr daneben läuft trotzdem sekundengenau, weil
+     * sie aus dem Endzeitpunkt gerechnet und nicht gelesen wird.
+     */
+    private suspend fun tagesstand(): Pair<Int, Int> {
+        if (istFrisch(standGelesenAt)) return zwischengespeicherterStand
+
+        zwischengespeicherterStand = todayCounts()
+        standGelesenAt = SystemClock.elapsedRealtime()
+        return zwischengespeicherterStand
+    }
+
+    private suspend fun petStufe(): HealthStage {
+        if (istFrisch(stufeGelesenAt)) return zwischengespeicherteStufe
+
+        zwischengespeicherteStufe = container.petRepository.storedState().stage
+        stufeGelesenAt = SystemClock.elapsedRealtime()
+        return zwischengespeicherteStufe
+    }
+
+    private fun istFrisch(gelesenAt: Long): Boolean =
+        gelesenAt != 0L && SystemClock.elapsedRealtime() - gelesenAt < CACHE_MILLIS
 
     /**
      * "3 von 7 heute": erledigte von heute anstehenden Aufgaben — überfällige, heutige
@@ -245,6 +277,9 @@ class FocusService : Service() {
 
         /** Nach so vielen Fehlversuchen in Folge gibt der Dienst auf, statt zu kreisen. */
         private const val MAX_FEHLSCHLAEGE = 3
+
+        /** So lange gelten Tagesstand und Pet-Zustand als frisch genug. */
+        private const val CACHE_MILLIS = 15_000L
 
         const val EXTRA_ACTION = "uk.spielerbohne.petodo.extra.FOCUS_ACTION"
         const val EXTRA_TASK_ID = "uk.spielerbohne.petodo.extra.FOCUS_TASK_ID"

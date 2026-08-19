@@ -38,7 +38,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,12 +71,6 @@ import java.util.Locale
 fun HabitsRoute(container: AppContainer, onBack: () -> Unit) {
     val viewModel: HabitsViewModel = viewModel(factory = HabitsViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
-
-    // Wer die App über Mitternacht offen lässt, soll den neuen Tag sehen.
-    DisposableEffect(Unit) {
-        viewModel.refreshToday()
-        onDispose { }
-    }
 
     HabitsScreen(
         state = state,
@@ -245,11 +239,13 @@ private fun HabitCard(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = when {
-                        row.streak == 0 -> stringResource(R.string.habits_streak_none)
-                        row.streak == 1 -> stringResource(R.string.habits_streak_one)
-                        else -> stringResource(R.string.habits_streak, row.streak)
-                    } + " · " + stringResource(R.string.habits_week, row.weekDone, row.weekTotal),
+                    text = (
+                        if (row.streak == 0) {
+                            stringResource(R.string.habits_streak_none)
+                        } else {
+                            pluralStringResource(R.plurals.habits_streak, row.streak, row.streak)
+                        }
+                        ) + " · " + stringResource(R.string.habits_week, row.weekDone, row.weekTotal),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -79,12 +79,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -164,9 +166,10 @@ fun TodayScreen(
         if (result == SnackbarResult.ActionPerformed) onUndoDelete() else onUndoConsumed()
     }
 
+    // pluralStringResource statt LocalContext.resources: So kommt ein Sprachwechsel
+    // ohne Neustart an, und Compose weiß, dass der Text von der Konfiguration abhängt.
     val postponedMessage = state.lastPostponedCount?.let { count ->
-        androidx.compose.ui.platform.LocalContext.current.resources
-            .getQuantityString(R.plurals.overdue_postponed, count, count)
+        pluralStringResource(R.plurals.overdue_postponed, count, count)
     }
     LaunchedEffect(state.lastPostponedCount) {
         postponedMessage ?: return@LaunchedEffect
@@ -220,9 +223,9 @@ fun TodayScreen(
                 }
 
                 habitStrip?.let { streifen ->
-                    item("gewohnheiten") {
-                        Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { streifen() }
-                    }
+                    // Ohne Rand drumherum: Der Streifen entscheidet selbst, ob er
+                    // überhaupt erscheint, und bringt seinen Rand dann mit.
+                    item("gewohnheiten") { streifen() }
                 }
 
                 if (board.isEmpty) {
@@ -853,7 +856,7 @@ private fun QuickAddBar(
     var title by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf<LocalDate?>(null) }
     var dueTime by remember { mutableStateOf<LocalTime?>(null) }
-    var priority by remember { mutableStateOf(uk.spielerbohne.petodo.domain.model.Priority.DEFAULT) }
+    var priority by remember { mutableIntStateOf(uk.spielerbohne.petodo.domain.model.Priority.DEFAULT) }
     val focusRequester = remember { FocusRequester() }
 
     // "morgen 9 Uhr Zahnarzt" wird beim Tippen gelesen: Die Kapsel darunter zeigt sofort,

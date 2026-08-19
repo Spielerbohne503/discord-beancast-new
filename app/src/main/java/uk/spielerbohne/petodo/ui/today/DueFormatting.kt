@@ -1,6 +1,7 @@
 package uk.spielerbohne.petodo.ui.today
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.domain.model.Task
@@ -44,11 +45,8 @@ fun Task.dueLabel(now: Instant, zone: ZoneId): String? {
 @Composable
 fun Task.overdueLabel(now: Instant, zone: ZoneId): String? {
     val days = overdueDays(now, zone)
-    return when {
-        days <= 0L -> null
-        days == 1L -> stringResource(R.string.due_overdue_one_day)
-        else -> stringResource(R.string.due_overdue_days, days.toInt())
-    }
+    if (days <= 0L) return null
+    return pluralStringResource(R.plurals.due_overdue, days.toInt(), days.toInt())
 }
 
 /**

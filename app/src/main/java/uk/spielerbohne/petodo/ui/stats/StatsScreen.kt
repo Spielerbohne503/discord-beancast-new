@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -125,17 +126,21 @@ private fun StreakCard(stats: Stats) {
                 color = Palette.Chalk.copy(alpha = 0.75f),
             )
             Text(
-                text = when (stats.streak) {
-                    0 -> stringResource(R.string.stats_streak_none)
-                    1 -> stringResource(R.string.stats_streak_one_day)
-                    else -> stringResource(R.string.stats_streak_days, stats.streak)
+                text = if (stats.streak == 0) {
+                    stringResource(R.string.stats_streak_none)
+                } else {
+                    pluralStringResource(R.plurals.stats_streak_days, stats.streak, stats.streak)
                 },
                 style = MaterialTheme.typography.displayMedium,
                 color = Palette.Chalk,
             )
             if (stats.longestStreak > 0) {
                 Text(
-                    text = stringResource(R.string.stats_longest, stats.longestStreak),
+                    text = pluralStringResource(
+                        R.plurals.stats_longest,
+                        stats.longestStreak,
+                        stats.longestStreak,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Palette.Chalk.copy(alpha = 0.8f),
                 )

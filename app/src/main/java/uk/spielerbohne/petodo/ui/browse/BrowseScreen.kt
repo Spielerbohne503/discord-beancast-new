@@ -61,6 +61,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -199,8 +200,11 @@ fun BrowseScreen(
                 )
             } else {
                 Text(
-                    text = androidx.compose.ui.platform.LocalContext.current.resources
-                        .getQuantityString(R.plurals.browse_count, state.tasks.size, state.tasks.size),
+                    text = pluralStringResource(
+                        R.plurals.browse_count,
+                        state.tasks.size,
+                        state.tasks.size,
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 16.dp, bottom = 4.dp),
