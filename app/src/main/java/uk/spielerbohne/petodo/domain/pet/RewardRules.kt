@@ -71,6 +71,18 @@ enum class RewardType(
     ),
 
     /**
+     * Gewohnheit abgehakt. Ohne Sperrzeit — die Sperre ist der Kalender: Ein Tag lässt
+     * sich nur einmal abhaken.
+     */
+    HABIT_DONE(
+        Balance.REWARD_HABIT_DONE_ENERGY,
+        Balance.REWARD_HABIT_DONE_SATIETY,
+        Balance.REWARD_HABIT_DONE_MOOD,
+        Balance.REWARD_HABIT_DONE_XP,
+        null,
+    ),
+
+    /**
      * XP fürs Erfassen. Wenn Eintragen nur schaden kann, trägt man nichts mehr ein — und
      * die App ist tot. Krankheit hängt deshalb ausschließlich an überfälligen Aufgaben.
      */

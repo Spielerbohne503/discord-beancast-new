@@ -147,6 +147,10 @@ class PetRepository(
         award(RewardType.FOCUS_DONE)
     }
 
+    override suspend fun onHabitChecked() {
+        award(RewardType.HABIT_DONE)
+    }
+
     // ----------------------------------------------------------------------------- Intern
 
     /** Schreibt ins Log und rechnet einmal nach. Der einzige Weg, der Werte verändert. */

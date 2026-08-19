@@ -93,5 +93,58 @@ object Migrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+    /**
+     * v4 → v5: Gewohnheiten (Projektplan, v2.0).
+     *
+     * Zwei neue Tabellen, keine bestehende wird angefasst. Der Tag eines Hakens ist ein
+     * **Epochentag** und kein Zeitstempel: Eine Gewohnheit gehört zu einem Kalendertag,
+     * und mit einem Zeitpunkt würde ein Zeitzonenwechsel Haken auf den Vortag schieben.
+     */
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `habits` (
+                    `id` TEXT NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `scheduleMask` INTEGER NOT NULL,
+                    `colorArgb` INTEGER,
+                    `sortKey` TEXT NOT NULL,
+                    `createdAt` INTEGER NOT NULL,
+                    `updatedAt` INTEGER NOT NULL,
+                    `deletedAt` INTEGER,
+                    PRIMARY KEY(`id`)
+                )
+                """.trimIndent()
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_habits_sortKey` ON `habits` (`sortKey`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_habits_deletedAt` ON `habits` (`deletedAt`)")
+
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `habit_checkins` (
+                    `id` TEXT NOT NULL,
+                    `habitId` TEXT NOT NULL,
+                    `day` INTEGER NOT NULL,
+                    `createdAt` INTEGER NOT NULL,
+                    `updatedAt` INTEGER NOT NULL,
+                    `deletedAt` INTEGER,
+                    PRIMARY KEY(`id`)
+                )
+                """.trimIndent()
+            )
+            db.execSQL(
+                "CREATE UNIQUE INDEX IF NOT EXISTS `index_habit_checkins_habitId_day` " +
+                    "ON `habit_checkins` (`habitId`, `day`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_habit_checkins_habitId` ON `habit_checkins` (`habitId`)"
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_habit_checkins_deletedAt` ON `habit_checkins` (`deletedAt`)"
+            )
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
 }

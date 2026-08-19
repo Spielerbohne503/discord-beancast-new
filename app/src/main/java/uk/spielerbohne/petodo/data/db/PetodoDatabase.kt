@@ -7,12 +7,15 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import uk.spielerbohne.petodo.data.db.dao.FocusSessionDao
 import uk.spielerbohne.petodo.data.db.dao.PetStateDao
+import uk.spielerbohne.petodo.data.db.dao.HabitDao
 import uk.spielerbohne.petodo.data.db.dao.TagDao
 import uk.spielerbohne.petodo.data.db.dao.RewardEventDao
 import uk.spielerbohne.petodo.data.db.dao.TaskDao
 import uk.spielerbohne.petodo.data.db.dao.TaskListDao
 import uk.spielerbohne.petodo.data.db.entity.FocusSessionEntity
 import uk.spielerbohne.petodo.data.db.entity.PetStateEntity
+import uk.spielerbohne.petodo.data.db.entity.HabitCheckinEntity
+import uk.spielerbohne.petodo.data.db.entity.HabitEntity
 import uk.spielerbohne.petodo.data.db.entity.ReminderEntity
 import uk.spielerbohne.petodo.data.db.entity.RewardEventEntity
 import uk.spielerbohne.petodo.data.db.entity.TagEntity
@@ -30,8 +33,10 @@ import uk.spielerbohne.petodo.data.db.entity.TaskTagEntity
         TagEntity::class,
         TaskTagEntity::class,
         ReminderEntity::class,
+        HabitEntity::class,
+        HabitCheckinEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class PetodoDatabase : RoomDatabase() {
@@ -42,6 +47,7 @@ abstract class PetodoDatabase : RoomDatabase() {
     abstract fun petStateDao(): PetStateDao
     abstract fun focusSessionDao(): FocusSessionDao
     abstract fun tagDao(): TagDao
+    abstract fun habitDao(): HabitDao
 
     companion object {
         const val NAME = "petodo.db"

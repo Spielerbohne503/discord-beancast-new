@@ -57,10 +57,33 @@ def migration_statements(from_version: int, to_version: int) -> list[str]:
     block = source[start:end]
 
     statements: list[str] = []
-    # execSQL("…")  und  execSQL("""…""".trimIndent())
-    for match in re.finditer(r'execSQL\(\s*("""(.*?)"""|"((?:[^"\\]|\\.)*)")', block, re.DOTALL):
-        statements.append((match.group(2) if match.group(2) is not None else match.group(3)).strip())
+    for call in execsql_calls(block):
+        # Mehrere Zeichenketten in einem Aufruf gehören zusammen: In Kotlin steht dort
+        # ein "…" + "…". Nur die erste zu nehmen ergäbe eine abgeschnittene Anweisung —
+        # und die könnte zufällig gültiges SQL sein und stillschweigend durchgehen.
+        parts = re.findall(r'"""(.*?)"""|"((?:[^"\\]|\\.)*)"', call, re.DOTALL)
+        text = "".join((dreifach if dreifach else einfach) for dreifach, einfach in parts)
+        if text.strip():
+            statements.append(text.strip())
     return statements
+
+
+def execsql_calls(block: str) -> list[str]:
+    """Der Inhalt jedes execSQL(...)-Aufrufs, Klammern korrekt gezählt."""
+    calls: list[str] = []
+    for match in re.finditer(r"execSQL\(", block):
+        start = match.end()
+        depth = 1
+        index = start
+        while index < len(block) and depth > 0:
+            character = block[index]
+            if character == "(":
+                depth += 1
+            elif character == ")":
+                depth -= 1
+            index += 1
+        calls.append(block[start:index - 1])
+    return calls
 
 
 def fingerprint(connection: sqlite3.Connection) -> dict[str, list]:

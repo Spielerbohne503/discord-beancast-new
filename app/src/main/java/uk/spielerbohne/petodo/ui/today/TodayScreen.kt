@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalUriHandler
 import uk.spielerbohne.petodo.ui.theme.Motion
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
@@ -93,6 +94,7 @@ import uk.spielerbohne.petodo.R
 import uk.spielerbohne.petodo.di.AppContainer
 import uk.spielerbohne.petodo.domain.model.Task
 import uk.spielerbohne.petodo.ui.common.PriorityUi
+import uk.spielerbohne.petodo.ui.habits.HabitStrip
 import uk.spielerbohne.petodo.ui.pet.PetStrip
 import java.time.Instant
 import java.time.LocalDate
@@ -106,6 +108,7 @@ fun TodayRoute(
     onOpenTask: (String) -> Unit,
     onSearch: () -> Unit,
     onOpenPet: () -> Unit = {},
+    onOpenHabits: () -> Unit = {},
     quickAdd: Boolean = false,
     onQuickAddConsumed: () -> Unit = {},
 ) {
@@ -127,6 +130,7 @@ fun TodayRoute(
         // Der Streifen wird hereingereicht, damit der Screen selbst nichts vom Container
         // wissen muss — er bleibt eine reine Anzeige seines Zustands.
         petStrip = { PetStrip(container = container, onOpen = onOpenPet) },
+        habitStrip = { HabitStrip(container = container, onOpen = onOpenHabits) },
         quickAdd = quickAdd,
         onQuickAddConsumed = onQuickAddConsumed,
     )
@@ -146,6 +150,7 @@ fun TodayScreen(
     onPostponeConsumed: () -> Unit,
     onSearch: () -> Unit = {},
     petStrip: (@Composable () -> Unit)? = null,
+    habitStrip: (@Composable () -> Unit)? = null,
     quickAdd: Boolean = false,
     onQuickAddConsumed: () -> Unit = {},
 ) {
@@ -210,6 +215,12 @@ fun TodayScreen(
 
                 petStrip?.let { streifen ->
                     item("pet") {
+                        Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { streifen() }
+                    }
+                }
+
+                habitStrip?.let { streifen ->
+                    item("gewohnheiten") {
                         Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { streifen() }
                     }
                 }
@@ -721,15 +732,30 @@ private fun TaskCard(
                 }
             }
 
-            if (MarkdownLinks.hasLink(task.title) || MarkdownLinks.hasLink(task.note.orEmpty())) {
-                Icon(
-                    imageVector = Icons.Filled.Link,
-                    contentDescription = stringResource(R.string.task_has_link),
-                    tint = Palette.Sky,
+            // Der erste Verweis der Aufgabe ist direkt aus der Liste zu öffnen. Wer ein
+            // geteiltes Video als Aufgabe ablegt, will es ansehen können, ohne vorher
+            // die Detailseite aufzumachen.
+            val verweis = remember(task.title, task.note) {
+                MarkdownLinks.links(task.title).firstOrNull()
+                    ?: MarkdownLinks.links(task.note.orEmpty()).firstOrNull()
+            }
+            if (verweis != null) {
+                val uriHandler = LocalUriHandler.current
+                Box(
                     modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(16.dp),
-                )
+                        .padding(end = 4.dp)
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .clickable { runCatching { uriHandler.openUri(verweis.url) } },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Link,
+                        contentDescription = stringResource(R.string.task_open_link),
+                        tint = Palette.Sky,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
             }
             if (task.rrule != null) {
                 Icon(

@@ -13,6 +13,7 @@ import uk.spielerbohne.petodo.data.db.PetodoDatabase
 import uk.spielerbohne.petodo.data.notify.NagNotifications
 import uk.spielerbohne.petodo.data.pet.PetRepository
 import uk.spielerbohne.petodo.data.repo.FocusRepository
+import uk.spielerbohne.petodo.data.repo.HabitRepository
 import uk.spielerbohne.petodo.data.repo.TagRepository
 import uk.spielerbohne.petodo.data.repo.TaskListRepository
 import uk.spielerbohne.petodo.data.repo.TaskRepository
@@ -67,6 +68,10 @@ class AppContainer(context: Context, val clock: Clock = Clock.systemDefaultZone(
     }
 
     val tagRepository: TagRepository by lazy { TagRepository(database.tagDao(), clock) }
+
+    val habitRepository: HabitRepository by lazy {
+        HabitRepository(database.habitDao(), clock, rewards = { petRepository })
+    }
 
     val focusRepository: FocusRepository by lazy {
         FocusRepository(database.focusSessionDao(), clock, rewards = { petRepository })

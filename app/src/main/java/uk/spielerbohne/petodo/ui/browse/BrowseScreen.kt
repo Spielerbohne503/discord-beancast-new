@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.ui.text.style.TextOverflow
 import uk.spielerbohne.petodo.domain.text.MarkdownLinks
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalUriHandler
 import uk.spielerbohne.petodo.ui.theme.Motion
 import uk.spielerbohne.petodo.ui.theme.Palette
 import androidx.compose.foundation.clickable
@@ -399,15 +400,27 @@ private fun BrowseRow(
                 )
             }
         }
-        if (MarkdownLinks.hasLink(task.title) || MarkdownLinks.hasLink(task.note.orEmpty())) {
-            Icon(
-                imageVector = Icons.Filled.Link,
-                contentDescription = stringResource(R.string.task_has_link),
-                tint = Palette.Sky,
+        val verweis = remember(task.title, task.note) {
+            MarkdownLinks.links(task.title).firstOrNull()
+                ?: MarkdownLinks.links(task.note.orEmpty()).firstOrNull()
+        }
+        if (verweis != null) {
+            val uriHandler = LocalUriHandler.current
+            Box(
                 modifier = Modifier
-                    .padding(end = 8.dp)
-                    .size(16.dp),
-            )
+                    .padding(end = 4.dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .clickable { runCatching { uriHandler.openUri(verweis.url) } },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Link,
+                    contentDescription = stringResource(R.string.task_open_link),
+                    tint = Palette.Sky,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
         }
         if (task.rrule != null) {
             Icon(

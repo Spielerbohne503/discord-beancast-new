@@ -30,4 +30,12 @@ interface RewardSink {
 
     /** Fokusrunde regulär beendet. Abgebrochene Runden zählen nicht. */
     suspend fun onFocusCompleted()
+
+    /**
+     * Gewohnheit für einen Tag abgehakt.
+     *
+     * Ohne Sperrzeit — die Sperre ist der Kalender: Ein Tag lässt sich nur einmal
+     * abhaken. Zurückgenommene Haken geben nichts zurück; das Log kennt keine Stornos.
+     */
+    suspend fun onHabitChecked()
 }

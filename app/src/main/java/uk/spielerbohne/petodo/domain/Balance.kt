@@ -26,6 +26,9 @@ object Balance {
     /** Höchstens so viele Zeilen im Archiv — es ist ein Rückblick, keine zweite Liste. */
     const val ARCHIVE_MAX_ROWS = 50
 
+    /** So weit zurück lädt die App Gewohnheits-Einträge: genug für Serien und Rückblick. */
+    const val HABIT_HISTORY_DAYS = 400L
+
     // ---------------------------------------------------------------- Verfall (Phase 4)
 
     /** Basisstunden, in denen ein Wert ohne Ereignisse von 100 auf 0 fällt. */
@@ -105,6 +108,16 @@ object Balance {
     const val REWARD_PAT_MOOD = 12
     const val REWARD_PAT_XP = 1
     const val COOLDOWN_PAT_MINUTES = 30L
+
+    // Gewohnheit abgehakt
+    //
+    // Kleiner als eine erledigte Aufgabe: Eine Gewohnheit ist eine kleine Sache, die man
+    // oft tut. Zu großzügig, und man hakt sich mit fünf Gewohnheiten aus jeder Krankheit
+    // heraus — dann wäre die Kopplung an die Arbeit wertlos.
+    const val REWARD_HABIT_DONE_ENERGY = 3
+    const val REWARD_HABIT_DONE_SATIETY = 5
+    const val REWARD_HABIT_DONE_MOOD = 5
+    const val REWARD_HABIT_DONE_XP = 3
 
     // Aufgabe erfasst
     const val REWARD_TASK_CREATED_XP = 1

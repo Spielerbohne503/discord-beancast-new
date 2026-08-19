@@ -17,6 +17,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.TextStyle
 import uk.spielerbohne.petodo.domain.text.MarkdownLinks
@@ -274,6 +276,16 @@ private fun LinkableField(
     var editing by rememberSaveable { mutableStateOf(false) }
     val hatVerweis = remember(value) { MarkdownLinks.hasLink(value) }
 
+    val focusRequester = remember { FocusRequester() }
+
+    // Ob das Feld überhaupt schon einmal den Finger hatte.
+    //
+    // Ohne diese Unterscheidung ist der Stift-Knopf wirkungslos: Ein frisch erschienenes
+    // Textfeld meldet sofort „nicht fokussiert“, und die Leseansicht käme im selben
+    // Atemzug zurück. Genau das war der Fehler — man tippte auf den Stift und es
+    // passierte nichts.
+    var hatteFokus by remember { mutableStateOf(false) }
+
     if (hatVerweis && !editing) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -287,7 +299,12 @@ private fun LinkableField(
                     .weight(1f)
                     .padding(start = 16.dp, top = 14.dp, bottom = 14.dp),
             )
-            IconButton(onClick = { editing = true }) {
+            IconButton(
+                onClick = {
+                    hatteFokus = false
+                    editing = true
+                },
+            ) {
                 Icon(
                     imageVector = Icons.Filled.Edit,
                     contentDescription = stringResource(R.string.task_edit_text),
@@ -307,9 +324,24 @@ private fun LinkableField(
         minLines = minLines,
         modifier = Modifier
             .fillMaxWidth()
-            // Weggetippt heißt fertig: Danach steht der Verweis wieder anklickbar da.
-            .onFocusChanged { if (!it.isFocused) editing = false },
+            .focusRequester(focusRequester)
+            .onFocusChanged { zustand ->
+                if (zustand.isFocused) {
+                    hatteFokus = true
+                } else if (hatteFokus) {
+                    // Weggetippt heißt fertig: Danach steht der Verweis wieder
+                    // anklickbar da.
+                    hatteFokus = false
+                    editing = false
+                }
+            },
     )
+
+    // Beim Umschalten in den Bearbeitungsmodus bekommt das Feld den Finger, sonst müsste
+    // man nach dem Stift noch einmal ins Feld tippen.
+    LaunchedEffect(editing) {
+        if (editing) runCatching { focusRequester.requestFocus() }
+    }
 }
 
 @Composable

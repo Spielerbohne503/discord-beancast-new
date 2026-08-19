@@ -42,6 +42,25 @@
     <string name="crash_safe_body">Die App hat sich beim letzten Start sofort beendet. Damit du nicht in einer Schleife feststeckst, wird hier zuerst der Bericht gezeigt — teile ihn, dann lässt sich der Fehler beheben.</string>
     <string name="crash_safe_continue">Trotzdem starten</string>
 
+    <!-- Gewohnheiten -->
+    <string name="habits_title">Gewohnheiten</string>
+    <string name="habits_open">Anlegen, ändern, löschen</string>
+    <string name="habits_new">Neue Gewohnheit</string>
+    <string name="habits_name_hint">Name</string>
+    <string name="habits_days">An welchen Tagen?</string>
+    <string name="habits_delete">Gewohnheit löschen</string>
+    <string name="habits_edit">Bearbeiten</string>
+    <string name="habits_empty">Noch keine Gewohnheit. Eine reicht für den Anfang.</string>
+    <string name="habits_hint">Gewohnheiten werden nie überfällig und mahnen nie. Ein ausgelassener Tag ist ein Tag ohne Haken — mehr nicht.</string>
+    <string name="habits_streak">%1$d Tage Serie</string>
+    <string name="habits_streak_one">1 Tag Serie</string>
+    <string name="habits_streak_none">Noch keine Serie</string>
+    <string name="habits_week">%1$d von %2$d diese Woche</string>
+    <string name="habits_free_today">Heute frei</string>
+    <string name="habits_today_done">%1$d von %2$d heute</string>
+    <string name="habits_needs_day">Wähle mindestens einen Tag.</string>
+    <string name="habits_check">Abhaken</string>
+
     <!-- Rückblick -->
     <string name="stats_title">Rückblick</string>
     <string name="stats_open">Rückblick öffnen</string>

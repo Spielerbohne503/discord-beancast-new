@@ -57,6 +57,7 @@ fun MoreRoute(
     onOpenPermissions: () -> Unit,
     onOpenList: (String) -> Unit,
     onOpenStats: () -> Unit = {},
+    onOpenHabits: () -> Unit = {},
 ) {
     val viewModel: MoreViewModel = viewModel(factory = MoreViewModel.factory(container))
     val quietHours by viewModel.quietHours.collectAsStateWithLifecycle()
@@ -94,6 +95,7 @@ fun MoreRoute(
         onOpenPermissions = onOpenPermissions,
         onOpenList = onOpenList,
         onOpenStats = onOpenStats,
+        onOpenHabits = onOpenHabits,
         onExport = viewModel::exportTo,
         onRestore = viewModel::restoreFrom,
     )
@@ -127,6 +129,7 @@ fun MoreScreen(
     onOpenPermissions: () -> Unit,
     onOpenList: (String) -> Unit = {},
     onOpenStats: () -> Unit = {},
+    onOpenHabits: () -> Unit = {},
     onExport: (android.net.Uri) -> Unit = {},
     onRestore: (android.net.Uri) -> Unit = {},
 ) {
@@ -216,31 +219,19 @@ fun MoreScreen(
         // Wichtigste auf diesem Bildschirm.
         CrashCard()
 
-        // Der Rückblick steht über den Einstellungen: Er ist etwas, das man anschaut,
-        // keins, das man einstellt.
-        GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onOpenStats) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.stats_title),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        text = stringResource(R.string.stats_open),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        NavigationCard(
+            title = stringResource(R.string.habits_title),
+            body = stringResource(R.string.habits_open),
+            onClick = onOpenHabits,
+        )
+
+        // Rückblick und Gewohnheiten stehen über den Einstellungen: Das sind Dinge, die
+        // man anschaut, keine, die man einstellt.
+        NavigationCard(
+            title = stringResource(R.string.stats_title),
+            body = stringResource(R.string.stats_open),
+            onClick = onOpenStats,
+        )
 
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -384,3 +375,28 @@ private fun CrashCard() {
 
 /** So viel vom Bericht steht in der Karte; der Rest kommt beim Teilen mit. */
 private const val CRASH_PREVIEW_LINES = 12
+
+/** Ein Eintrag, der woandershin führt — überall gleich gebaut. */
+@Composable
+private fun NavigationCard(title: String, body: String, onClick: () -> Unit) {
+    GlassCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(text = title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = body,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}

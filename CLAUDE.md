@@ -160,6 +160,23 @@ Wischgesten auf der Heute-Liste: rechts abhaken, links auf morgen. Die Karte spr
 zurück, statt wegzufliegen — sie verschwindet nicht, sie wandert in einen anderen
 Abschnitt, und das zeigt die Liste selbst. Löschen ist bewusst keine Geste.
 
+## Gewohnheiten
+
+Eigene Tabellen (`habits`, `habit_checkins`), und das ist keine Formsache: Was keine
+Fälligkeit hat, kann nicht überfällig werden. Gewohnheiten mahnen nie, tauchen nie im
+Überfällig-Block auf und gehen nicht in die Überfälligkeitslast des Pets ein — die Regel
+ist strukturell unumgehbar, nicht bloß eingehalten.
+
+Ein Haken gehört zu einem **Kalendertag**, gespeichert als Epochentag in Ortszeit. Mit
+einem Zeitstempel würde ein Zeitzonenwechsel Haken auf den Vortag schieben. Der Index über
+(`habitId`, `day`) ist eindeutig; Zurücknehmen setzt `deletedAt`, erneutes Abhaken lässt
+dieselbe Zeile wieder aufleben.
+
+Serien zählen nur Tage, an denen die Gewohnheit **anstand** (`domain/habit/HabitStreak`).
+Wer montags, mittwochs und freitags läuft, verliert seine Serie nicht am Dienstag — sonst
+wäre jeder Zeitplan außer „täglich“ eine eingebaute Niederlage. Und wie überall: Der
+heutige Tag zählt nie gegen einen.
+
 ## Rückblick
 
 `domain/stats/Statistics.kt` rechnet über **Kalendertage**, nicht über Zeitpunkte — die

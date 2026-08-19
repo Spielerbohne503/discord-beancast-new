@@ -40,6 +40,8 @@ object BackupFormat {
         "reward_events",
         "pet_state",
         "focus_sessions",
+        "habits",
+        "habit_checkins",
     )
 
     fun encode(document: BackupDocument, indent: Int = 2): String {
