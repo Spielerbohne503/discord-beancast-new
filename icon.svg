@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PeTodo">
+  <!-- Dasselbe Bild wie im Programm: eine leuchtende Kugel auf dunklem Grund. -->
+  <defs>
+    <radialGradient id="grund" cx="30%" cy="12%" r="95%">
+      <stop offset="0" stop-color="#141a33" />
+      <stop offset="1" stop-color="#06070d" />
+    </radialGradient>
+    <radialGradient id="korona" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#7e8bff" stop-opacity="0.85" />
+      <stop offset="1" stop-color="#7e8bff" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="kugel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6e8bff" />
+      <stop offset="1" stop-color="#a66bff" />
+    </linearGradient>
+    <radialGradient id="glanz" cx="34%" cy="28%" r="45%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#grund)" />
+  <circle cx="256" cy="256" r="190" fill="url(#korona)" />
+  <circle cx="256" cy="256" r="118" fill="url(#kugel)" />
+  <circle cx="256" cy="256" r="118" fill="url(#glanz)" />
+  <circle cx="228" cy="240" r="11" fill="#0a0c18" />
+  <circle cx="284" cy="240" r="11" fill="#0a0c18" />
+</svg>

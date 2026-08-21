@@ -1,0 +1,264 @@
+/*
+ * Der Begleiter.
+ *
+ * Kein Bildchen und **kein Emoji**: eine leuchtende Kugel aus Farbverläufen, mit einer
+ * Korona, die atmet, und einem Ring, der den Fortschritt trägt. Ein Emoji wäre schneller
+ * gebaut, sieht aber in jeder Größe nach Aufkleber aus — und genau das soll die App nicht
+ * sein.
+ *
+ * Der Zustand steckt in `data-stufe`; alles andere ergibt sich daraus. Zwei Werte kommen
+ * als CSS-Variablen von außen: `--laune` (0–1) steuert die Helligkeit, `--puls` die
+ * Atemgeschwindigkeit.
+ */
+
+.orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--orb-groesse, 148px);
+  height: var(--orb-groesse, 148px);
+  flex: none;
+  --orb-a: var(--aurora-1);
+  --orb-b: var(--aurora-2);
+  --laune: 1;
+  --puls: 5.5s;
+}
+
+/* Die Korona: weiches Licht, das über den Rand hinausreicht. */
+.orb__korona {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--orb-a), transparent 62%);
+  opacity: calc(0.16 + 0.42 * var(--laune));
+  filter: blur(16px);
+  animation: orb-atmen var(--puls) var(--ease) infinite;
+}
+
+/* Der Körper: ein Verlauf mit Glanzlicht oben links und Schatten unten rechts. */
+.orb__koerper {
+  position: relative;
+  width: 68%;
+  height: 68%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.85), transparent 42%),
+    radial-gradient(circle at 68% 76%, rgba(0, 0, 0, 0.4), transparent 55%),
+    linear-gradient(140deg, var(--orb-a), var(--orb-b));
+  box-shadow:
+    0 0 40px color-mix(in srgb, var(--orb-a) 55%, transparent),
+    inset 0 0 24px rgba(255, 255, 255, 0.14);
+  animation: orb-atmen var(--puls) var(--ease) infinite;
+}
+
+/* Eine treibende Fleckenschicht, damit die Kugel nicht wie eine Murmel steht. */
+.orb__koerper::after {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 25% 65%, rgba(255, 255, 255, 0.2), transparent 40%),
+    radial-gradient(circle at 74% 30%, rgba(255, 255, 255, 0.14), transparent 36%);
+  mix-blend-mode: screen;
+  animation: orb-treiben 18s linear infinite;
+}
+
+/*
+ * Der Kern: ein heller Punkt tief in der Kugel, der langsam mit atmet.
+ *
+ * Er ersetzt die naheliegende Lösung — zwei Punkte als Augen. Ein Gesicht macht aus einem
+ * Himmelskörper sofort einen Aufkleber, und genau davon soll die App wegkommen.
+ */
+.orb__kern {
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 70%);
+  opacity: calc(0.25 + 0.5 * var(--laune));
+  filter: blur(3px);
+  animation: orb-kern var(--puls) var(--ease) infinite;
+}
+
+/* Eine gekippte Umlaufbahn mit einem Trabanten darauf. */
+.orb__bahn {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform: rotateX(74deg) rotate(0deg);
+  transform-style: preserve-3d;
+  animation: orb-umlauf 14s linear infinite;
+}
+
+.orb__trabant {
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--orb-b);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--orb-b) 85%, transparent);
+}
+
+/* Der Fortschrittsring: dieselbe Farbe wie die Kugel, ein Kreis mit Lücke. */
+.orb__ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.orb__ring-spur {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 2.5;
+}
+
+.orb__ring-fortschritt {
+  fill: none;
+  stroke: url(#orbVerlauf);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--slow) var(--ease);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--orb-a) 70%, transparent));
+}
+
+/* ------------------------------------------------------------------- Zustände */
+
+.orb[data-stufe="healthy"] {
+  --orb-a: var(--aurora-1);
+  --orb-b: var(--aurora-2);
+  --puls: 5.5s;
+}
+
+.orb[data-stufe="weakened"] {
+  --orb-a: #7f8bd6;
+  --orb-b: #9d7fd6;
+  --puls: 6.5s;
+}
+
+.orb[data-stufe="sick"] {
+  --orb-a: #ffb45c;
+  --orb-b: #ff7a59;
+  --puls: 8s;
+}
+
+/* Elend: matt, langsam, leicht schief — sichtbar schlecht, aber nie tot. */
+.orb[data-stufe="miserable"] {
+  --orb-a: #8b6f7f;
+  --orb-b: #6b5a72;
+  --puls: 11s;
+}
+
+.orb[data-stufe="miserable"] .orb__koerper {
+  filter: saturate(0.5);
+}
+
+.orb[data-stufe="miserable"] .orb__bahn {
+  opacity: 0.35;
+  animation-duration: 34s;
+}
+
+/* -------------------------------------------------------------- Kurze Regungen */
+
+.orb--gefuettert .orb__koerper {
+  animation: orb-hupfen 620ms var(--ease);
+}
+
+.orb--gespielt .orb__koerper {
+  animation: orb-wackeln 700ms var(--ease);
+}
+
+.orb--gestreichelt .orb__korona {
+  animation: orb-aufleuchten 900ms var(--ease);
+}
+
+@keyframes orb-atmen {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes orb-treiben {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orb-kern {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: calc(0.25 + 0.5 * var(--laune));
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: calc(0.35 + 0.55 * var(--laune));
+  }
+}
+
+@keyframes orb-umlauf {
+  to {
+    transform: rotateX(74deg) rotate(360deg);
+  }
+}
+
+@keyframes orb-hupfen {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  35% {
+    transform: translateY(-12px) scale(1.06);
+  }
+  65% {
+    transform: translateY(2px) scale(0.97);
+  }
+}
+
+@keyframes orb-wackeln {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-9deg);
+  }
+  60% {
+    transform: rotate(7deg);
+  }
+}
+
+@keyframes orb-aufleuchten {
+  50% {
+    opacity: 0.95;
+    filter: blur(10px);
+  }
+}
+
+/* ---------------------------------------------------------------- Sprechblase */
+
+.blase {
+  position: relative;
+  max-width: 260px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  font-size: 0.86rem;
+  color: var(--text-dim);
+  animation: blase-herein var(--normal) var(--ease);
+}
+
+@keyframes blase-herein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

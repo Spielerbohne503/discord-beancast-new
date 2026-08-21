@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>PeTodo</title>
+    <meta name="description" content="Aufgaben und ein Begleiter, der davon lebt. Offline, ohne Konto." />
+    <meta name="theme-color" content="#06070d" />
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+
+    <link rel="stylesheet" href="src/styles/tokens.css" />
+    <link rel="stylesheet" href="src/styles/base.css" />
+    <link rel="stylesheet" href="src/styles/components.css" />
+    <link rel="stylesheet" href="src/styles/layout.css" />
+    <link rel="stylesheet" href="src/styles/orb.css" />
+    <link rel="stylesheet" href="src/styles/views.css" />
+  </head>
+
+  <body>
+    <a class="nur-vorlesen" href="#inhalt">Zum Inhalt springen</a>
+    <div id="wurzel"></div>
+
+    <noscript>
+      <p style="padding: 24px; color: #9aa3c7">
+        PeTodo rechnet alles im Browser — ohne JavaScript gibt es nichts anzuzeigen.
+      </p>
+    </noscript>
+
+    <script type="module">
+      import { starten } from "./src/ui/app.js";
+
+      starten(document.getElementById("wurzel")).catch((fehler) => {
+        // Ein Fehler beim Start darf nicht in einer weißen Seite enden — dann weiß
+        // niemand, ob die App kaputt ist oder nur langsam.
+        console.error(fehler);
+        document.getElementById("wurzel").innerHTML =
+          '<div class="leer"><p class="leer__titel">Das hat nicht geklappt.</p>' +
+          `<p>${String(fehler?.message ?? fehler)}</p></div>`;
+      });
+
+      if ("serviceWorker" in navigator) {
+        addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+      }
+    </script>
+  </body>
+</html>

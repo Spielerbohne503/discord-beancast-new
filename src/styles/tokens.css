@@ -1,0 +1,117 @@
+/*
+ * Die Gestaltungsgrundlage.
+ *
+ * Ein tiefer, fast schwarzer Grund mit einem Hauch Nebel darüber; darauf Glasflächen mit
+ * schmalen Kanten und drei Verläufen, die immer dasselbe bedeuten:
+ *
+ *   --grad-aurora   Handlung, Fortschritt, der Begleiter selbst
+ *   --grad-ember    Überfällig, dringend — nie dekorativ
+ *   --grad-vital    Geschafft, Serien, Gewohnheiten
+ *
+ * Das Leuchten ist ein Farbschein hinter der Fläche, kein Rahmen: `box-shadow` in der
+ * Farbe des Verlaufs, weit gestreut, niedrige Deckkraft. Ein harter farbiger Rahmen wirkt
+ * sofort nach Spielzeug — der Schein wirkt nach Tiefe.
+ *
+ * Es gibt bewusst **nur diese eine, dunkle Fassung**: „Space“ mit hellem Grund wäre keine
+ * Variante, sondern ein anderes Programm.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* -------------------------------------------------------------------- Grund */
+  --ground: #06070d;
+  --ground-2: #0a0c16;
+  --nebula-a: rgba(110, 139, 255, 0.16);
+  --nebula-b: rgba(166, 107, 255, 0.13);
+  --nebula-c: rgba(52, 195, 255, 0.08);
+
+  /* ------------------------------------------------------------------ Flächen */
+  --surface: rgba(255, 255, 255, 0.035);
+  --surface-strong: rgba(255, 255, 255, 0.06);
+  --surface-sunken: rgba(0, 0, 0, 0.25);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
+  /* -------------------------------------------------------------------- Text */
+  --text: #e9ecff;
+  --text-dim: #9aa3c7;
+  --text-faint: #626b93;
+
+  /* ---------------------------------------------------------------- Verläufe */
+  --aurora-1: #6e8bff;
+  --aurora-2: #a66bff;
+  --ember-1: #ff8a5c;
+  --ember-2: #ff4d6d;
+  --vital-1: #3ddc97;
+  --vital-2: #34c3ff;
+
+  --grad-aurora: linear-gradient(135deg, var(--aurora-1), var(--aurora-2));
+  --grad-ember: linear-gradient(135deg, var(--ember-1), var(--ember-2));
+  --grad-vital: linear-gradient(135deg, var(--vital-1), var(--vital-2));
+
+  /* ------------------------------------------------------------------ Leuchten */
+  --glow-aurora: 0 0 32px rgba(126, 126, 255, 0.28);
+  --glow-ember: 0 0 32px rgba(255, 77, 109, 0.26);
+  --glow-vital: 0 0 32px rgba(61, 220, 151, 0.24);
+
+  /* -------------------------------------------------------------------- Maße */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 12px 32px rgba(0, 0, 0, 0.45);
+
+  /* ------------------------------------------------------------------ Schrift */
+  --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-num: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  /* ------------------------------------------------------------------ Bewegung */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --fast: 140ms;
+  --normal: 240ms;
+  --slow: 520ms;
+
+  /* --------------------------------------------------------------- Prioritäten */
+  --prio-0: #5c6690;
+  --prio-1: transparent;
+  --prio-2: #ffb45c;
+  --prio-3: #ff4d6d;
+}
+
+/*
+ * „Bewegung reduzieren“ kommt aus zwei Richtungen: aus dem Betriebssystem und aus den
+ * Einstellungen der App. Beide schalten dieselbe Klasse scharf, damit es nur eine Stelle
+ * gibt, an der Bewegung endet.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fast: 0ms;
+    --normal: 0ms;
+    --slow: 0ms;
+  }
+}
+
+body.ruhig {
+  --fast: 0ms;
+  --normal: 0ms;
+  --slow: 0ms;
+}
+
+body.ruhig *,
+body.ruhig *::before,
+body.ruhig *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}

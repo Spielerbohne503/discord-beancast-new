@@ -1,0 +1,255 @@
+/*
+ * Zwei Anordnungen, ein Programm.
+ *
+ * Auf dem Telefon: ein Strang, eine Leiste unten, der Begleiter als schmaler Streifen über
+ * der Liste. Am Schreibtisch: Seitenleiste links, Inhalt in der Mitte, Begleiter und
+ * Rückblick rechts — **alles gleichzeitig sichtbar**, nichts hinter einem Menü. Der
+ * Umbruch liegt bei 960 px; darunter ist der zweispaltige Aufbau eng, darüber wirkt der
+ * einspaltige verloren.
+ */
+
+.rahmen {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+/*
+ * Raster- und Flex-Kinder dürfen sonst nicht unter ihre Inhaltsbreite schrumpfen. Ohne
+ * diese Zeile schiebt eine einzige zu breite Chip-Reihe die ganze Seite auseinander, und
+ * das Telefon scrollt seitwärts.
+ */
+.rahmen > * {
+  min-width: 0;
+}
+
+.inhalt {
+  width: 100%;
+  min-width: 0;
+  max-width: 720px;
+  margin: 0 auto;
+  /* Unten so viel Luft, dass die letzte Karte nicht unter der Leiste verschwindet. */
+  padding: var(--space-4) var(--space-4) calc(var(--space-7) + 56px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* -------------------------------------------------------------- Kopf (Telefon) */
+
+.kopf {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
+  background: linear-gradient(180deg, rgba(6, 7, 13, 0.92), rgba(6, 7, 13, 0.62) 70%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.kopf__zeile {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.kopf__titel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kopf__datum {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+}
+
+.kopf__werkzeuge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ------------------------------------------------------------- Leiste (Telefon) */
+
+.leiste {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: rgba(8, 9, 18, 0.86);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.leiste__knopf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: var(--space-2) 0;
+  border-radius: var(--r-md);
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.leiste__knopf svg {
+  width: 22px;
+  height: 22px;
+}
+
+.leiste__knopf[aria-current="page"] {
+  color: var(--text);
+}
+
+.leiste__knopf[aria-current="page"] svg {
+  filter: drop-shadow(0 0 8px rgba(126, 126, 255, 0.7));
+}
+
+.leiste__knopf:hover {
+  color: var(--text-dim);
+}
+
+/* --------------------------------------------------------- Seitenleiste (Desktop) */
+
+.seitenleiste,
+.nebenspalte {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .rahmen {
+    grid-template-rows: 1fr;
+    grid-template-columns: 260px minmax(0, 1fr) 340px;
+    max-width: 1560px;
+    margin: 0 auto;
+    gap: var(--space-5);
+    padding: var(--space-5);
+  }
+
+  .kopf,
+  .leiste {
+    display: none;
+  }
+
+  .inhalt {
+    max-width: none;
+    padding: 0 0 var(--space-6);
+  }
+
+  .seitenleiste,
+  .nebenspalte {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    position: sticky;
+    top: var(--space-5);
+    align-self: start;
+    max-height: calc(100dvh - 2 * var(--space-5));
+    overflow-y: auto;
+    padding-right: var(--space-1);
+  }
+
+  .marke {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .marke__name {
+    font-size: 1.05rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+
+  .marke__satz {
+    font-size: 0.72rem;
+    color: var(--text-faint);
+  }
+}
+
+/* Sehr breite Fenster: Die dritte Spalte darf mitwachsen, der Text nicht. */
+@media (min-width: 1400px) {
+  .rahmen {
+    grid-template-columns: 280px minmax(0, 1fr) 380px;
+  }
+}
+
+.navi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+}
+
+.navi__gruppe {
+  padding: var(--space-3) var(--space-3) var(--space-1);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.navi__punkt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  text-align: left;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.navi__punkt svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.navi__punkt:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.navi__punkt[aria-current="page"] {
+  background: var(--surface-strong);
+  color: var(--text);
+  box-shadow: inset 2px 0 0 var(--aurora-1);
+}
+
+.navi__punkt-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navi__zahl {
+  font-family: var(--font-num);
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.navi__punkt-farbe {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  flex: none;
+  background: var(--grad-aurora);
+}

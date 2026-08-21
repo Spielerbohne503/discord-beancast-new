@@ -1,0 +1,22 @@
+{
+  "name": "PeTodo",
+  "short_name": "PeTodo",
+  "description": "Aufgaben und ein Begleiter, der davon lebt. Offline, ohne Konto.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#06070d",
+  "theme_color": "#06070d",
+  "lang": "de",
+  "categories": ["productivity", "lifestyle"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  }
+}
