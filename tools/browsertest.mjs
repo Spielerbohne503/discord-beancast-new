@@ -102,6 +102,56 @@ pruefe(
 );
 pruefe("keine Zeile geht dabei verloren", (await seite.locator(".zeile").count()) === vorher);
 
+// ------------------------------------------------------------ Überfällig und Morgen
+
+console.log("\nÜberfällig und Morgen");
+await eingeben(seite, "Alter Kram");
+
+// Ein Datum in der Vergangenheit gibt es über die Schnell-Eingabe nicht — ein Datum ohne
+// Jahr meint immer das nächste Vorkommen. Also über die Einzelheiten.
+await seite.locator('.zeile:has-text("Alter Kram")').first().click();
+await seite.waitForSelector("dialog[open]");
+await seite.locator('dialog[open] input[type="date"]').fill("2020-03-05");
+await seite.locator('dialog[open] input[type="date"]').press("Enter");
+await seite.waitForTimeout(500);
+await seite.locator('dialog[open] button:has-text("Schließen")').click();
+await seite.waitForTimeout(500);
+
+const alt = seite.locator('.zeile:has-text("Alter Kram")').first();
+pruefe(
+  "eine Aufgabe von vorgestern steht als überfällig da",
+  (await alt.getAttribute("class")).includes("zeile--ueberfaellig"),
+  await alt.getAttribute("class"),
+);
+pruefe(
+  "sie sagt, wie lange sie schon liegt",
+  (await alt.innerText()).includes("Tage überfällig"),
+  await alt.innerText(),
+);
+
+await alt.hover();
+await alt.locator(".zeile__werkzeuge button").first().click();
+await seite.waitForTimeout(600);
+const verschoben = seite.locator('.zeile:has-text("Alter Kram")').first();
+pruefe(
+  "„Auf morgen schieben“ nimmt ihr die Überfälligkeit",
+  (await verschoben.getAttribute("class")).includes("zeile--ueberfaellig") === false,
+);
+pruefe(
+  "und sie ist danach morgen fällig",
+  (await verschoben.innerText()).includes("Morgen"),
+  await verschoben.innerText(),
+);
+
+await seite.locator(".meldung__knopf").click();
+await seite.waitForTimeout(600);
+pruefe(
+  "Rückgängig macht das Verschieben rückgängig",
+  (await seite.locator('.zeile:has-text("Alter Kram")').first().getAttribute("class")).includes(
+    "zeile--ueberfaellig",
+  ),
+);
+
 // ---------------------------------------------------------- Löschen und Rückgängig
 
 console.log("\nLöschen und Rückgängig");

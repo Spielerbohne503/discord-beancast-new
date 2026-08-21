@@ -9,6 +9,8 @@
 import { RewardType, SpeechCategory } from "../../domain/pet.js";
 import { isCompleted, isOverdue, overdueDays, subtaskProgress } from "../../domain/tasks.js";
 import { parseRule } from "../../domain/recurrence.js";
+import { postponeToTomorrow } from "../../domain/nag.js";
+import { dayOf, minutesOfDay } from "../../domain/time.js";
 import * as repo from "../../data/repo.js";
 import { aktualisieren, reagieren, state } from "../store.js";
 import { h } from "../dom.js";
@@ -53,7 +55,7 @@ export function taskRow(task, { schlicht = false, verzoegerung = 0, ziehbar = fa
       task.note && !schlicht ? renderText(task.note, { klasse: "zeile__notiz" }) : null,
       schlicht ? null : unterzeile(task, ueberfaellig),
     ),
-    schlicht ? null : werkzeuge(task),
+    schlicht ? null : werkzeuge(task, ueberfaellig),
   );
 
   async function umschalten() {
@@ -105,10 +107,13 @@ function unterzeile(task, ueberfaellig) {
   return teile.length === 0 ? null : h("div.zeile__unten", {}, teile);
 }
 
-function werkzeuge(task) {
+function werkzeuge(task, ueberfaellig) {
   return h(
     "div.zeile__werkzeuge",
     {},
+    // „Morgen“ steht nur an überfälligen Zeilen. An einer Aufgabe, die noch gar nicht
+    // dran ist, wäre Verschieben eine Einladung, gar nicht erst anzufangen.
+    ueberfaellig ? aufMorgen(task) : null,
     h(
       "button.knopf.knopf--still.knopf--rund",
       {
@@ -128,6 +133,39 @@ function werkzeuge(task) {
       },
       icon("papierkorb", 16),
     ),
+  );
+}
+
+/**
+ * Einen Kalendertag weiter, Uhrzeit bleibt.
+ *
+ * Gerechnet wird über Tag + Uhrzeit, nie über `+ 86.400.000 ms` — sonst wandert die
+ * 8-Uhr-Erinnerung bei jeder Zeitumstellung.
+ */
+function aufMorgen(task) {
+  return h(
+    "button.knopf.knopf--still.knopf--rund",
+    {
+      type: "button",
+      "aria-label": S.task_tomorrow,
+      title: S.task_tomorrow,
+      onclick: async (ereignis) => {
+        ereignis.stopPropagation();
+        const vorher = { dueAt: task.dueAt, hasTime: task.hasTime, dueTimeLocal: task.dueTimeLocal };
+        const ziel = postponeToTomorrow(task, Date.now());
+
+        await repo.setDue(task.id, dayOf(ziel), task.hasTime ? minutesOfDay(ziel) : null);
+        await aktualisieren();
+
+        meldung(`${task.title} — ${S.task_due_tomorrow}`, {
+          rueckgaengig: async () => {
+            await repo.updateTask(task.id, vorher);
+            await aktualisieren();
+          },
+        });
+      },
+    },
+    icon("pfeil_rechts", 16),
   );
 }
 

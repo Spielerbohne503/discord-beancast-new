@@ -71,6 +71,7 @@ export const S = Object.freeze({
   task_subtask_add: "Unteraufgabe",
   task_tags: "Etiketten",
   task_delete: "Löschen",
+  task_tomorrow: "Auf morgen schieben",
   task_restore: "Zurückholen",
   task_done: "Abhaken",
   task_undone: "Haken zurücknehmen",
