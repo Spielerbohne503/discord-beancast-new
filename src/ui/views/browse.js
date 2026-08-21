@@ -8,7 +8,7 @@
 
 import { Scope, filterTasks, isManuallyOrdered } from "../../domain/filter.js";
 import * as repo from "../../data/repo.js";
-import { aktualisieren, setzen, state } from "../store.js";
+import { aktualisieren, navigieren, state } from "../store.js";
 import { fuellen, h } from "../dom.js";
 import { icon } from "../icons.js";
 import { S } from "../strings.js";
@@ -72,13 +72,13 @@ export function browseView() {
               state.scope.kind === eintrag.kind &&
                 (eintrag.kind !== Scope.LIST || state.scope.listId === eintrag.listId),
             ),
-            onclick: () => {
-              state.scope = eintrag.kind === Scope.LIST
-                ? { kind: Scope.LIST, listId: eintrag.listId }
-                : { kind: eintrag.kind };
-              bereicheZeichnen();
-              inhaltZeichnen();
-            },
+            onclick: () =>
+              navigieren(
+                "browse",
+                eintrag.kind === Scope.LIST
+                  ? { kind: Scope.LIST, listId: eintrag.listId }
+                  : { kind: eintrag.kind },
+              ),
           },
           eintrag.text,
         ),
@@ -91,8 +91,8 @@ export function browseView() {
             const name = globalThis.prompt(S.list_new_placeholder)?.trim();
             if (!name) return;
             const liste = await repo.createList(name);
-            state.scope = { kind: Scope.LIST, listId: liste.id };
             await aktualisieren();
+            navigieren("browse", { kind: Scope.LIST, listId: liste.id });
           },
         },
         S.list_new,
@@ -162,8 +162,8 @@ export function browseView() {
               meldung(S.list_delete_last);
               return;
             }
-            setzen({ scope: { kind: Scope.ALL_OPEN } });
             await aktualisieren();
+            navigieren("browse", { kind: Scope.ALL_OPEN });
           },
         },
         icon("papierkorb", 16),

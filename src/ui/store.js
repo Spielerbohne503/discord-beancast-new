@@ -12,6 +12,7 @@ import { moodCategory, pickSpeech } from "../domain/pet.js";
 import { dayOf } from "../domain/time.js";
 import * as repo from "../data/repo.js";
 import { focusRoundsToday, recomputePet } from "../data/petstore.js";
+import { hashFuer } from "./router.js";
 import { S } from "./strings.js";
 
 const hoerer = new Set();
@@ -90,6 +91,22 @@ export function tickern() {
 export function setzen(aenderungen) {
   Object.assign(state, aenderungen);
   melden();
+}
+
+/**
+ * Ansicht wechseln — über die Adresse, nicht am Zustand vorbei.
+ *
+ * Der Zustand ändert sich erst, wenn der Browser den Wechsel meldet. Damit stimmen
+ * Adresse, Verlauf und Bildschirm immer überein, und der Zurück-Knopf tut, was er soll.
+ */
+export function navigieren(route, scope = null) {
+  const ziel = hashFuer(route, scope ?? (route === "browse" ? state.scope : null));
+  if (globalThis.location.hash === ziel) {
+    // Derselbe Ort: Es kommt keine Meldung vom Browser, also selbst zeichnen.
+    melden();
+    return;
+  }
+  globalThis.location.hash = ziel;
 }
 
 /**

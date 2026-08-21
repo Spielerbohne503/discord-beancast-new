@@ -6,7 +6,7 @@
  * eigener Inhalt.
  */
 
-import { setzen, state } from "../store.js";
+import { navigieren, state } from "../store.js";
 import { fuellen, h } from "../dom.js";
 import { icon } from "../icons.js";
 import { S } from "../strings.js";
@@ -26,7 +26,7 @@ export function moreView() {
       PUNKTE.map((punkt) =>
         h(
           "button.navi__punkt",
-          { onclick: () => setzen({ route: punkt.route }) },
+          { onclick: () => navigieren(punkt.route) },
           icon(punkt.symbol, 18),
           h("span.navi__punkt-name", {}, punkt.text),
           icon("pfeil_rechts", 16),

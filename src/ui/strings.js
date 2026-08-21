@@ -174,6 +174,15 @@ export const S = Object.freeze({
   stats_today_counts_never_against_you: "Der heutige Tag zählt nie gegen dich.",
 
   // --------------------------------------------------------------- Einstellungen
+  nag_group: (n) => `${n} überfällige Aufgaben warten.`,
+  nag_stage: (stufe) =>
+    ({
+      first: "ist fällig",
+      again: "steht immer noch offen",
+      loud: "liegt schon eine Weile",
+      cleanup: "Willst du das noch?",
+    })[stufe] ?? "ist fällig",
+
   settings_title: "Einstellungen",
   settings_focus: "Fokus",
   settings_focus_minutes: "Fokusrunde (Minuten)",

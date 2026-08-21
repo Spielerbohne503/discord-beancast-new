@@ -806,3 +806,9 @@ body[data-fokus="running"] .seitenleiste {
     display: none;
   }
 }
+
+/* Die Restzeit im Kopf, solange eine Runde läuft. */
+.laufende-runde {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}

@@ -9,7 +9,7 @@
  */
 
 import { stageOf } from "../../domain/pet.js";
-import { setzen, state } from "../store.js";
+import { navigieren, state } from "../store.js";
 import { h } from "../dom.js";
 import { S, STAGE_NAMES } from "../strings.js";
 import { orb } from "../orb.js";
@@ -21,7 +21,7 @@ export function petStrip() {
     "button.streifen",
     {
       type: "button",
-      onclick: () => setzen({ route: "companion" }),
+      onclick: () => navigieren("companion"),
       "aria-label": S.nav_companion,
     },
     orb(state.pet, { groesse: 56, ring: false, bahn: false }),

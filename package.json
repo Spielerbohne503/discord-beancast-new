@@ -7,6 +7,8 @@
   "scripts": {
     "test": "node --test",
     "serve": "python3 tools/serve.py",
-    "shots": "node tools/screenshots.mjs"
+    "shots": "node tools/screenshots.mjs",
+    "browsertest": "node tools/browsertest.mjs",
+    "check": "node --test && node tools/browsertest.mjs && node tools/screenshots.mjs"
   }
 }

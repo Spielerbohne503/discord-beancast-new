@@ -84,6 +84,7 @@ for (const ansicht of ANSICHTEN) {
   await seite.goto(ADRESSE, { waitUntil: "networkidle" });
   await seite.waitForSelector(".rahmen", { timeout: 5000 });
 
+  await willkommenWegklicken(seite, ansicht.name);
   await beispieleAnlegen(seite);
   await gewohnheitenAnlegen(seite);
 
@@ -151,6 +152,16 @@ async function gewohnheitenAnlegen(seite) {
     await seite.waitForTimeout(160);
   }
   await klicken(seite, "Heute");
+}
+
+/** Der Willkommensbildschirm kommt beim allerersten Start — erst ablichten, dann weg. */
+async function willkommenWegklicken(seite, ansichtName) {
+  const dialog = seite.locator("dialog[open]");
+  if ((await dialog.count()) === 0) return;
+
+  await seite.screenshot({ path: `${ORDNER}/${ansichtName}-willkommen.png` });
+  await seite.locator('dialog[open] button:has-text("Los geht")').click();
+  await seite.waitForTimeout(320);
 }
 
 async function beispieleAnlegen(seite) {

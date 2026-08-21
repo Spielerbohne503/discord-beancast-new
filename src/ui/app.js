@@ -10,11 +10,13 @@
 import { Scope, filterTasks } from "../domain/filter.js";
 import { groupToday } from "../domain/tasks.js";
 import { levelForXp, stageOf } from "../domain/pet.js";
+import { FocusState, focusStateOf, formatRemaining } from "../domain/focus.js";
 import * as repo from "../data/repo.js";
 import { pruneRewardLog } from "../data/petstore.js";
-import { abonnieren, aktualisieren, setzen, state, tickern } from "./store.js";
+import { abonnieren, aktualisieren, navigieren, setzen, state, tickern } from "./store.js";
 import { fuellen, h, on } from "./dom.js";
 import { icon } from "./icons.js";
+import { ausHash } from "./router.js";
 import { S, STAGE_NAMES } from "./strings.js";
 import { formatLongDay } from "./format.js";
 import { orb } from "./orb.js";
@@ -26,6 +28,9 @@ import { habitsView } from "./views/habits.js";
 import { statsView } from "./views/stats.js";
 import { settingsView } from "./views/settings.js";
 import { moreView } from "./views/more.js";
+import { erinnerungenStarten } from "./nag.js";
+import { geteiltesUebernehmen } from "./share.js";
+import { willkommenZeigen } from "./onboarding.js";
 
 const ANSICHTEN = {
   today: { bauen: todayView, titel: () => S.nav_today },
@@ -67,6 +72,7 @@ const gebaute = new Map();
 export async function starten(wurzel) {
   const kopfTitel = h("h1");
   const kopfDatum = h("span.kopf__datum");
+  const laufendeRunde = h("div");
   const kopf = h(
     "header.kopf",
     {},
@@ -77,9 +83,10 @@ export async function starten(wurzel) {
       h(
         "div.kopf__werkzeuge",
         {},
+        laufendeRunde,
         h(
           "button.knopf.knopf--still.knopf--rund",
-          { "aria-label": S.action_search, onclick: () => setzen({ route: "browse" }) },
+          { "aria-label": S.action_search, onclick: () => navigieren("browse") },
           icon("suchen", 18),
         ),
       ),
@@ -105,6 +112,7 @@ export async function starten(wurzel) {
     if (inhalt.firstChild !== gebaut.el) fuellen(inhalt, gebaut.el);
     gebaut.update();
 
+    laufendeRundeZeichnen(laufendeRunde);
     leisteZeichnen(leiste);
     seitenleisteZeichnen(seitenleiste);
     nebenspalteZeichnen(nebenspalte);
@@ -114,9 +122,34 @@ export async function starten(wurzel) {
 
   abonnieren(zeichnen);
 
+  /** Die Adresse ist die Wahrheit über die Ansicht — auch beim allerersten Zeichnen. */
+  function ausAdresseUebernehmen() {
+    const ziel = ausHash(globalThis.location.hash);
+    state.route = ziel.route;
+    if (ziel.scope !== null) state.scope = ziel.scope;
+  }
+
+  on(globalThis, "hashchange", () => {
+    ausAdresseUebernehmen();
+    zeichnen();
+  });
+  ausAdresseUebernehmen();
+
   await repo.seedIfEmpty(S);
   await aktualisieren({ neuerSatz: true });
   await pruneRewardLog(Date.now());
+
+  // Geteiltes kommt als Adressparameter herein und wird sofort zur Aufgabe.
+  if (await geteiltesUebernehmen(state.settings)) await aktualisieren();
+
+  if (state.settings.onboardingDone !== true) {
+    willkommenZeigen(() => {
+      void aktualisieren();
+      gebaute.get("today")?.focus?.();
+    });
+  }
+
+  erinnerungenStarten();
 
   // Ein Takt pro Sekunde reicht für die Uhr; alles andere hängt an Ereignissen.
   setInterval(tickern, 1000);
@@ -129,6 +162,37 @@ export async function starten(wurzel) {
   tastenkuerzel();
 }
 
+/**
+ * Eine laufende Fokusrunde, überall sichtbar.
+ *
+ * Ohne diese Anzeige läuft nach einem Neuladen eine Runde weiter, von der niemand mehr
+ * etwas weiß — und man wundert sich, warum die Pause plötzlich anfängt.
+ */
+function laufendeRundeZeichnen(behaelter) {
+  const zustand = focusStateOf(state.focusSession, state.now);
+  const laeuft = zustand.state === FocusState.RUNNING || zustand.state === FocusState.PAUSED;
+
+  if (!laeuft || state.route === "focus") {
+    fuellen(behaelter);
+    // Der Titel des Tabs zählt mit, solange eine Runde läuft.
+    document.title = S.app_name;
+    return;
+  }
+
+  const rest = formatRemaining(zustand.remaining);
+  document.title = `${rest} · ${S.app_name}`;
+
+  fuellen(
+    behaelter,
+    h(
+      "button.knopf.knopf--klein",
+      { onclick: () => navigieren("focus"), "aria-label": S.focus_title },
+      icon(zustand.state === FocusState.PAUSED ? "pause" : "fokus", 14),
+      h("span.laufende-runde", {}, rest),
+    ),
+  );
+}
+
 function leisteZeichnen(leiste) {
   fuellen(
     leiste,
@@ -137,7 +201,7 @@ function leisteZeichnen(leiste) {
         "button.leiste__knopf",
         {
           "aria-current": passt(punkt.route) ? "page" : null,
-          onclick: () => setzen({ route: punkt.route }),
+          onclick: () => navigieren(punkt.route),
         },
         icon(punkt.symbol, 22),
         h("span", {}, punkt.text),
@@ -176,13 +240,14 @@ function seitenleisteZeichnen(seitenleiste) {
           "button.navi__punkt",
           {
             "aria-current": state.route === punkt.route ? "page" : null,
-            onclick: () => setzen({ route: punkt.route }),
+            onclick: () => navigieren(punkt.route),
           },
           icon(punkt.symbol, 18),
           h("span.navi__punkt-name", {}, punkt.text),
           punkt.route === "today" && brett.overdue.length > 0
             ? h("span.navi__zahl", {}, String(brett.overdue.length))
             : null,
+          punkt.route === "focus" ? fokusRest() : null,
         ),
       ),
     ),
@@ -198,6 +263,13 @@ function seitenleisteZeichnen(seitenleiste) {
   );
 }
 
+/** Die Restzeit neben „Fokus“ in der Seitenleiste — `null`, wenn nichts läuft. */
+function fokusRest() {
+  const zustand = focusStateOf(state.focusSession, state.now);
+  if (zustand.state !== FocusState.RUNNING && zustand.state !== FocusState.PAUSED) return null;
+  return h("span.navi__zahl", {}, formatRemaining(zustand.remaining));
+}
+
 function bereichspunkt(eintrag) {
   const aktiv = state.route === "browse" && state.scope.kind === eintrag.kind;
   const anzahl = filterTasks(state.tasks, { kind: eintrag.kind }, "", state.now).length;
@@ -206,7 +278,10 @@ function bereichspunkt(eintrag) {
     "button.navi__punkt",
     {
       "aria-current": aktiv ? "page" : null,
-      onclick: () => setzen({ route: "browse", scope: { kind: eintrag.kind }, query: "" }),
+      onclick: () => {
+      state.query = "";
+      navigieren("browse", { kind: eintrag.kind });
+    },
     },
     h("span.navi__punkt-name", {}, eintrag.text),
     h("span.navi__zahl", {}, String(anzahl)),
@@ -223,8 +298,10 @@ function listenpunkt(liste) {
     "button.navi__punkt",
     {
       "aria-current": aktiv ? "page" : null,
-      onclick: () =>
-        setzen({ route: "browse", scope: { kind: Scope.LIST, listId: liste.id }, query: "" }),
+      onclick: () => {
+        state.query = "";
+        navigieren("browse", { kind: Scope.LIST, listId: liste.id });
+      },
     },
     h("span.navi__punkt-farbe"),
     h("span.navi__punkt-name", {}, liste.name),
@@ -242,8 +319,8 @@ function neueListe() {
       if (name.length === 0) return;
       feld.value = "";
       const liste = await repo.createList(name);
-      setzen({ route: "browse", scope: { kind: Scope.LIST, listId: liste.id } });
       await aktualisieren();
+      navigieren("browse", { kind: Scope.LIST, listId: liste.id });
     },
   });
 
@@ -273,7 +350,7 @@ function nebenspalteZeichnen(nebenspalte) {
       state.speechText ? h("p.blase", {}, state.speechText) : null,
       h(
         "button.knopf.knopf--klein",
-        { onclick: () => setzen({ route: "companion" }) },
+        { onclick: () => navigieren("companion") },
         S.nav_companion,
       ),
     ),
@@ -299,14 +376,14 @@ function tastenkuerzel() {
 
     if (ereignis.key === "n") {
       ereignis.preventDefault();
-      setzen({ route: "today" });
+      navigieren("today");
       gebaute.get("today")?.focus?.();
     } else if (ereignis.key === "/") {
       ereignis.preventDefault();
-      setzen({ route: "browse" });
+      navigieren("browse");
     } else if (ereignis.key === "f") {
       ereignis.preventDefault();
-      setzen({ route: "focus" });
+      navigieren("focus");
     }
   });
 }
