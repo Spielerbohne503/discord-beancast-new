@@ -1,15 +1,28 @@
-# Cloudflare Pages.
+# Cloudflare.
 #
-# Es gibt keinen Bauschritt: Die Webseite **ist** das Wurzelverzeichnis. Reine ES-Module,
-# die der Browser direkt lädt — nichts zu übersetzen, nichts zu bündeln.
+# Ausgeliefert wird `dist/` — nicht das Wurzelverzeichnis. Cloudflare lädt alles hoch, was
+# im angegebenen Verzeichnis liegt; zeigte es auf die Wurzel, stünde `.git` mit der ganzen
+# Projektgeschichte im Netz. `.assetsignore` hilft an dieser Stelle nicht, es greift bei
+# `directory = "."` nicht.
 #
-# Damit reicht in der Weboberfläche von Cloudflare:
+# `[build]` legt die Webseite vorher dorthin. Übersetzt wird dabei nichts — es wird
+# kopiert; `index.html` im Wurzelverzeichnis bleibt unverändert lauffähig.
 #
-#   Build command      (leer lassen)
-#   Output directory   /
+# Kein `main`: Es gibt kein Programm auf der Gegenseite, nur Dateien.
 #
-# Diese Datei nimmt einem die zweite Angabe ab. Kommt Cloudflare damit nicht zurecht,
-# kann sie ersatzlos gelöscht werden — dann trägt man das Verzeichnis von Hand ein.
+# **`name` muss zu dem Worker passen, der im Dashboard steht.** Heißt er dort anders,
+# gehört hier derselbe Name hin — sonst legt der Deploy einen zweiten daneben.
 
 name = "petodo"
-pages_build_output_dir = "."
+compatibility_date = "2026-08-20"
+
+[build]
+command = "node tools/publish.mjs"
+
+[assets]
+directory = "dist"
+
+# `not_found_handling` bleibt aus: Die App führt ihren Verlauf im Hash (`#/heute`), es gibt
+# also nie einen Pfad, der ins Leere zeigt. Stünde hier „single-page-application“, käme
+# statt einer fehlenden `.js`-Datei stillschweigend HTML zurück — und der Fehler läse sich
+# dann wie ein Syntaxfehler im Modul.

@@ -15,7 +15,11 @@ import sys
 from pathlib import Path
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
-WURZEL = Path(__file__).resolve().parent.parent
+
+# Zweites Argument: welches Verzeichnis ausgeliefert wird. Ohne Angabe das
+# Wurzelverzeichnis — das **ist** die Webseite. Mit ``dist`` lässt sich prüfen, was
+# Cloudflare tatsächlich bekommt, samt derselben Kopfzeilen.
+WURZEL = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else Path(__file__).resolve().parent.parent
 
 
 def kopfzeilen_lesen(pfad):
@@ -50,6 +54,9 @@ REGELN = kopfzeilen_lesen(WURZEL / "_headers")
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(WURZEL), **kwargs)
+
     extensions_map = {
         **http.server.SimpleHTTPRequestHandler.extensions_map,
         ".js": "text/javascript",

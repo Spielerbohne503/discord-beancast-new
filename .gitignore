@@ -9,3 +9,6 @@ android/.gradle/
 android/build/
 android/app/build/
 *.apk
+
+# Nur für die Auslieferung; entsteht aus dem Wurzelverzeichnis.
+dist/

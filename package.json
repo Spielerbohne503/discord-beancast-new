@@ -7,8 +7,10 @@
   "scripts": {
     "test": "node --test",
     "serve": "python3 tools/serve.py",
-    "shots": "node tools/screenshots.mjs",
+    "build": "node tools/publish.mjs",
     "browsertest": "node tools/browsertest.mjs",
-    "check": "node --test && node tools/browsertest.mjs && node tools/bruecketest.mjs && node tools/screenshots.mjs"
+    "bruecketest": "node tools/bruecketest.mjs",
+    "shots": "node tools/screenshots.mjs",
+    "check": "node --test && node tools/publish.mjs && node tools/browsertest.mjs && node tools/bruecketest.mjs && node tools/screenshots.mjs"
   }
 }

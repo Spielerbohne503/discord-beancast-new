@@ -28,16 +28,22 @@ npm test              Unit-Tests (node --test, keine Abhängigkeit)
 npm run serve         Entwicklungsserver auf :8000
 npm run browsertest   Durchlauf durch die laufende App in Chromium
 npm run bruecketest   Der Vertrag zur Android-Hülle, gegen eine nachgebaute Hülle
+npm run build         Webseite nach dist/ legen und auf Vollständigkeit prüfen
 npm run shots         Bildschirmfotos beider Anordnungen und beider Fassungen
-npm run check         alles vier
+npm run check         alles zusammen
 
 cd android && ./gradlew assembleRelease    # die Hülle als APK
 ```
 
-Ins Netz gestellt wird ohne Bauschritt: Das Wurzelverzeichnis **ist** die Webseite.
-Einzelheiten in `docs/CLOUDFLARE.md`. `_headers` gilt dabei für beide Seiten — Cloudflare
-liest es, und `tools/serve.py` liest es auch, damit sich der Entwicklungsbetrieb nicht
-anders verhält als das Netz.
+Ins Netz gestellt wird mit `npm run build`: Das legt die Dateien der Webseite nach `dist/`
+und prüft dabei, ob jeder Verweis aus `index.html` auch mitgekommen ist. **Übersetzt wird
+nichts** — das Wurzelverzeichnis bleibt unverändert lauffähig. Nötig ist der Schritt nur,
+weil Cloudflare alles ausliefert, was im angegebenen Verzeichnis liegt, und `.git` dort
+nichts zu suchen hat. Einzelheiten in `docs/CLOUDFLARE.md`.
+
+`_headers` gilt für beide Seiten — Cloudflare liest es, und `tools/serve.py` liest es auch,
+damit sich der Entwicklungsbetrieb nicht anders verhält als das Netz. Prüfen lässt sich das
+mit `python3 tools/serve.py 8001 dist` plus `node tools/browsertest.mjs http://localhost:8001/`.
 
 Für die Browser-Werkzeuge muss der Server laufen. Chromium liegt unter
 `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`; **nichts nachladen.**
