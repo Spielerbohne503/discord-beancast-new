@@ -11,6 +11,8 @@ import * as repo from "../../data/repo.js";
 import { clearAll } from "../../data/db.js";
 import { backupFileName, exportBackup, importBackup } from "../../data/backupstore.js";
 import { erinnerungenErlaubt, erlaubnisAnfragen, exakteWeckerErlaubt, huellenFassung, inHuelle } from "../bruecke.js";
+import { ausLosung } from "../../data/krypto.js";
+import { anstossen, letzterAusgang } from "../sync.js";
 import { aktualisieren, state } from "../store.js";
 import { fuellen, h } from "../dom.js";
 import { icon } from "../icons.js";
@@ -30,6 +32,7 @@ export function settingsView() {
 
     fuellen(
       element,
+      abgleich(setzenUndNeu, update),
       fokusgruppe(setzenUndNeu),
       ruhezeit(setzenUndNeu),
       erinnerungen(setzenUndNeu),
@@ -40,6 +43,115 @@ export function settingsView() {
   }
 
   return { el: element, update };
+}
+
+/**
+ * Geräteübergreifend.
+ *
+ * Steht ganz oben, weil es die einzige Einstellung ist, die etwas an der Welt außerhalb
+ * dieses Geräts ändert. Standardmäßig aus — und der Hinweis darunter sagt, was passiert,
+ * bevor man einschaltet, nicht danach.
+ *
+ * Die Losung wird **nicht** gespeichert, nur was daraus abgeleitet wurde. Deshalb steht im
+ * Feld nach dem Verbinden auch nichts mehr: Es gibt nichts anzuzeigen.
+ */
+function abgleich(setzenUndNeu, neuZeichnen) {
+  const verbunden = Boolean(state.settings.syncRaum);
+
+  const losung = h("input.eingabe", {
+    type: "password",
+    autocomplete: "off",
+    placeholder: S.settings_sync_losung_platzhalter,
+    onkeydown: (ereignis) => {
+      if (ereignis.key === "Enter") void verbinden();
+    },
+  });
+
+  const adresse = h("input.eingabe", {
+    type: "url",
+    inputmode: "url",
+    placeholder: globalThis.location?.origin ?? "",
+    value: state.settings.syncAdresse,
+    onchange: () => void setzenUndNeu("syncAdresse", adresse.value.trim()),
+  });
+
+  const stand = h(
+    "span.feld__hinweis",
+    {},
+    state.settings.syncStand
+      ? S.settings_sync_stand(new Date(state.settings.syncStand).toLocaleString("de-DE"))
+      : S.settings_sync_nie,
+  );
+
+  async function verbinden() {
+    const satz = losung.value.trim();
+    if (satz.length === 0) return;
+
+    losung.value = "";
+    losung.disabled = true;
+    losung.placeholder = S.settings_sync_rechnet;
+
+    // Dauert absichtlich spürbar: Die Ableitung ist teuer, damit Raten weh tut.
+    const abgeleitet = await ausLosung(satz);
+    await repo.saveSetting("syncRaum", abgeleitet.raum);
+    await repo.saveSetting("syncSchluessel", abgeleitet.schluessel);
+    await repo.saveSetting("syncAktiv", true);
+    await aktualisieren();
+
+    await anstossen({ still: false });
+    neuZeichnen();
+  }
+
+  async function trennen() {
+    // Der Stand auf dem Server bleibt liegen — er gehört auch den anderen Geräten.
+    for (const schluessel of ["syncRaum", "syncSchluessel", "syncStand"]) {
+      await repo.saveSetting(schluessel, schluessel === "syncStand" ? null : "");
+    }
+    await setzenUndNeu("syncAktiv", false);
+    neuZeichnen();
+  }
+
+  return gruppe(
+    S.settings_sync,
+    verbunden
+      ? schalter(S.settings_sync_toggle, state.settings.syncAktiv, (an) => setzenUndNeu("syncAktiv", an))
+      : null,
+    verbunden
+      ? h(
+          "div.chips",
+          {},
+          h(
+            "button.knopf.knopf--haupt",
+            { onclick: () => void anstossen({ still: false }) },
+            icon("wiederholen", 16),
+            S.settings_sync_jetzt,
+          ),
+          h("button.knopf.knopf--gefahr", { onclick: () => void trennen() }, S.settings_sync_trennen),
+        )
+      : h(
+          "div.feld",
+          {},
+          h("span.feld__beschriftung", {}, S.settings_sync_losung),
+          h(
+            "div.schnell__zeile",
+            { style: { gap: "8px" } },
+            losung,
+            h("button.knopf.knopf--haupt", { onclick: () => void verbinden() }, S.settings_sync_verbinden),
+          ),
+          h("span.feld__hinweis", {}, S.settings_sync_losung_hint),
+        ),
+    verbunden ? stand : null,
+    verbunden && letzterAusgang
+      ? h("span.feld__hinweis", {}, S.settings_sync_ergebnis[letzterAusgang.ergebnis] ?? "")
+      : null,
+    h(
+      "details",
+      {},
+      h("summary.feld__beschriftung", { style: { cursor: "pointer" } }, S.settings_sync_adresse),
+      h("div.feld", { style: { "padding-top": "12px" } }, adresse, h("span.feld__hinweis", {}, S.settings_sync_adresse_hint)),
+    ),
+    h("span.feld__hinweis", {}, S.settings_sync_hint),
+  );
 }
 
 function gruppe(titel, ...kinder) {

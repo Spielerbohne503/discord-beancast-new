@@ -19,10 +19,15 @@ function keyOf(table, row) {
   return Array.isArray(keyPath) ? keyPath.map((feld) => row[feld]) : row[keyPath];
 }
 
-export async function exportBackup(at) {
+/** Alles, was gesichert und abgeglichen wird — Tombstones eingeschlossen. */
+export async function tabellenLesen() {
   const tabellen = {};
   for (const tabelle of BACKUP_TABLES) tabellen[tabelle] = await getAll(tabelle);
-  return encodeBackup(tabellen, at);
+  return tabellen;
+}
+
+export async function exportBackup(at) {
+  return encodeBackup(await tabellenLesen(), at);
 }
 
 /** Ein Dateiname, der sich später sortieren lässt. */
@@ -40,10 +45,22 @@ export async function importBackup(text) {
   const dokument = decodeBackup(text);
   if (dokument === null) return null;
 
+  const tabellen = {};
+  for (const tabelle of BACKUP_TABLES) tabellen[tabelle] = dokument.rows(tabelle);
+  return tabellenZusammenfuehren(tabellen);
+}
+
+/**
+ * Schreibt fremde Zeilen in die Datenbank — je Zeile gewinnt der jüngere `updatedAt`.
+ *
+ * Dieselbe Regel für Sicherung und Abgleich, und dieselbe Umsetzung: Zwei Wege, dieselben
+ * Daten zu überschreiben, wären zwei Wege, sie unterschiedlich kaputtzumachen.
+ */
+export async function tabellenZusammenfuehren(tabellen) {
   let bericht = restoreReport();
 
   for (const tabelle of BACKUP_TABLES) {
-    const zeilen = dokument.rows(tabelle);
+    const zeilen = tabellen[tabelle] ?? [];
     if (zeilen.length === 0) continue;
 
     bericht = await transaction([tabelle], "readwrite", async (tx) => {

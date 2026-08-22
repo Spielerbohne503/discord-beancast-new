@@ -368,6 +368,17 @@ const EINSTELLUNGEN = {
   reduceMotion: false,
   onboardingDone: false,
   defaultListId: null,
+
+  // ------------------------------------------------------------------- Abgleich
+  //
+  // Standardmäßig aus. Die Losung selbst wird **nie** gespeichert — nur das, was daraus
+  // abgeleitet wurde. Wer das Gerät in die Hand bekommt, hat ohnehin Zugriff auf die
+  // Aufgaben; wer den Server hat, bekommt damit trotzdem nichts.
+  syncAktiv: false,
+  syncAdresse: "",
+  syncRaum: "",
+  syncSchluessel: "",
+  syncStand: null,
 };
 
 export async function loadSettings() {

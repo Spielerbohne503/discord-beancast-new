@@ -1,14 +1,8 @@
 # Cloudflare.
 #
-# Ausgeliefert wird `dist/` — nicht das Wurzelverzeichnis. Cloudflare lädt alles hoch, was
-# im angegebenen Verzeichnis liegt; zeigte es auf die Wurzel, stünde `.git` mit der ganzen
-# Projektgeschichte im Netz. `.assetsignore` hilft an dieser Stelle nicht, es greift bei
-# `directory = "."` nicht.
-#
-# `[build]` legt die Webseite vorher dorthin. Übersetzt wird dabei nichts — es wird
-# kopiert; `index.html` im Wurzelverzeichnis bleibt unverändert lauffähig.
-#
-# Kein `main`: Es gibt kein Programm auf der Gegenseite, nur Dateien.
+# **Reihenfolge ist hier keine Geschmacksfrage.** In TOML gehört alles, was nach einer
+# Tabellenüberschrift steht, zu dieser Tabelle. `main` unter `[build]` wird zu
+# `build.main` und ist damit weg. Alle einfachen Angaben stehen deshalb oben.
 #
 # **`name` muss zu dem Worker passen, der im Dashboard steht.** Heißt er dort anders,
 # gehört hier derselbe Name hin — sonst legt der Deploy einen zweiten daneben.
@@ -16,13 +10,39 @@
 name = "petodo"
 compatibility_date = "2026-08-20"
 
+# Der Abgleich zwischen Geräten.
+#
+# `worker/index.js` beantwortet ausschließlich `/sync/…`; alles andere holt Cloudflare aus
+# `dist/`. Damit liegt der Abgleich am **selben Ursprung** wie die App — die
+# Sicherheitsrichtlinie braucht keine Ausnahme, und CORS gibt es gar nicht erst.
+main = "worker/index.js"
+
+# Ausgeliefert wird `dist/` — nicht das Wurzelverzeichnis. Cloudflare lädt alles hoch, was
+# im angegebenen Verzeichnis liegt; zeigte es auf die Wurzel, stünde `.git` mit der ganzen
+# Projektgeschichte im Netz. `.assetsignore` hilft dort nicht, es greift bei
+# `directory = "."` nicht.
+#
+# `[build]` legt die Webseite vorher dorthin. Übersetzt wird dabei nichts — es wird
+# kopiert; `index.html` im Wurzelverzeichnis bleibt unverändert lauffähig.
 [build]
 command = "node tools/publish.mjs"
 
 [assets]
 directory = "dist"
+binding = "ASSETS"
 
 # `not_found_handling` bleibt aus: Die App führt ihren Verlauf im Hash (`#/heute`), es gibt
 # also nie einen Pfad, der ins Leere zeigt. Stünde hier „single-page-application“, käme
 # statt einer fehlenden `.js`-Datei stillschweigend HTML zurück — und der Fehler läse sich
 # dann wie ein Syntaxfehler im Modul.
+
+# ------------------------------------------------------------------------- Abgleich
+#
+# Ohne diese Bindung läuft die Webseite genau wie bisher; der Abgleich sagt dann „kein
+# Speicher gebunden“ und rührt nichts an. Zum Einschalten in Cloudflare eine KV-Namespace
+# anlegen, deren `id` hier eintragen und die drei Zeilen entkommentieren.
+# Einzelheiten in `docs/SYNC.md`.
+#
+# [[kv_namespaces]]
+# binding = "PETODO"
+# id = "hier-die-kennung-aus-cloudflare"

@@ -31,6 +31,7 @@ import { settingsView } from "./views/settings.js";
 import { moreView } from "./views/more.js";
 import { erinnerungenStarten } from "./nag.js";
 import { aktionenNachholen, inHuelle, zeitplanSenden } from "./bruecke.js";
+import { abgleichStarten } from "./sync.js";
 import { geteiltesUebernehmen } from "./share.js";
 import { willkommenZeigen } from "./onboarding.js";
 
@@ -186,6 +187,7 @@ export async function starten(wurzel) {
   }
 
   erinnerungenStarten();
+  abgleichStarten();
 
   // Ein Takt pro Sekunde reicht für die Uhr; alles andere hängt an Ereignissen.
   setInterval(tickern, 1000);
