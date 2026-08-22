@@ -310,6 +310,45 @@ pruefe(
   `${wiederDa} von ${aufgabenVorher}`,
 );
 
+// ---------------------------------------------------------------------- Offline
+
+/*
+ * Der Grund, warum es einen Dienstarbeiter gibt.
+ *
+ * Auf Cloudflare liegt die App an einer Adresse im Netz — ohne Zwischenspeicher wäre sie
+ * im Flugzeug oder im Funkloch schlicht weg, obwohl alle Daten auf dem Gerät liegen. Das
+ * hier prüft, dass sie es nicht ist.
+ */
+console.log("\nOhne Netz");
+await klicken(seite, "Heute");
+await seite.waitForTimeout(400);
+
+const arbeiter = await seite.evaluate(async () => {
+  const anmeldung = await navigator.serviceWorker?.getRegistration();
+  return Boolean(anmeldung);
+});
+pruefe("der Dienstarbeiter ist angemeldet", arbeiter);
+
+await kontext.setOffline(true);
+await seite.reload({ waitUntil: "domcontentloaded" });
+await seite.waitForSelector(".rahmen", { timeout: 15000 }).catch(() => {});
+await willkommenWeg(seite);
+pruefe(
+  "die App startet auch ohne Netz",
+  (await seite.locator(".rahmen").count()) === 1,
+);
+pruefe(
+  "und die Aufgaben sind noch da",
+  (await seite.locator(".zeile").count()) > 0,
+  `${await seite.locator(".zeile").count()} Zeilen`,
+);
+await kontext.setOffline(false);
+await seite.reload({ waitUntil: "networkidle" });
+await seite.waitForSelector(".rahmen");
+// „Alle Daten löschen“ weiter oben hat auch die Einstellungen mitgenommen — die stehen
+// nicht in der Sicherung. Nach dem Neuladen ist die App also wieder fabrikneu und grüßt.
+await willkommenWeg(seite);
+
 // ---------------------------------------------------------------- Kaputte Datei
 
 console.log("\nKaputte Sicherung");

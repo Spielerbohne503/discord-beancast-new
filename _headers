@@ -1,0 +1,37 @@
+# Kopfzeilen für Cloudflare Pages.
+#
+# Cloudflare liest diese Datei aus dem Wurzelverzeichnis der ausgelieferten Dateien. Der
+# Entwicklungsserver (`tools/serve.py`) liest **dieselbe** Datei — sonst verhält sich die
+# App beim Entwickeln anders als im Netz, und der Unterschied fällt erst dem Nutzer auf.
+
+/*
+  # Die App holt nichts von außen. Kein Skript, kein Bild, keine Verbindung, keine
+  # Schrift — alles liegt neben der Seite. Deshalb kann die Richtlinie so eng sein:
+  # `default-src 'none'` verbietet erst einmal alles, der Rest erlaubt genau das Eigene.
+  #
+  # Kein 'unsafe-inline': Dafür stehen die zwei Startskripte in eigenen Dateien.
+  # `blob:` ist für die Sicherungsdatei nötig, die im Browser entsteht und heruntergeladen
+  # wird — es gibt keinen Server, der sie ausliefern könnte.
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; child-src blob:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  # Die App gehört in kein fremdes Fenster eingebettet.
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  # Nichts davon wird gebraucht. Was nicht gebraucht wird, wird abgeschaltet.
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+
+/sw.js
+  # Der Dienstarbeiter darf nie aus dem Zwischenspeicher kommen: Sonst bleibt eine alte
+  # Fassung der App tagelang stehen, und niemand versteht, warum die Änderung nicht ankommt.
+  Cache-Control: no-cache
+  Content-Type: text/javascript; charset=utf-8
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json; charset=utf-8
+
+/src/*.js
+  Content-Type: text/javascript; charset=utf-8
+
+/src/*.css
+  Content-Type: text/css; charset=utf-8

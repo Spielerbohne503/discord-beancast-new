@@ -12,15 +12,12 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
 
-    <script>
-      // Vor dem ersten Strich: Sonst blitzt die helle Fassung auf, bevor die Datenbank
-      // gelesen ist. Die Wahrheit steht in IndexedDB; das hier ist nur der Vorgriff.
-      try {
-        document.documentElement.dataset.fassung = localStorage.getItem("petodo.fassung") || "hell";
-      } catch (fehler) {
-        document.documentElement.dataset.fassung = "hell";
-      }
-    </script>
+    <!--
+      Kein Inline-Skript, nirgends: Die Sicherheitsrichtlinie erlaubt ausschließlich
+      `script-src 'self'`. Dieses hier läuft vor dem ersten Strich, damit die helle
+      Fassung nicht kurz aufblitzt.
+    -->
+    <script src="src/ui/fassung.js"></script>
 
     <link rel="stylesheet" href="src/styles/tokens.css" />
     <link rel="stylesheet" href="src/styles/base.css" />
@@ -35,29 +32,11 @@
     <div id="wurzel"></div>
 
     <noscript>
-      <p style="padding: 24px; color: #9aa3c7">
+      <p class="ohne-javascript">
         PeTodo rechnet alles im Browser — ohne JavaScript gibt es nichts anzuzeigen.
       </p>
     </noscript>
 
-    <script type="module">
-      import { starten } from "./src/ui/app.js";
-
-      starten(document.getElementById("wurzel")).catch((fehler) => {
-        // Ein Fehler beim Start darf nicht in einer weißen Seite enden — dann weiß
-        // niemand, ob die App kaputt ist oder nur langsam.
-        console.error(fehler);
-        document.getElementById("wurzel").innerHTML =
-          '<div class="leer"><p class="leer__titel">Das hat nicht geklappt.</p>' +
-          `<p>${String(fehler?.message ?? fehler)}</p></div>`;
-      });
-
-      // In der Android-Hülle liegen die Dateien schon im Paket. Ein Dienstarbeiter würde
-      // dort nur eine zweite, ältere Kopie zwischenspeichern — und nach einem Update der
-      // App bekäme man tagelang die alte Fassung zu sehen.
-      if ("serviceWorker" in navigator && !globalThis.Petodo) {
-        addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-      }
-    </script>
+    <script type="module" src="src/ui/start.js"></script>
   </body>
 </html>

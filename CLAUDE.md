@@ -34,6 +34,11 @@ npm run check         alles vier
 cd android && ./gradlew assembleRelease    # die Hülle als APK
 ```
 
+Ins Netz gestellt wird ohne Bauschritt: Das Wurzelverzeichnis **ist** die Webseite.
+Einzelheiten in `docs/CLOUDFLARE.md`. `_headers` gilt dabei für beide Seiten — Cloudflare
+liest es, und `tools/serve.py` liest es auch, damit sich der Entwicklungsbetrieb nicht
+anders verhält als das Netz.
+
 Für die Browser-Werkzeuge muss der Server laufen. Chromium liegt unter
 `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`; **nichts nachladen.**
 
@@ -180,6 +185,8 @@ jemand seine Daten schon verloren hat.
 ## Arbeitsweise
 
 - Keine Bibliotheken ohne Rückfrage. Bisher: null Laufzeitabhängigkeiten.
+- **Kein Inline-Skript und kein `style`-Attribut.** Die Sicherheitsrichtlinie erlaubt nur
+  `'self'`; eine Ausnahme dafür wäre das Loch, durch das später alles andere passt.
 - Kein Netzzugriff aus der App heraus, kein Konto, keine Telemetrie.
 - **Nach jeder Änderung an der Oberfläche `npm run browsertest` laufen lassen.**
   Behauptungen über eine laufende App sind wertlos; hier lässt sie sich starten.

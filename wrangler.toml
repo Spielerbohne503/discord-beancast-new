@@ -1,0 +1,15 @@
+# Cloudflare Pages.
+#
+# Es gibt keinen Bauschritt: Die Webseite **ist** das Wurzelverzeichnis. Reine ES-Module,
+# die der Browser direkt lädt — nichts zu übersetzen, nichts zu bündeln.
+#
+# Damit reicht in der Weboberfläche von Cloudflare:
+#
+#   Build command      (leer lassen)
+#   Output directory   /
+#
+# Diese Datei nimmt einem die zweite Angabe ab. Kommt Cloudflare damit nicht zurecht,
+# kann sie ersatzlos gelöscht werden — dann trägt man das Verzeichnis von Hand ein.
+
+name = "petodo"
+pages_build_output_dir = "."

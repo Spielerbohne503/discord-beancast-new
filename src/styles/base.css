@@ -171,3 +171,15 @@ a:hover {
   border: 3px solid transparent;
   background-clip: content-box;
 }
+
+/*
+ * Ohne JavaScript.
+ *
+ * Als Klasse und nicht als `style`-Attribut: Die Sicherheitsrichtlinie erlaubt kein
+ * `'unsafe-inline'` für Gestaltung, und eine Ausnahme dafür wäre das Loch, durch das
+ * später alles andere passt.
+ */
+.ohne-javascript {
+  padding: var(--space-5);
+  color: var(--tinte-dim);
+}
