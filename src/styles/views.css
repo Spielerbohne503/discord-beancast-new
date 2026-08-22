@@ -283,7 +283,20 @@
   opacity: 1;
 }
 
-@media (hover: none) {
+/*
+ * Auf schmalen Bildschirmen gibt es die Werkzeuge nicht.
+ *
+ * Dort ersetzt das Wischen sie — und sie stünden sonst genau an der Kante, an der man
+ * ansetzt: Ein Wisch, der auf dem Löschknopf beginnt, ist kein Wisch, sondern ein
+ * Tippversuch. Gelöscht wird auf dem Telefon aus den Einzelheiten.
+ */
+@media (max-width: 640px) {
+  .zeile__werkzeuge {
+    display: none;
+  }
+}
+
+@media (hover: none) and (min-width: 641px) {
   .zeile__werkzeuge {
     opacity: 1;
   }
@@ -958,4 +971,427 @@ body[data-fokus="running"] .seitenleiste {
   display: flex;
   justify-content: center;
   padding: var(--space-4) 0 var(--space-2);
+}
+
+/* ---------------------------------------------------------------- Wischgesten */
+
+/*
+ * Die Spur hinter der Zeile.
+ *
+ * Sie liegt darunter und wird sichtbar, während die Zeile zur Seite fährt — links wie
+ * rechts, mit dem Text der Handlung an der Kante, aus der die Zeile kommt.
+ */
+.wischspur {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  padding: 0 var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.wischspur[data-art] {
+  display: flex;
+}
+
+.wischspur[data-seite="rechts"] {
+  justify-content: flex-start;
+}
+
+.wischspur[data-seite="links"] {
+  justify-content: flex-end;
+}
+
+.wischspur[data-art="erledigt"] {
+  background: var(--acid);
+  color: var(--auf-acid);
+}
+
+.wischspur[data-art="morgen"] {
+  background: var(--violett);
+  color: var(--auf-violett);
+}
+
+/* Ab hier löst das Loslassen aus — der Ruck macht es sichtbar, bevor man loslässt. */
+.wischspur--reif {
+  animation: spur-reif 160ms var(--ease-hart);
+}
+
+@keyframes spur-reif {
+  50% {
+    filter: brightness(1.25);
+  }
+}
+
+.zeile--wischt {
+  transition: none;
+  touch-action: pan-y;
+  user-select: none;
+  z-index: 1;
+}
+
+.zeile {
+  touch-action: pan-y;
+}
+
+/* --------------------------------------------------------------- Mehrfachauswahl */
+
+/*
+ * Die Auswahlleiste klebt oben — dort, wo der Blick nach dem langen Drücken ohnehin ist,
+ * und außerhalb der Liste, damit sie nicht mitscrollt und plötzlich weg ist.
+ */
+.auswahl {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--strich-stark) solid var(--linie);
+  border-radius: var(--r-md);
+  background: var(--acid);
+  color: var(--auf-acid);
+  box-shadow: var(--schatten);
+  animation: auswahl-herein var(--normal) var(--ease-hart);
+}
+
+@keyframes auswahl-herein {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.auswahl__zahl {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.auswahl__knoepfe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.auswahl__liste {
+  min-height: 32px;
+  width: auto;
+  padding: 0 var(--space-6) 0 var(--space-3);
+  font-size: 0.8rem;
+  background-position: calc(100% - 16px) 14px, calc(100% - 11px) 14px;
+}
+
+/* Eine ausgewählte Zeile ist ausgefüllt, nicht nur umrandet — auf einen Blick zählbar. */
+.zeile--gewaehlt {
+  background: var(--violett-hell);
+  box-shadow: inset 4px 0 0 var(--violett);
+}
+
+.zeile--gewaehlt:hover {
+  background: var(--violett-hell);
+}
+
+/* ------------------------------------------------------------------- Etiketten */
+
+.etikett {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--violett);
+  border-radius: var(--r-sm);
+  background: var(--violett-hell);
+  color: var(--violett);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- Aufgabenverweis */
+
+/*
+ * `[[Andere Aufgabe]]` — ein Verweis innerhalb der eigenen Aufgaben.
+ *
+ * Er sieht aus wie ein Verweis nach draußen, nur in der Begleiterfarbe: Es geht irgendwo
+ * hin, aber nicht aus der App heraus.
+ */
+.verweis {
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--violett);
+  cursor: pointer;
+}
+
+.verweis:hover {
+  background: var(--violett);
+  color: var(--auf-violett);
+}
+
+/* Zeigt der Verweis ins Leere, sagt er das — statt so zu tun, als ginge er noch irgendwohin. */
+.verweis--leer {
+  cursor: help;
+  color: var(--tinte-faint);
+  text-decoration-style: dashed;
+  text-decoration-color: var(--tinte-faint);
+}
+
+/* ------------------------------------------------------------------- Kalender */
+
+.kalender__kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.kalender__monat {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.4rem;
+}
+
+/*
+ * Das Raster ist eine Tabelle, kein Kachelfeld: durchgehende Linien, keine Abstände.
+ * Ein Kalender mit Lücken zwischen den Tagen liest sich nicht als Woche.
+ */
+.kalender {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: var(--strich) solid var(--linie);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--flaeche);
+}
+
+.kalender__wochentag {
+  padding: var(--space-2) 0;
+  border-bottom: var(--strich) solid var(--linie);
+  border-right: 1px solid var(--linie-leise);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinte-faint);
+  background: var(--flaeche-2);
+}
+
+.kalender__wochentag:nth-child(7) {
+  border-right: 0;
+}
+
+.kalender__tag {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  min-height: 62px;
+  padding: var(--space-2) 2px;
+  border-right: 1px solid var(--linie-leise);
+  border-bottom: 1px solid var(--linie-leise);
+  background: var(--flaeche);
+  transition: background var(--fast) var(--ease);
+}
+
+.kalender__tag:nth-child(7n) {
+  border-right: 0;
+}
+
+.kalender__tag:hover {
+  background: var(--flaeche-2);
+}
+
+.kalender__zahl {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tage des Nachbarmonats stehen da, treten aber zurück. */
+.kalender__tag[data-fremd="true"] {
+  background: var(--vertieft);
+  color: var(--tinte-faint);
+}
+
+.kalender__tag[data-heute="true"] .kalender__zahl {
+  background: var(--tinte);
+  color: var(--papier);
+  padding: 1px 6px;
+  border-radius: var(--r-sm);
+  font-weight: 700;
+}
+
+.kalender__tag[data-gewaehlt="true"] {
+  background: var(--acid);
+  color: var(--auf-acid);
+}
+
+.kalender__punkte {
+  display: flex;
+  gap: 3px;
+}
+
+.kalender__punkte i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--violett);
+}
+
+.kalender__tag[data-dringend="true"] .kalender__punkte i:first-child {
+  background: var(--rot);
+}
+
+.kalender__zahl-klein {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--violett);
+}
+
+.kalender__tag[data-dringend="true"] .kalender__zahl-klein {
+  color: var(--rot);
+}
+
+/* ------------------------------------------------------------------- Vorlagen */
+
+.vorlage__punkte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 0 0 var(--space-4);
+  list-style: none;
+  border-left: var(--strich) dashed var(--linie-leise);
+}
+
+.vorlage__punkte li {
+  position: relative;
+  font-size: 0.88rem;
+  color: var(--tinte-dim);
+}
+
+/* Ein Querstrich statt eines Aufzählungspunkts — es ist eine Bauliste, keine Prosa. */
+.vorlage__punkte li::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--space-4) * -1);
+  top: 0.7em;
+  width: 8px;
+  height: 1px;
+  background: var(--linie-leise);
+}
+
+.vorlage__fuss {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.vorlage__fuss select {
+  flex: 1;
+  min-width: 120px;
+  min-height: 32px;
+  padding: 0 var(--space-6) 0 var(--space-3);
+  font-size: 0.8rem;
+  background-position: calc(100% - 16px) 14px, calc(100% - 11px) 14px;
+}
+
+/* ------------------------------------------------------------------- Gestalten */
+
+.gestalten {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/*
+ * Eine Gestalt ist eine Scheibe in ihren Farben — kein Name, kein Bild.
+ * Man wählt sie danach aus, wie sie aussieht, und das steht hier drauf.
+ */
+.gestalt {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: var(--strich) solid var(--linie);
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--von), var(--bis));
+  transition: transform var(--fast) var(--ease-hart), box-shadow var(--fast) var(--ease-hart);
+}
+
+.gestalt:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--schatten-klein);
+}
+
+.gestalt[aria-pressed="true"] {
+  box-shadow: 0 0 0 3px var(--acid), 0 0 0 4.5px var(--tinte);
+}
+
+/* Gesperrt: entfärbt, mit der Stufe darauf, ab der es sie gibt. */
+.gestalt:disabled {
+  filter: grayscale(1);
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.gestalt__schloss {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--papier);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------- Verteilung */
+
+.verteilung {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.verteilung__zeile {
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) 2fr auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.verteilung__name {
+  font-size: 0.86rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verteilung__zahl {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--tinte-dim);
+  white-space: nowrap;
 }

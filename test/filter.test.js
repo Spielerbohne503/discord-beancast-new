@@ -81,6 +81,43 @@ test("hoehere_prioritaet_steht_bei_gleicher_faelligkeit_oben", () => {
   assert.deepEqual(ids, ["dringend", "normal"]);
 });
 
+test("eine_raute_sucht_nur_im_etikett", () => {
+  // Ohne diese Regel fände „#haus“ auch jede Aufgabe, in deren Notiz das Wort steht — und
+  // die Etikettensuche wäre unbrauchbar, sobald man sie wirklich braucht.
+  const mitEtikett = aufgabe({ id: "e", title: "Fenster putzen" });
+  const nurText = aufgabe({ id: "t", title: "Über Haus nachdenken", note: "haus" });
+  const etiketten = new Map([["e", ["Haus"]]]);
+
+  const bereich = scope(Scope.ALL_OPEN);
+  assert.deepEqual(
+    filterTasks([mitEtikett, nurText], bereich, "#haus", JETZT, etiketten).map((t) => t.id),
+    ["e"],
+  );
+  assert.deepEqual(
+    filterTasks([mitEtikett, nurText], bereich, "haus", JETZT, etiketten).map((t) => t.id).sort(),
+    ["e", "t"],
+  );
+});
+
+test("eine_nackte_raute_findet_alles_mit_irgendeinem_etikett", () => {
+  const mit = aufgabe({ id: "m", title: "A" });
+  const ohne = aufgabe({ id: "o", title: "B" });
+  const gefunden = filterTasks(
+    [mit, ohne],
+    scope(Scope.ALL_OPEN),
+    "#",
+    JETZT,
+    new Map([["m", ["x"]]]),
+  );
+  assert.deepEqual(gefunden.map((t) => t.id), ["m"]);
+});
+
+test("ohne_etiketten_verhaelt_sich_die_suche_wie_zuvor", () => {
+  // Zahnarzt, zahnpasta kaufen und die Unteraufgabe Zahnbürste — beim Suchen zählt sie mit.
+  const ids = filterTasks(bestand, scope(Scope.ALL_OPEN), "zahn", JETZT).map((t) => t.id);
+  assert.deepEqual(ids.sort(), ["kind", "ohne", "ueberfaellig"]);
+});
+
 test("von_hand_umsortiert_wird_nur_in_einer_liste_ohne_suche", () => {
   assert.ok(isManuallyOrdered(listScope("inbox"), ""));
   assert.ok(!isManuallyOrdered(listScope("inbox"), "milch"));

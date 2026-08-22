@@ -62,6 +62,28 @@ export const Schedule = Object.freeze({
   },
 });
 
+/**
+ * Zwei Arten von Gewohnheit.
+ *
+ * `TAGE` — feste Wochentage: montags, mittwochs, freitags. Gezählt wird in Terminen.
+ * `ZIEL` — eine Zahl pro Woche: dreimal, egal wann. Gezählt wird in Wochen.
+ *
+ * Der Unterschied ist keine Verpackung, sondern eine andere Frage: „Habe ich meinen
+ * Termin gehalten?“ gegen „Habe ich die Woche geschafft?“. Wer dreimal die Woche laufen
+ * will, hat am Dienstag nichts versäumt — er hat nur noch nicht angefangen.
+ */
+export const Art = Object.freeze({ TAGE: "tage", ZIEL: "ziel" });
+
+/** Ob eine Gewohnheit über ein Wochenziel läuft. */
+export function hatZiel(habit) {
+  return Number(habit?.target) > 0;
+}
+
+/** Das Wochenziel — bei festen Tagen ist es die Anzahl der Termine. */
+export function wochenziel(habit) {
+  return hatZiel(habit) ? Number(habit.target) : Schedule.timesPerWeek(habit.schedule);
+}
+
 /** Weiter zurück wird nicht gesucht. Schützt vor Endlosschleifen bei kaputten Daten. */
 const MAX_LOOKBACK_STEPS = 366 * 5;
 
@@ -93,6 +115,89 @@ function previousScheduled(mask, day) {
  *
  * @param checkins Menge von Epochentagen (`Set<number>`)
  */
+/**
+ * Ob an diesem Tag abgehakt werden **darf**.
+ *
+ * Bei einem Wochenziel: jeden Tag. Bei festen Tagen: nur an den gewählten. Das ist der
+ * ganze Unterschied in der Bedienung.
+ */
+export function darfAbhaken(habit, day) {
+  return hatZiel(habit) ? true : Schedule.isDueOn(habit.schedule, day);
+}
+
+/**
+ * Die laufende Serie, je nach Art in Terminen oder in Wochen.
+ *
+ * **Der heutige Tag zählt nie gegen einen** — und bei einem Wochenziel gilt dasselbe für
+ * die laufende Woche: Sie bricht die Serie nicht, solange sie noch läuft.
+ */
+export function serie(habit, checkins, today) {
+  if (!hatZiel(habit)) return currentStreak(checkins, habit.schedule, today);
+  return wochenSerie(checkins, Number(habit.target), today);
+}
+
+/**
+ * Wie viele Wochen in Folge das Ziel erreicht wurde.
+ *
+ * Die laufende Woche zählt mit, wenn sie schon geschafft ist — sonst wird sie
+ * übersprungen, statt die Serie zu beenden. Wer montags nachsieht, hat sonst jeden Montag
+ * eine Null vor sich.
+ */
+export function wochenSerie(checkins, ziel, today) {
+  if (!(ziel > 0)) return 0;
+
+  let woche = startOfWeek(today);
+  let laenge = 0;
+
+  if (hakenInWoche(checkins, woche) >= ziel) laenge++;
+
+  for (let schritt = 0; schritt < 520; schritt++) {
+    woche -= 7;
+    if (hakenInWoche(checkins, woche) < ziel) break;
+    laenge++;
+  }
+  return laenge;
+}
+
+export function hakenInWoche(checkins, montag) {
+  let anzahl = 0;
+  for (let versatz = 0; versatz < 7; versatz++) if (checkins.has(montag + versatz)) anzahl++;
+  return anzahl;
+}
+
+/** Fortschritt dieser Woche — `done` von `due`, für beide Arten. */
+export function fortschritt(habit, checkins, today) {
+  if (!hatZiel(habit)) return weekProgress(checkins, habit.schedule, today);
+  return { done: hakenInWoche(checkins, startOfWeek(today)), due: Number(habit.target) };
+}
+
+/** Die längste Serie, je nach Art. */
+export function besteSerie(habit, checkins) {
+  if (!hatZiel(habit)) return longestStreak(checkins, habit.schedule);
+  return besteWochenSerie(checkins, Number(habit.target));
+}
+
+function besteWochenSerie(checkins, ziel) {
+  if (checkins.size === 0 || !(ziel > 0)) return 0;
+
+  const wochen = [...new Set([...checkins].map(startOfWeek))].sort((a, b) => a - b);
+  let beste = 0;
+  let laufend = 0;
+  let vorige = null;
+
+  for (const woche of wochen) {
+    if (hakenInWoche(checkins, woche) < ziel) {
+      laufend = 0;
+      vorige = woche;
+      continue;
+    }
+    laufend = vorige !== null && woche - vorige === 7 ? laufend + 1 : 1;
+    if (laufend > beste) beste = laufend;
+    vorige = woche;
+  }
+  return beste;
+}
+
 export function currentStreak(checkins, mask, today) {
   if (Schedule.isEmpty(mask)) return 0;
 

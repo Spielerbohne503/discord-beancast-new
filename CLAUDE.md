@@ -27,6 +27,7 @@ tools/        Entwicklungsserver, Bildschirmfotos, Durchlauf im Browser.
 npm test              Unit-Tests (node --test, keine Abhängigkeit)
 npm run serve         Entwicklungsserver auf :8000
 npm run browsertest   Durchlauf durch die laufende App in Chromium
+npm run featuretest   Gesten und die neueren Ansichten, mit echtem Zeiger auf dem Telefon
 npm run bruecketest   Der Vertrag zur Android-Hülle, gegen eine nachgebaute Hülle
 npm run synctest      Zwei Browser-Kontexte gegen den echten Worker (siehe docs/SYNC.md)
 npm run build         Webseite nach dist/ legen und auf Vollständigkeit prüfen
@@ -75,6 +76,13 @@ Das hier ist später nicht mehr zu ändern, ohne alles anzufassen:
 9. **Alle sichtbaren Texte stehen in `src/ui/strings.js`.**
 10. **Der Abgleich führt je Zeile zusammen, nie je Datei.** Wer das ändert, verliert bei
     jedem Zusammentreffen zweier Geräte die Arbeit eines der beiden.
+11. **Verweise zeigen auf den Titel, nicht auf eine Kennung.** `[[Steuer]]` tippt man,
+    statt es nachzuschlagen. Der Preis ist ein Verweis, der nach dem Umbenennen ins Leere
+    zeigt — dann sagt die Oberfläche das (`.verweis--leer`) und tut nicht so, als ginge er
+    noch irgendwohin.
+12. **Zeit je Aufgabe wird aus den Fokusrunden gerechnet, nie mitgeschrieben.** Es gibt
+    keine zweite Stoppuhr; `jeAufgabe` in `src/domain/zeit.js` ist die einzige Stelle.
+    Abgebrochene Runden zählen null — sonst wird Abbrechen zur Leistung.
 
 ## Fachliche Regeln, die keine Geschmacksfrage sind
 
@@ -94,6 +102,10 @@ Das hier ist später nicht mehr zu ändern, ohne alles anzufassen:
 - **Aufräumen zählt wie Erledigen** — auch Löschen. Sonst bestraft man Ehrlichkeit.
 - **Erinnerungen eskalieren, sie wiederholen sich nicht.** In der Ruhezeit werden
   sie verschoben, nie verworfen.
+- **Ein Wochenziel bricht die Serie erst, wenn die Woche vorbei ist.** Die laufende Woche
+  zählt nie gegen einen — dieselbe Regel wie beim heutigen Tag, nur eine Ebene höher.
+- **Gestalten schaltet die Stufe frei, nichts anderes.** Kein Kauf, keine Kiste, kein
+  Zufall. Was gesperrt ist, steht sichtbar da und nennt die Stufe.
 - **Erinnerungen laufen nur, solange die Seite offen ist.** Ohne Server kann
   niemand einen geschlossenen Tab wecken; das wird so gesagt und nicht kaschiert.
 
@@ -197,6 +209,8 @@ jemand seine Daten schon verloren hat.
 - **Kein Inline-Skript und kein `style`-Attribut.** Die Sicherheitsrichtlinie erlaubt nur
   `'self'`; eine Ausnahme dafür wäre das Loch, durch das später alles andere passt.
 - Kein Netzzugriff aus der App heraus, kein Konto, keine Telemetrie.
-- **Nach jeder Änderung an der Oberfläche `npm run browsertest` laufen lassen.**
+- **Nach jeder Änderung an der Oberfläche `npm run browsertest` und `npm run featuretest`
+  laufen lassen.** Der zweite fährt einen echten Zeiger über die Zeilen — eine Geste, die
+  nur aus erfundenen Ereignissen besteht, beweist nichts über einen Daumen.
   Behauptungen über eine laufende App sind wertlos; hier lässt sie sich starten.
 - Fragen statt raten, wenn etwas offenbleibt.

@@ -119,9 +119,24 @@
 
 /* ------------------------------------------------------------------- Zustände */
 
+/*
+ * Wohlauf: die gewählte Gestalt.
+ *
+ * Nur hier — in jedem anderen Zustand übernimmt der Zustand die Farbe. Wer krank ist,
+ * sieht nicht golden aus; sonst wäre die Gestalt eine Möglichkeit, die Krankheit
+ * wegzudekorieren.
+ */
 .orb[data-stufe="healthy"] {
-  --orb-farbe: var(--violett);
+  --orb-farbe: var(--gestalt-von, var(--violett));
   --puls: 6s;
+}
+
+.orb[data-stufe="healthy"] .orb__scheibe {
+  background: linear-gradient(140deg, var(--gestalt-von, var(--violett)), var(--gestalt-bis, #a78bfa));
+}
+
+.orb[data-stufe="healthy"] .orb__trabant {
+  background: var(--gestalt-bahn, var(--acid));
 }
 
 .orb[data-stufe="weakened"] {

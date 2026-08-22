@@ -130,3 +130,43 @@ export function plusYears(day, years) {
 export function daysInMonth(year, monthIndex) {
   return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
 }
+
+
+/**
+ * Das Raster eines Monats, wie ein Kalender es zeigt.
+ *
+ * Immer volle Wochen von Montag bis Sonntag — die Tage davor und danach gehören zum
+ * Nachbarmonat und stehen trotzdem da. Ein Kalender, dessen erste Zeile mit einer Lücke
+ * anfängt, ist schwerer zu lesen als einer, der den 30. Juni zeigt.
+ *
+ * @returns Array von Wochen, jede Woche ein Array aus 7 `{ day, imMonat }`
+ */
+export function monatsRaster(imMonat) {
+  const datum = fromEpochDay(imMonat);
+  const erster = epochDayOf(datum.getFullYear(), datum.getMonth(), 1);
+  const letzter = epochDayOf(datum.getFullYear(), datum.getMonth() + 1, 0);
+
+  const wochen = [];
+  for (let tag = startOfWeek(erster); tag <= letzter; tag += 7) {
+    wochen.push(
+      Array.from({ length: 7 }, (_, versatz) => ({
+        day: tag + versatz,
+        imMonat: tag + versatz >= erster && tag + versatz <= letzter,
+      })),
+    );
+  }
+  return wochen;
+}
+
+/** Einen Monat weiter oder zurück, immer auf dem Ersten. */
+export function monatVerschieben(imMonat, schritte) {
+  const datum = fromEpochDay(imMonat);
+  return epochDayOf(datum.getFullYear(), datum.getMonth() + schritte, 1);
+}
+
+/** `August 2026` — die Überschrift über dem Raster. */
+const MONAT_JAHR = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" });
+
+export function monatsName(day) {
+  return MONAT_JAHR.format(fromEpochDay(day));
+}

@@ -17,7 +17,7 @@ import { aktualisieren, state } from "../store.js";
 import { fuellen, h } from "../dom.js";
 import { icon } from "../icons.js";
 import { PRIORITY_NAMES, S } from "../strings.js";
-import { renderText } from "../format.js";
+import { formatDuration, renderText } from "../format.js";
 import { meldung } from "../toast.js";
 
 const WIEDERHOLUNGEN = [
@@ -100,7 +100,9 @@ export function taskDialog(taskId) {
       prioritaet(task, speichern),
       wiederholung(task, speichern),
       unteraufgaben(task, kinder, zeichnen),
+      etiketten(task, zeichnen),
       liste(task, speichern),
+      fokuszeit(task),
     );
   }
 
@@ -276,6 +278,86 @@ function unteraufgaben(task, kinder, neuZeichnen) {
           ),
         ),
     eingabe,
+  );
+}
+
+/**
+ * Etiketten an- und abhängen.
+ *
+ * Neue entstehen direkt hier: Wer erst in eine Verwaltung wechseln muss, um ein Etikett
+ * anzulegen, benutzt keine Etiketten.
+ */
+function etiketten(task, neuZeichnen) {
+  const vorhandene = new Set(state.tagLinks.get(task.id) ?? []);
+
+  const feld = h("input.eingabe", {
+    type: "text",
+    placeholder: S.tags_neu,
+    onkeydown: async (ereignis) => {
+      if (ereignis.key !== "Enter") return;
+      const name = feld.value.trim().replace(/^#/, "");
+      if (name.length === 0) return;
+
+      feld.value = "";
+      const tag = await repo.createTag(name);
+      await repo.setTaskTags(task.id, [...vorhandene, tag.id]);
+      await aktualisieren();
+      neuZeichnen();
+    },
+  });
+
+  return h(
+    "div.feld",
+    {},
+    h("span.feld__beschriftung", {}, S.task_tags),
+    state.tags.length === 0
+      ? null
+      : h(
+          "div.chips",
+          {},
+          state.tags.map((tag) =>
+            h(
+              "button.chip",
+              {
+                type: "button",
+                "aria-pressed": String(vorhandene.has(tag.id)),
+                onclick: async () => {
+                  const neu = new Set(vorhandene);
+                  if (neu.has(tag.id)) neu.delete(tag.id);
+                  else neu.add(tag.id);
+
+                  await repo.setTaskTags(task.id, [...neu]);
+                  await aktualisieren();
+                  neuZeichnen();
+                },
+              },
+              `#${tag.name}`,
+            ),
+          ),
+        ),
+    feld,
+  );
+}
+
+/**
+ * Was der Fokus an dieser Aufgabe verbracht hat.
+ *
+ * Gerechnet aus abgeschlossenen Runden, nicht aus einer zweiten Stoppuhr — eine
+ * Zeiterfassung neben dem Fokus wäre eine zweite Wahrheit über dieselbe Frage.
+ */
+function fokuszeit(task) {
+  const zeit = state.fokuszeit.get(task.id);
+  if (!zeit) return null;
+
+  return h(
+    "div.feld",
+    {},
+    h("span.feld__beschriftung", {}, S.focus_title),
+    h(
+      "span.feld__hinweis",
+      {},
+      `${formatDuration(zeit.millis)} · ${S.focus_rounds_today(zeit.runden).replace(" heute", "")}`,
+    ),
   );
 }
 

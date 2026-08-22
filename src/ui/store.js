@@ -8,6 +8,7 @@
 
 import { Balance } from "../domain/balance.js";
 import { Scope, scope } from "../domain/filter.js";
+import { jeAufgabe } from "../domain/zeit.js";
 import { moodCategory, pickSpeech } from "../domain/pet.js";
 import { dayOf } from "../domain/time.js";
 import * as repo from "../data/repo.js";
@@ -40,10 +41,22 @@ export const state = {
   lists: [],
   tasks: [],
   tags: [],
+  tagLinks: new Map(),
+  templates: [],
   habits: [],
   checkins: new Map(),
   focusSession: null,
+  focusSessions: [],
   focusRounds: 0,
+  fokuszeit: new Map(),
+
+  /**
+   * Die ausgewählten Aufgaben.
+   *
+   * Leer heißt: kein Auswahlmodus. Es gibt keinen zweiten Schalter dafür — ein Zustand,
+   * der aus zwei Feldern besteht, läuft irgendwann auseinander.
+   */
+  auswahl: new Set(),
   settings: { ...repo.SETTING_DEFAULTS },
 
   pet: null,
@@ -81,10 +94,18 @@ export async function aktualisieren({ neuerSatz = false } = {}) {
   state.lists = await repo.loadLists();
   state.tasks = await repo.loadTasks();
   state.tags = await repo.loadTags();
+  state.tagLinks = await repo.loadTagLinks();
+  state.templates = await repo.loadTemplates();
   state.habits = await repo.loadHabits();
   state.checkins = await repo.loadCheckins(state.today);
   state.focusSession = await repo.loadCurrentFocus();
   state.focusRounds = await focusRoundsToday(state.now);
+  state.focusSessions = await repo.loadFocusSessions();
+  state.fokuszeit = jeAufgabe(state.focusSessions);
+
+  // Ausgewähltes, das es nicht mehr gibt, fliegt raus — sonst hakt „alle abhaken“ ins Leere.
+  const vorhanden = new Set(state.tasks.map((task) => task.id));
+  for (const id of state.auswahl) if (!vorhanden.has(id)) state.auswahl.delete(id);
 
   const { state: pet, load } = await recomputePet(state.now, state.tasks);
   state.pet = pet;
@@ -108,6 +129,24 @@ export function tickern() {
     return;
   }
   melden("takt");
+}
+
+/**
+ * Eine Aufgabe aus- oder abwählen.
+ *
+ * Fällt die letzte weg, endet der Auswahlmodus von selbst. Ein eigener „Modus beenden“
+ * wäre ein zweiter Zustand für dieselbe Sache.
+ */
+export function auswahlUmschalten(taskId) {
+  if (state.auswahl.has(taskId)) state.auswahl.delete(taskId);
+  else state.auswahl.add(taskId);
+  melden("daten");
+}
+
+export function auswahlLeeren() {
+  if (state.auswahl.size === 0) return;
+  state.auswahl.clear();
+  melden("daten");
 }
 
 export function setzen(aenderungen) {

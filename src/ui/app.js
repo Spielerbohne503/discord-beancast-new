@@ -29,6 +29,9 @@ import { habitsView } from "./views/habits.js";
 import { statsView } from "./views/stats.js";
 import { settingsView } from "./views/settings.js";
 import { moreView } from "./views/more.js";
+import { kalenderView } from "./views/kalender.js";
+import { vorlagenView } from "./views/vorlagen.js";
+import { etikettenView } from "./views/etiketten.js";
 import { erinnerungenStarten } from "./nag.js";
 import { aktionenNachholen, inHuelle, zeitplanSenden } from "./bruecke.js";
 import { abgleichStarten } from "./sync.js";
@@ -51,6 +54,9 @@ const ANSICHTEN = {
   habits: { bauen: habitsView, titel: () => S.habits_title },
   stats: { bauen: statsView, titel: () => S.stats_title },
   settings: { bauen: settingsView, titel: () => S.settings_title },
+  calendar: { bauen: kalenderView, titel: () => S.kalender_titel },
+  templates: { bauen: vorlagenView, titel: () => S.vorlagen_titel },
+  tags: { bauen: etikettenView, titel: () => S.tags_titel },
   more: { bauen: moreView, titel: () => S.nav_more },
 };
 
@@ -66,8 +72,11 @@ const LEISTE = [
 /** Die Seitenleiste am Schreibtisch — dieselben Ziele, nur alle gleichzeitig sichtbar. */
 const SEITE = [
   { route: "today", text: S.nav_today, symbol: "heute" },
+  { route: "calendar", text: S.kalender_titel, symbol: "heute" },
   { route: "focus", text: S.focus_title, symbol: "fokus" },
   { route: "habits", text: S.nav_habits, symbol: "gewohnheiten" },
+  { route: "templates", text: S.vorlagen_titel, symbol: "listen" },
+  { route: "tags", text: S.tags_titel, symbol: "verweis" },
   { route: "stats", text: S.nav_stats, symbol: "rueckblick" },
   { route: "settings", text: S.nav_settings, symbol: "einstellungen" },
 ];
@@ -284,7 +293,9 @@ function leisteZeichnen(leiste) {
 
 /** „Mehr“ bleibt hervorgehoben, solange man in einer seiner Unteransichten steht. */
 function passt(route) {
-  if (route === "more") return ["more", "companion", "stats", "settings"].includes(state.route);
+  if (route === "more") {
+    return ["more", "companion", "stats", "settings", "calendar", "templates", "tags"].includes(state.route);
+  }
   return state.route === route;
 }
 

@@ -12,6 +12,8 @@ import { clearAll } from "../../data/db.js";
 import { backupFileName, exportBackup, importBackup } from "../../data/backupstore.js";
 import { erinnerungenErlaubt, erlaubnisAnfragen, exakteWeckerErlaubt, huellenFassung, inHuelle } from "../bruecke.js";
 import { ausLosung } from "../../data/krypto.js";
+import { SKINS, naechsteGestalt, verfuegbar } from "../../domain/skins.js";
+import { levelForXp } from "../../domain/pet.js";
 import { anstossen, letzterAusgang } from "../sync.js";
 import { aktualisieren, state } from "../store.js";
 import { fuellen, h } from "../dom.js";
@@ -301,8 +303,36 @@ function darstellung(setzenUndNeu) {
     { wert: "dunkel", text: S.settings_fassung_dunkel },
   ];
 
+  const level = levelForXp(state.pet?.xp ?? 0);
+  const offen = new Set(verfuegbar(level).map((skin) => skin.id));
+  const naechste = naechsteGestalt(level);
+
   return gruppe(
     S.settings_motion,
+    h(
+      "div.feld",
+      {},
+      h("span.feld__beschriftung", {}, S.skins_titel),
+      h(
+        "div.gestalten",
+        {},
+        SKINS.map((skin) =>
+          h(
+            "button.gestalt",
+            {
+              type: "button",
+              disabled: !offen.has(skin.id),
+              "aria-pressed": String(state.settings.skin === skin.id),
+              title: offen.has(skin.id) ? skin.id : S.skins_gesperrt(skin.abLevel),
+              style: { "--von": skin.von, "--bis": skin.bis },
+              onclick: () => void setzenUndNeu("skin", skin.id),
+            },
+            offen.has(skin.id) ? null : h("span.gestalt__schloss", {}, String(skin.abLevel)),
+          ),
+        ),
+      ),
+      naechste ? h("span.feld__hinweis", {}, S.skins_naechste(naechste.abLevel)) : null,
+    ),
     h(
       "div.feld",
       {},

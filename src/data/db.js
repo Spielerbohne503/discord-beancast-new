@@ -58,14 +58,23 @@ export function openDatabase(name = DB_NAME, version = DB_VERSION) {
  * verloren hat, kommt nicht zurück.
  */
 function migrate(db, oldVersion) {
-  if (oldVersion < 1) {
-    for (const [name, definition] of Object.entries(STORES)) {
-      const store = db.createObjectStore(name, { keyPath: definition.keyPath });
-      for (const [indexName, keyPath] of Object.entries(definition.indexes)) {
-        store.createIndex(indexName, keyPath);
-      }
+  // Fassung 1 legte alles an, was es damals gab. Fassung 2 kam mit den Vorlagen dazu.
+  // Deshalb wird hier nicht nach Fassungen verzweigt, sondern nachgeholt, was fehlt: Das
+  // ist gegen jede Reihenfolge robust und kann keine Tabelle doppelt anlegen.
+  for (const [name, definition] of Object.entries(STORES)) {
+    const store = db.objectStoreNames.contains(name)
+      ? null
+      : db.createObjectStore(name, { keyPath: definition.keyPath });
+    if (store === null) continue;
+
+    for (const [indexName, keyPath] of Object.entries(definition.indexes)) {
+      store.createIndex(indexName, keyPath);
     }
   }
+
+  // `oldVersion` bleibt im Spiel, sobald einmal eine Tabelle **umgebaut** werden muss —
+  // dann reicht Nachholen nicht mehr.
+  void oldVersion;
 }
 
 export async function transaction(stores, mode, arbeit) {

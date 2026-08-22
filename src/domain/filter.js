@@ -40,11 +40,26 @@ function matchesScope(task, current, now, today) {
   return due <= today + SEVEN_DAYS;
 }
 
-function matchesQuery(task, query) {
+/**
+ * Sucht in Titel, Notiz — und in den Etiketten.
+ *
+ * Beginnt die Suche mit `#`, ist **nur** das Etikett gemeint. Sonst fände „#haus“ auch
+ * jede Aufgabe, in deren Notiz zufällig das Wort steht, und die Etikettensuche wäre
+ * unbrauchbar, sobald man sie einmal wirklich braucht.
+ */
+function matchesQuery(task, query, etiketten) {
   const needle = query.toLowerCase();
+
+  if (needle.startsWith("#")) {
+    const gesucht = needle.slice(1);
+    if (gesucht.length === 0) return (etiketten.get(task.id) ?? []).length > 0;
+    return (etiketten.get(task.id) ?? []).some((name) => name.toLowerCase() === gesucht);
+  }
+
   return (
     task.title.toLowerCase().includes(needle) ||
-    (task.note ?? "").toLowerCase().includes(needle)
+    (task.note ?? "").toLowerCase().includes(needle) ||
+    (etiketten.get(task.id) ?? []).some((name) => name.toLowerCase().includes(needle))
   );
 }
 
@@ -76,11 +91,11 @@ function compareKeys(a, b) {
 /**
  * Wendet Bereich und Suchtext an.
  *
- * Gesucht wird in Titel und Notiz, ohne Rücksicht auf Groß- und Kleinschreibung.
+ * Gesucht wird in Titel, Notiz und Etiketten, ohne Rücksicht auf Groß- und Kleinschreibung.
  * Unteraufgaben tauchen nur auf, wenn tatsächlich gesucht wird — sonst stünde eine
  * Unteraufgabe zusammenhanglos zwischen den Aufgaben.
  */
-export function filterTasks(tasks, current, query, now) {
+export function filterTasks(tasks, current, query, now, etiketten = new Map()) {
   const needle = String(query ?? "").trim();
   const searching = needle.length > 0;
   const today = dayOf(now);
@@ -89,7 +104,7 @@ export function filterTasks(tasks, current, query, now) {
     .filter((task) => !isDeleted(task))
     .filter((task) => searching || !isSubtask(task))
     .filter((task) => matchesScope(task, current, now, today))
-    .filter((task) => !searching || matchesQuery(task, needle))
+    .filter((task) => !searching || matchesQuery(task, needle, etiketten))
     .sort(comparatorFor(current));
 }
 

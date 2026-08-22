@@ -13,6 +13,7 @@ import { fuellen, h } from "../dom.js";
 import { icon } from "../icons.js";
 import { S } from "../strings.js";
 import { taskRow } from "../components/taskrow.js";
+import { auswahlleiste } from "../components/auswahlleiste.js";
 import { meldung } from "../toast.js";
 
 export function browseView() {
@@ -29,14 +30,28 @@ export function browseView() {
   const bereiche = h("div.bereiche");
   const kopf = h("div.abschnitt__kopf");
   const inhalt = h("div.abschnitt");
+  const leiste = auswahlleiste();
   const element = h(
     "div.abschnitt",
     {},
+    leiste.el,
     bereiche,
     h("div.suchzeile", {}, icon("suchen", 18), suche),
     kopf,
     inhalt,
   );
+
+  /** `Map<taskId, string[]>` mit den Namen — die Suche kennt keine Kennungen. */
+  function etikettennamen() {
+    const namen = new Map();
+    for (const [taskId, kennungen] of state.tagLinks) {
+      namen.set(
+        taskId,
+        kennungen.map((id) => state.tags.find((tag) => tag.id === id)?.name).filter(Boolean),
+      );
+    }
+    return namen;
+  }
 
   function titel() {
     if (state.scope.kind === Scope.LIST) {
@@ -101,7 +116,7 @@ export function browseView() {
   }
 
   function inhaltZeichnen() {
-    const aufgaben = filterTasks(state.tasks, state.scope, state.query, state.now);
+    const aufgaben = filterTasks(state.tasks, state.scope, state.query, state.now, etikettennamen());
     const ziehbar = isManuallyOrdered(state.scope, state.query);
 
     kopf.className = "abschnitt__kopf hilfslinie";
@@ -176,6 +191,7 @@ export function browseView() {
   function update() {
     if (!state.bereit) return;
     if (suche.value !== state.query) suche.value = state.query;
+    leiste.update();
     bereicheZeichnen();
     inhaltZeichnen();
   }

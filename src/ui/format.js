@@ -46,12 +46,17 @@ export function formatDue(task, now) {
  * Adresse einer mit der Kurzform. Ohne `rel` würde die Zielseite über `window.opener` an
  * diesen Tab herankommen.
  */
-export function renderText(text, { klasse = null } = {}) {
+export function renderText(text, { klasse = null, aufAufgabe = null } = {}) {
   const behaelter = h("span", klasse ? { class: klasse } : {});
 
   for (const stueck of parseLinks(text)) {
     if (stueck.kind === "text") {
       behaelter.append(document.createTextNode(stueck.text));
+      continue;
+    }
+
+    if (stueck.kind === "aufgabe") {
+      behaelter.append(aufgabenVerweis(stueck, aufAufgabe));
       continue;
     }
     behaelter.append(
@@ -69,6 +74,34 @@ export function renderText(text, { klasse = null } = {}) {
     );
   }
   return behaelter;
+}
+
+/**
+ * Ein Verweis auf eine andere Aufgabe.
+ *
+ * Ohne Auflöser — oder wenn es die Aufgabe nicht (mehr) gibt — steht der Titel als Text
+ * da, durchgestrichen markiert. Ein Verweis, der ins Leere zeigt, soll das sagen und nicht
+ * so tun, als ginge er noch irgendwohin.
+ */
+function aufgabenVerweis(stueck, aufAufgabe) {
+  const ziel = aufAufgabe?.(stueck.titel) ?? null;
+
+  if (ziel === null) {
+    return h("span.verweis.verweis--leer", { title: S.verweis_fehlt }, stueck.label);
+  }
+
+  return h(
+    "button.verweis",
+    {
+      type: "button",
+      title: stueck.titel,
+      onclick: (ereignis) => {
+        ereignis.stopPropagation();
+        ziel.oeffnen();
+      },
+    },
+    stueck.label,
+  );
 }
 
 /** „25:00“ aus Millisekunden, aber als Wortmarke für Sperrzeiten: „1 h 12 min“. */

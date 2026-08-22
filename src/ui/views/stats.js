@@ -7,6 +7,7 @@
 
 import { Balance } from "../../domain/balance.js";
 import { statsOf } from "../../domain/stats.js";
+import { jeListe } from "../../domain/zeit.js";
 import { isCompleted, isDeleted } from "../../domain/tasks.js";
 import { dayOf, isoWeekday } from "../../domain/time.js";
 import { fuellen, h } from "../dom.js";
@@ -14,6 +15,7 @@ import { state } from "../store.js";
 import { S } from "../strings.js";
 import { formatDay } from "../format.js";
 import { hochzaehlen } from "../motion.js";
+import { formatDuration } from "../format.js";
 
 export function statsView() {
   const element = h("div.abschnitt");
@@ -67,6 +69,7 @@ export function statsView() {
           rueckblick.days.map((eintrag) => h("span", {}, S.weekdays_short[isoWeekday(eintrag.day) - 1])),
         ),
       ),
+      nachListe(),
       rueckblick.busiestDay
         ? h(
             "p.feld__hinweis",
@@ -88,6 +91,60 @@ export function statsView() {
  * gerechnet wurden. Alles, was keine reine Zahl ist („3 Tage“), bleibt stehen: Ein
  * hochzählendes Wort wäre Unfug.
  */
+/**
+ * Wohin die Zeit geht.
+ *
+ * Nicht „war ich fleißig“, sondern „wofür ging der Monat drauf“ — und die Frage
+ * beantwortet nur eine Aufteilung nach Listen. Absteigend nach Zeit, weil man zuerst
+ * wissen will, was am meisten frisst.
+ */
+function nachListe() {
+  const verteilung = jeListe(
+    state.tasks,
+    state.focusSessions ?? [],
+    state.lists,
+    state.today - Balance.STATS_WINDOW_DAYS + 1,
+    state.today,
+  );
+
+  const laengste = Math.max(1, ...verteilung.map((eintrag) => eintrag.millis));
+
+  return h(
+    "section.karte.abschnitt",
+    {},
+    h(
+      "div.abschnitt__kopf.hilfslinie",
+      { style: { padding: "16px 16px 0" } },
+      h("h2.abschnitt__titel", {}, S.stats_nach_liste),
+    ),
+    verteilung.length === 0
+      ? h("p.feld__hinweis", { style: { padding: "0 16px 16px" } }, S.stats_keine_zeit)
+      : h(
+          "div.verteilung",
+          {},
+          verteilung.map((eintrag) =>
+            h(
+              "div.verteilung__zeile",
+              {},
+              h("span.verteilung__name", {}, eintrag.name),
+              h(
+                "div.wert__balken",
+                {},
+                h("div.wert__fuellung.wert__fuellung--laune", {
+                  style: { width: `${(eintrag.millis / laengste) * 100}%` },
+                }),
+              ),
+              h(
+                "span.verteilung__zahl",
+                {},
+                eintrag.millis > 0 ? formatDuration(eintrag.millis) : S.stats_liste_zeile(eintrag.erledigt),
+              ),
+            ),
+          ),
+        ),
+  );
+}
+
 function kachel(name, zahl, roh = null) {
   const wert = h("span.kachel__zahl", {}, zahl);
   if (roh !== null) hochzaehlen(wert, roh, { formatieren: (n) => String(n) });

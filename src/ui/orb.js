@@ -8,22 +8,34 @@
  */
 
 import { levelForXp, levelProgress, stageOf } from "../domain/pet.js";
+import { skinOder } from "../domain/skins.js";
 import { h, svg } from "./dom.js";
+import { state } from "./store.js";
 
 const UMFANG = 2 * Math.PI * 46;
 
-export function orb(state, { groesse = 148, ring = true, bahn = true } = {}) {
-  const stufe = stageOf(state.values);
-  const laune = state.values.mood / 100;
-  const fortschritt = levelProgress(state.xp);
+export function orb(pet, { groesse = 148, ring = true, bahn = true } = {}) {
+  const stufe = stageOf(pet.values);
+  const laune = pet.values.mood / 100;
+  const fortschritt = levelProgress(pet.xp);
+  const gestalt = skinOder(state.settings?.skin, levelForXp(pet.xp));
 
   return h(
     "div.orb",
     {
       dataset: { stufe },
-      style: { "--orb-groesse": `${groesse}px`, "--laune": laune.toFixed(3) },
+      style: {
+        "--orb-groesse": `${groesse}px`,
+        "--laune": laune.toFixed(3),
+        // Die Gestalt färbt nur; Form, Bahn und Ring bleiben gleich, damit der Begleiter
+        // derselbe bleibt. Bei Krankheit übernimmt der Zustand — wer krank ist, sieht
+        // nicht golden aus.
+        "--gestalt-von": gestalt.von,
+        "--gestalt-bis": gestalt.bis,
+        "--gestalt-bahn": gestalt.bahn,
+      },
       role: "img",
-      "aria-label": `${Math.round(state.values.mood)} % Laune, Stufe ${levelForXp(state.xp)}`,
+      "aria-label": `${Math.round(pet.values.mood)} % Laune, Stufe ${levelForXp(pet.xp)}`,
     },
     ring ? fortschrittsring(fortschritt) : null,
     // Die Bahn liegt **hinter** der Scheibe. Davor gezogen sähe sie aus wie ein

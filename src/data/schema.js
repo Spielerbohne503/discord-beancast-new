@@ -16,7 +16,7 @@
  */
 
 export const DB_NAME = "petodo";
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 /** Die Zeile im Belohnungs-Log ist unveränderlich — angehängt wird, nie geändert. */
 export const STORES = Object.freeze({
@@ -57,7 +57,21 @@ export const STORES = Object.freeze({
     indexes: { habitId: "habitId", day: "day", updatedAt: "updatedAt" },
   },
 
-  /** Einstellungen. Steht bewusst **nicht** in der Sicherung — die ist tabellennah und v1. */
+  /**
+   * Vorlagen: ein Name und eine Liste von Punkten.
+   *
+   * „Wocheneinkauf“ mit fünf Unteraufgaben, per Knopf neu angelegt. Bewusst **keine**
+   * Aufgabe mit einem Merkmal „ist Vorlage“ — dann tauchte sie in jeder Liste, jedem
+   * Filter und jeder Zählung auf, und man müsste sie überall wieder herausrechnen.
+   */
+  templates: { keyPath: "id", indexes: { updatedAt: "updatedAt", sortKey: "sortKey" } },
+
+  template_items: {
+    keyPath: "id",
+    indexes: { templateId: "templateId", sortKey: "sortKey", updatedAt: "updatedAt" },
+  },
+
+  /** Einstellungen. Steht bewusst **nicht** in der Sicherung — die ist gerätebezogen. */
   settings: { keyPath: "key", indexes: {} },
 });
 

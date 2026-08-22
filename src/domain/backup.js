@@ -15,6 +15,14 @@
 
 /** Kennung, damit eine fremde JSON-Datei nicht versehentlich eingelesen wird. */
 export const BACKUP_MAGIC = "petodo-backup";
+/**
+ * Die Fassung bleibt 1.
+ *
+ * Tabellen kommen dazu — das Format ist tabellennah, eine unbekannte Tabelle wird beim
+ * Lesen schlicht übergangen. Eine Sicherung aus der Android-Fassung bleibt damit
+ * einlesbar, und eine von heute lässt sich dort öffnen, nur ohne Vorlagen. Die Fassung
+ * steigt erst, wenn sich die **Bedeutung** eines Feldes ändert.
+ */
 export const BACKUP_VERSION = 1;
 
 /** Reihenfolge der Tabellen in der Datei — nur der Lesbarkeit halber fest. */
@@ -29,6 +37,8 @@ export const BACKUP_TABLES = Object.freeze([
   "focus_sessions",
   "habits",
   "habit_checkins",
+  "templates",
+  "template_items",
 ]);
 
 export function encodeBackup(tables, exportedAt, indent = 2) {

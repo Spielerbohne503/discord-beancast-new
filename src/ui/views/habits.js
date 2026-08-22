@@ -6,7 +6,7 @@
  * keine Gewohnheit mehr, sondern eine Aufgabe.
  */
 
-import { Schedule, currentStreak, longestStreak, weekProgress } from "../../domain/habits.js";
+import { Schedule, besteSerie, darfAbhaken, fortschritt, hatZiel, serie } from "../../domain/habits.js";
 import { SpeechCategory } from "../../domain/pet.js";
 import { startOfWeek } from "../../domain/time.js";
 import * as repo from "../../data/repo.js";
@@ -51,7 +51,7 @@ export function habitsView() {
     const name = eingabe.value.trim();
     if (name.length === 0) return;
     eingabe.value = "";
-    await repo.createHabit(name, Schedule.DAILY);
+    await repo.createHabit(name, Schedule.DAILY, null);
     await aktualisieren();
   }
 
@@ -71,10 +71,11 @@ export function habitsView() {
 
 function karte(habit) {
   const haken = state.checkins.get(habit.id) ?? new Set();
-  const serie = currentStreak(haken, habit.schedule, state.today);
-  const beste = longestStreak(haken, habit.schedule);
-  const woche = weekProgress(haken, habit.schedule, state.today);
+  const laufend = serie(habit, haken, state.today);
+  const beste = besteSerie(habit, haken);
+  const woche = fortschritt(habit, haken, state.today);
   const montag = startOfWeek(state.today);
+  const ziel = hatZiel(habit);
 
   return h(
     "article.karte.gewohnheit",
@@ -111,16 +112,102 @@ function karte(habit) {
       {},
       // Grün nur, wenn tatsächlich eine Serie läuft — „0 Termine in Folge“ in der
       // Erfolgsfarbe wäre ein Widerspruch in sich.
-      h(`span.abzeichen${serie > 0 ? ".abzeichen--gut" : ""}`, {}, serie === 0 ? S.habits_streak_none : S.habits_streak(serie)),
+      h(
+        `span.abzeichen${laufend > 0 ? ".abzeichen--gut" : ""}`,
+        {},
+        laufend === 0
+          ? S.habits_streak_none
+          : ziel
+            ? S.habits_wochen_serie(laufend)
+            : S.habits_streak(laufend),
+      ),
       h("span.abzeichen", {}, S.habits_week(woche.done, woche.due)),
       beste > 0 ? h("span.abzeichen", {}, S.habits_longest(beste)) : null,
     ),
-    zeitplan(habit),
+    rhythmus(habit),
+  );
+}
+
+/**
+ * Zwei Arten von Gewohnheit, ein Umschalter.
+ *
+ * **Feste Tage** beantworten „habe ich meinen Termin gehalten?“, ein **Wochenziel**
+ * beantwortet „habe ich die Woche geschafft?“. Wer dreimal die Woche laufen will, hat am
+ * Dienstag nichts versäumt — er hat nur noch nicht angefangen. Diese beiden Fragen in eine
+ * Darstellung zu pressen, macht beide unscharf.
+ */
+function rhythmus(habit) {
+  const ziel = hatZiel(habit);
+
+  return h(
+    "div.feld",
+    {},
+    h("span.feld__beschriftung", {}, S.habits_art),
+    h(
+      "div.chips",
+      {},
+      h(
+        "button.chip",
+        {
+          type: "button",
+          "aria-pressed": String(!ziel),
+          onclick: async () => {
+            await repo.updateHabit(habit.id, {
+              target: null,
+              // Ein leerer Zeitplan nach dem Umschalten hieße: steht nie an. Täglich ist
+              // die Fassung, aus der man am schnellsten das gewünschte macht.
+              schedule: Schedule.isEmpty(habit.schedule) ? Schedule.DAILY : habit.schedule,
+            });
+            await aktualisieren();
+          },
+        },
+        S.habits_art_tage,
+      ),
+      h(
+        "button.chip",
+        {
+          type: "button",
+          "aria-pressed": String(ziel),
+          onclick: async () => {
+            await repo.updateHabit(habit.id, { target: Math.max(1, woechentlich(habit)) });
+            await aktualisieren();
+          },
+        },
+        S.habits_art_ziel,
+      ),
+    ),
+    ziel ? zielwahl(habit) : zeitplan(habit),
+  );
+}
+
+/** Beim Umschalten übernimmt das Ziel die bisherige Anzahl der Termine. */
+function woechentlich(habit) {
+  return Schedule.timesPerWeek(habit.schedule) || 3;
+}
+
+function zielwahl(habit) {
+  return h(
+    "div.chips",
+    {},
+    [1, 2, 3, 4, 5, 6, 7].map((anzahl) =>
+      h(
+        "button.chip",
+        {
+          type: "button",
+          "aria-pressed": String(Number(habit.target) === anzahl),
+          onclick: async () => {
+            await repo.updateHabit(habit.id, { target: anzahl });
+            await aktualisieren();
+          },
+        },
+        S.habits_ziel(anzahl),
+      ),
+    ),
   );
 }
 
 function tag(habit, day, haken) {
-  const steht = Schedule.isDueOn(habit.schedule, day);
+  const steht = darfAbhaken(habit, day);
   const gesetzt = haken.has(day);
   const wochentag = day - startOfWeek(day);
 

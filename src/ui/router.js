@@ -19,6 +19,9 @@ const ZU_HASH = {
   habits: "gewohnheiten",
   stats: "rueckblick",
   settings: "einstellungen",
+  calendar: "kalender",
+  templates: "vorlagen",
+  tags: "etiketten",
   more: "mehr",
 };
 

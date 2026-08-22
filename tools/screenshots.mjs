@@ -39,6 +39,9 @@ const SEITEN = {
     { name: "einstellungen", weg: ["Mehr", "Einstellungen"] },
     { name: "listen", weg: ["Listen"] },
     { name: "liste-erledigt", weg: ["Listen", "Erledigt"] },
+    { name: "kalender", weg: ["Mehr", "Kalender"] },
+    { name: "vorlagen", weg: ["Mehr", "Vorlagen"] },
+    { name: "etiketten", weg: ["Mehr", "Etiketten"] },
   ],
   schreibtisch: [
     { name: "heute", weg: [] },
@@ -48,6 +51,9 @@ const SEITEN = {
     { name: "rueckblick", weg: ["Rückblick"] },
     { name: "einstellungen", weg: ["Einstellungen"] },
     { name: "listen", weg: ["Alles Offene"] },
+    { name: "kalender", weg: ["Kalender"] },
+    { name: "vorlagen", weg: ["Vorlagen"] },
+    { name: "etiketten", weg: ["Etiketten"] },
   ],
 };
 

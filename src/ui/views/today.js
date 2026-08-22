@@ -16,6 +16,7 @@ import { S } from "../strings.js";
 import { formatDay } from "../format.js";
 import { taskRow } from "../components/taskrow.js";
 import { petStrip } from "../components/petstrip.js";
+import { auswahlleiste } from "../components/auswahlleiste.js";
 import { SpeechCategory } from "../../domain/pet.js";
 import { stempeln } from "../motion.js";
 
@@ -55,7 +56,8 @@ export function todayView() {
 
   const streifen = h("div");
   const bloecke = h("div.abschnitt");
-  const element = h("div.abschnitt", {}, streifen, schnell, bloecke);
+  const leiste = auswahlleiste();
+  const element = h("div.abschnitt", {}, leiste.el, streifen, schnell, bloecke);
 
   function vorschauZeichnen() {
     const gelesen = parseQuickAdd(eingabe.value, state.now);
@@ -114,6 +116,7 @@ export function todayView() {
 
     if (vorschau.childElementCount === 0 && vorschau.textContent === "") vorschauZeichnen();
 
+    leiste.update();
     fuellen(streifen, petStrip());
 
     const brett = groupToday(state.tasks, state.now);

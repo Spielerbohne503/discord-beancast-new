@@ -13,6 +13,9 @@ import { S } from "../strings.js";
 
 const PUNKTE = [
   { route: "companion", text: S.nav_companion, symbol: "begleiter" },
+  { route: "calendar", text: S.kalender_titel, symbol: "heute" },
+  { route: "templates", text: S.vorlagen_titel, symbol: "listen" },
+  { route: "tags", text: S.tags_titel, symbol: "verweis" },
   { route: "stats", text: S.nav_stats, symbol: "rueckblick" },
   { route: "settings", text: S.nav_settings, symbol: "einstellungen" },
 ];

@@ -12,3 +12,7 @@ android/app/build/
 
 # Nur für die Auslieferung; entsteht aus dem Wurzelverzeichnis.
 dist/
+
+# Der örtliche Zustand von `wrangler dev` — Zwischenstände und ein KV-Speicher,
+# der nur zum Prüfen da ist. Gehört niemandem außer diesem Rechner.
+.wrangler/

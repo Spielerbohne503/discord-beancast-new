@@ -333,6 +333,9 @@ await kontext.setOffline(true);
 await seite.reload({ waitUntil: "domcontentloaded" });
 await seite.waitForSelector(".rahmen", { timeout: 15000 }).catch(() => {});
 await willkommenWeg(seite);
+// Aus der Datenbank wird asynchron gelesen — auf das erste Zeichnen warten, nicht auf gut
+// Glück nachsehen. Sonst prüft der Test die Ladezeit statt den Zwischenspeicher.
+await seite.waitForSelector(".zeile", { timeout: 8000 }).catch(() => {});
 pruefe(
   "die App startet auch ohne Netz",
   (await seite.locator(".rahmen").count()) === 1,

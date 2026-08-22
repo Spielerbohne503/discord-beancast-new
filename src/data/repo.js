@@ -257,11 +257,45 @@ export async function tagsOfTask(taskId) {
   return verknuepfungen.map((row) => alle.get(row.tagId)).filter(Boolean);
 }
 
+/** Alle Etiketten mit ihren Aufgaben — die Oberfläche braucht beide Richtungen. */
+export async function loadTagLinks() {
+  const rows = lebend(await getAll("task_tags"));
+  const nachAufgabe = new Map();
+  for (const row of rows) {
+    if (!nachAufgabe.has(row.taskId)) nachAufgabe.set(row.taskId, []);
+    nachAufgabe.get(row.taskId).push(row.tagId);
+  }
+  return nachAufgabe;
+}
+
+export async function deleteTag(id, at = now()) {
+  const tag = await getOne("tags", id);
+  if (!tag) return null;
+  await put("tags", { ...tag, deletedAt: at, updatedAt: at });
+
+  // Die Verknüpfungen fahren mit — sonst zeigt eine Aufgabe auf ein Etikett, das es nicht
+  // mehr gibt, und die Anzeige müsste das überall abfangen.
+  await transaction(["task_tags"], "readwrite", async (tx) => {
+    const store = tx.objectStore("task_tags");
+    const keys = await request(store.index("tagId").getAllKeys(IDBKeyRange.only(id)));
+    for (const key of keys) {
+      const zeile = await request(store.get(key));
+      if (zeile) store.put({ ...zeile, deletedAt: at, updatedAt: at });
+    }
+  });
+  return true;
+}
+
 export async function setTaskTags(taskId, tagIds, at = now()) {
   await transaction(["task_tags"], "readwrite", async (tx) => {
     const store = tx.objectStore("task_tags");
-    const alte = await request(store.index("taskId").getAllKeys(IDBKeyRange.only(taskId)));
-    for (const key of alte) store.delete(key);
+
+    // Entfernte Verknüpfungen bekommen einen Grabstein statt gelöscht zu werden — sonst
+    // käme das Etikett beim nächsten Abgleich vom anderen Gerät zurück.
+    const alte = await request(store.index("taskId").getAll(IDBKeyRange.only(taskId)));
+    for (const zeile of alte) {
+      if (!tagIds.includes(zeile.tagId)) store.put({ ...zeile, deletedAt: at, updatedAt: at });
+    }
     for (const tagId of tagIds) store.put({ taskId, tagId, updatedAt: at, deletedAt: null });
   });
 }
@@ -273,12 +307,14 @@ export async function loadHabits() {
   return rows.sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0));
 }
 
-export async function createHabit(name, schedule, at = now()) {
+export async function createHabit(name, schedule, target = null, at = now()) {
   const vorhandene = await loadHabits();
   const habit = {
     id: uuid(),
     name: name.trim(),
     schedule,
+    // `null` heißt „feste Tage“, eine Zahl heißt „so oft pro Woche, egal wann“.
+    target,
     color: null,
     sortKey: FractionalIndex.afterOrInitial(vorhandene.at(-1)?.sortKey ?? null),
     createdAt: at,
@@ -336,6 +372,93 @@ export async function toggleCheckin(habitId, day, at = now()) {
   return !gesetzt;
 }
 
+// ------------------------------------------------------------------------ Vorlagen
+
+export async function loadTemplates() {
+  const vorlagen = lebend(await getAll("templates")).sort((a, b) =>
+    a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0,
+  );
+  const punkte = lebend(await getAll("template_items"));
+
+  return vorlagen.map((vorlage) => ({
+    ...vorlage,
+    punkte: punkte
+      .filter((punkt) => punkt.templateId === vorlage.id)
+      .sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0)),
+  }));
+}
+
+export async function createTemplate(name, titel, at = now()) {
+  const vorhandene = await loadTemplates();
+  const vorlage = {
+    id: uuid(),
+    name: name.trim(),
+    listId: null,
+    sortKey: FractionalIndex.afterOrInitial(vorhandene.at(-1)?.sortKey ?? null),
+    createdAt: at,
+    updatedAt: at,
+    deletedAt: null,
+  };
+  await put("templates", vorlage);
+
+  let schluessel = FractionalIndex.initial();
+  const punkte = [];
+  for (const text of titel) {
+    punkte.push({
+      id: uuid(),
+      templateId: vorlage.id,
+      title: text.trim(),
+      sortKey: schluessel,
+      createdAt: at,
+      updatedAt: at,
+      deletedAt: null,
+    });
+    schluessel = FractionalIndex.after(schluessel);
+  }
+  await putAll("template_items", punkte);
+
+  return { ...vorlage, punkte };
+}
+
+export async function updateTemplate(id, patch, at = now()) {
+  const vorlage = await getOne("templates", id);
+  if (!vorlage) return null;
+  const neu = { ...vorlage, ...patch, updatedAt: at };
+  await put("templates", neu);
+  return neu;
+}
+
+export async function deleteTemplate(id, at = now()) {
+  const punkte = (await getAll("template_items", "templateId", IDBKeyRange.only(id))).filter(
+    (punkt) => !isDeleted(punkt),
+  );
+  await putAll(
+    "template_items",
+    punkte.map((punkt) => ({ ...punkt, deletedAt: at, updatedAt: at })),
+  );
+  return updateTemplate(id, { deletedAt: at }, at);
+}
+
+/**
+ * Legt aus einer Vorlage eine Aufgabe mit Unteraufgaben an.
+ *
+ * Eine Aufgabe, nicht fünf: Der „Wocheneinkauf“ ist **ein** Vorhaben, und was darin steht,
+ * sind seine Schritte. Fünf gleichrangige Zeilen in der Heute-Liste wären fünfmal so viel
+ * Rauschen für dieselbe Sache.
+ */
+export async function ausVorlage(templateId, listId, at = now()) {
+  const vorlage = (await loadTemplates()).find((eintrag) => eintrag.id === templateId);
+  if (!vorlage) return null;
+
+  const ziel = listId ?? vorlage.listId ?? (await loadLists())[0]?.id;
+  const eltern = await createTask({ listId: ziel, title: vorlage.name }, at);
+
+  for (const punkt of vorlage.punkte) {
+    await createTask({ listId: ziel, parentId: eltern.id, title: punkt.title }, at);
+  }
+  return eltern;
+}
+
 // --------------------------------------------------------------------------- Fokus
 
 export async function loadCurrentFocus() {
@@ -357,6 +480,9 @@ export async function loadFocusSessions() {
 const EINSTELLUNGEN = {
   /** „hell“ oder „dunkel“ — dieselbe Gestaltung, getauschte Rollen. */
   fassung: "hell",
+
+  /** Die Gestalt des Begleiters. Freigeschaltet über Level, siehe `domain/skins.js`. */
+  skin: "violett",
   quietHoursEnabled: true,
   quietHoursStart: Balance.QUIET_HOURS_DEFAULT_START,
   quietHoursEnd: Balance.QUIET_HOURS_DEFAULT_END,
