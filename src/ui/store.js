@@ -60,8 +60,16 @@ export function abonnieren(rueckruf) {
   return () => hoerer.delete(rueckruf);
 }
 
-function melden() {
-  for (const rueckruf of hoerer) rueckruf(state);
+/**
+ * Meldet eine Änderung.
+ *
+ * `grund` unterscheidet **Daten** von **Takt**. Das ist kein Feinschliff: Ohne die
+ * Unterscheidung wird jede Ansicht einmal je Sekunde neu gebaut, jede Einlauf-Animation
+ * fängt von vorn an — und die Zeilen werden nie ganz sichtbar. Nebenbei rechnet das
+ * Telefon dann sekündlich Dinge nach, die sich nur beim Tippen ändern.
+ */
+function melden(grund) {
+  for (const rueckruf of hoerer) rueckruf(state, grund);
 }
 
 /** Lädt alles neu und rechnet den Begleiter fort. */
@@ -85,7 +93,7 @@ export async function aktualisieren({ neuerSatz = false } = {}) {
   if (neuerSatz || state.speechText === null) satzWaehlen();
 
   state.bereit = true;
-  melden();
+  melden("daten");
   for (const rueckruf of nachLadenHoerer) rueckruf(state);
 }
 
@@ -99,12 +107,12 @@ export function tickern() {
     void aktualisieren();
     return;
   }
-  melden();
+  melden("takt");
 }
 
 export function setzen(aenderungen) {
   Object.assign(state, aenderungen);
-  melden();
+  melden("daten");
 }
 
 /**
@@ -117,7 +125,7 @@ export function navigieren(route, scope = null) {
   const ziel = hashFuer(route, scope ?? (route === "browse" ? state.scope : null));
   if (globalThis.location.hash === ziel) {
     // Derselbe Ort: Es kommt keine Meldung vom Browser, also selbst zeichnen.
-    melden();
+    melden("daten");
     return;
   }
   globalThis.location.hash = ziel;
@@ -145,12 +153,12 @@ let rueckfall = null;
 
 export function reagieren(kategorie) {
   satzWaehlen(kategorie);
-  melden();
+  melden("daten");
 
   clearTimeout(rueckfall);
   rueckfall = setTimeout(() => {
     satzWaehlen();
-    melden();
+    melden("daten");
   }, 6000);
 }
 

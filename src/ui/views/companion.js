@@ -16,6 +16,7 @@ import { icon } from "../icons.js";
 import { S, STAGE_NAMES } from "../strings.js";
 import { formatDuration } from "../format.js";
 import { orb, regung } from "../orb.js";
+import { entschluesseln } from "../motion.js";
 
 const HANDLUNGEN = [
   { typ: RewardType.FEED, text: S.pet_feed, symbol: "fuettern", regung: "gefuettert", satz: SpeechCategory.FED },
@@ -24,7 +25,7 @@ const HANDLUNGEN = [
 ];
 
 export function companionView() {
-  const element = h("div.karte.begleiter");
+  const element = h("div.karte.karte--erhoben.begleiter");
   let orbElement = null;
 
   async function handeln(handlung) {
@@ -39,7 +40,7 @@ export function companionView() {
     if (state.pet === null) return;
 
     const pet = state.pet;
-    orbElement = orb(pet, { groesse: 168 });
+    orbElement = orb(pet, { groesse: 172 });
 
     fuellen(
       element,
@@ -54,7 +55,7 @@ export function companionView() {
         ),
       ),
       orbElement,
-      state.speechText ? h("p.blase", {}, state.speechText) : null,
+      state.speechText ? blase(state.speechText) : null,
       h(
         "div.begleiter__werte",
         {},
@@ -81,6 +82,22 @@ export function companionView() {
   }
 
   return { el: element, update };
+}
+
+/**
+ * Der Satz des Begleiters „findet“ sich (Vorlage: „Decrypted Text“).
+ *
+ * Nur bei einem neuen Satz, nicht bei jedem Takt — sonst zappelt die Blase im Sekundentakt.
+ */
+let letzterSatz = null;
+
+function blase(text) {
+  const element = h("p.blase", {}, text);
+  if (text !== letzterSatz) {
+    letzterSatz = text;
+    entschluesseln(element, text);
+  }
+  return element;
 }
 
 function wert(name, art, zahl) {

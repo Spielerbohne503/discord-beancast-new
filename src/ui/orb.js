@@ -1,9 +1,10 @@
 /**
- * Der Begleiter als leuchtende Kugel.
+ * Der Begleiter als Bauzeichnung.
  *
- * Gezeichnet wird mit Verläufen und einem SVG-Ring, nicht mit einem Bild und **nicht mit
- * einem Emoji**: Ein Emoji sieht in jeder Größe nach Aufkleber aus, und genau der Eindruck
- * soll hier nicht entstehen. Der Ring trägt den Levelfortschritt.
+ * Eine Scheibe mit hartem Rand, eine gestrichelte Umlaufbahn, ein Trabant, außen der
+ * Fortschrittsring. Kein Emoji, kein Gesicht — beides sah in jeder Größe nach Aufkleber
+ * aus. Der Kern ist das einzige Licht im ganzen Programm; der Begleiter ist auch das
+ * einzige, was hier lebt.
  */
 
 import { levelForXp, levelProgress, stageOf } from "../domain/pet.js";
@@ -16,7 +17,7 @@ export function orb(state, { groesse = 148, ring = true, bahn = true } = {}) {
   const laune = state.values.mood / 100;
   const fortschritt = levelProgress(state.xp);
 
-  const element = h(
+  return h(
     "div.orb",
     {
       dataset: { stufe },
@@ -24,39 +25,42 @@ export function orb(state, { groesse = 148, ring = true, bahn = true } = {}) {
       role: "img",
       "aria-label": `${Math.round(state.values.mood)} % Laune, Stufe ${levelForXp(state.xp)}`,
     },
-    h("div.orb__korona"),
     ring ? fortschrittsring(fortschritt) : null,
-    h("div.orb__koerper", {}, h("div.orb__kern")),
-    // Ein Trabant auf einer gekippten Bahn. Der Begleiter ist ein Himmelskörper, kein
-    // Gesicht — zwei Punkte als Augen hätten aus jeder Größe einen Aufkleber gemacht.
+    // Die Bahn liegt **hinter** der Scheibe. Davor gezogen sähe sie aus wie ein
+    // Drahtkäfig über der Kugel; dahinter liest sie sich als Ring.
     bahn ? h("div.orb__bahn", {}, h("i.orb__trabant")) : null,
+    h("div.orb__scheibe", {}, h("div.orb__kern")),
   );
-
-  return element;
 }
 
+/**
+ * Der Fortschrittsring.
+ *
+ * Zwei Linien übereinander: erst eine dicke in Tinte, dann eine dünnere in Acid. Acid
+ * allein verschwindet auf hellem Papier — die Tintenkante hält es zusammen.
+ */
 function fortschrittsring(anteil) {
+  const rest = (UMFANG * (1 - anteil)).toFixed(2);
+
   return svg(
     "svg",
     { class: "orb__ring", viewBox: "0 0 100 100", "aria-hidden": "true" },
-    svg(
-      "defs",
-      {},
-      svg(
-        "linearGradient",
-        { id: "orbVerlauf", x1: "0", y1: "0", x2: "1", y2: "1" },
-        svg("stop", { offset: "0", "stop-color": "var(--orb-a)" }),
-        svg("stop", { offset: "1", "stop-color": "var(--orb-b)" }),
-      ),
-    ),
     svg("circle", { class: "orb__ring-spur", cx: 50, cy: 50, r: 46 }),
+    svg("circle", {
+      class: "orb__ring-kante",
+      cx: 50,
+      cy: 50,
+      r: 46,
+      "stroke-dasharray": UMFANG.toFixed(2),
+      "stroke-dashoffset": rest,
+    }),
     svg("circle", {
       class: "orb__ring-fortschritt",
       cx: 50,
       cy: 50,
       r: 46,
       "stroke-dasharray": UMFANG.toFixed(2),
-      "stroke-dashoffset": (UMFANG * (1 - anteil)).toFixed(2),
+      "stroke-dashoffset": rest,
     }),
   );
 }

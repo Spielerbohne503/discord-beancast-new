@@ -17,7 +17,7 @@ export function meldung(text, { rueckgaengig = null, dauer = 5200 } = {}) {
   const element = h(
     "div.meldung",
     { role: "status", "aria-live": "polite" },
-    h("span", {}, text),
+    h("span.meldung__text", { title: text }, text),
     rueckgaengig
       ? h(
           "button.meldung__knopf",

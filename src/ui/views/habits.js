@@ -31,7 +31,7 @@ export function habitsView() {
     h("h2.gruppe__titel", {}, S.habits_new),
     h(
       "div.schnell__zeile",
-      {},
+      { style: { gap: "8px" } },
       eingabe,
       h(
         "button.knopf.knopf--haupt.knopf--rund",

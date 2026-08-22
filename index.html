@@ -5,12 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>PeTodo</title>
     <meta name="description" content="Aufgaben und ein Begleiter, der davon lebt. Offline, ohne Konto." />
-    <meta name="theme-color" content="#06070d" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#edebe4" />
+    <meta name="color-scheme" content="light dark" />
 
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
+
+    <script>
+      // Vor dem ersten Strich: Sonst blitzt die helle Fassung auf, bevor die Datenbank
+      // gelesen ist. Die Wahrheit steht in IndexedDB; das hier ist nur der Vorgriff.
+      try {
+        document.documentElement.dataset.fassung = localStorage.getItem("petodo.fassung") || "hell";
+      } catch (fehler) {
+        document.documentElement.dataset.fassung = "hell";
+      }
+    </script>
 
     <link rel="stylesheet" href="src/styles/tokens.css" />
     <link rel="stylesheet" href="src/styles/base.css" />

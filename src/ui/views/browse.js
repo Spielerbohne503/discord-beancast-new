@@ -33,7 +33,7 @@ export function browseView() {
     "div.abschnitt",
     {},
     bereiche,
-    h("div.schnell__zeile", {}, icon("suchen", 18), suche),
+    h("div.suchzeile", {}, icon("suchen", 18), suche),
     kopf,
     inhalt,
   );
@@ -104,10 +104,11 @@ export function browseView() {
     const aufgaben = filterTasks(state.tasks, state.scope, state.query, state.now);
     const ziehbar = isManuallyOrdered(state.scope, state.query);
 
+    kopf.className = "abschnitt__kopf hilfslinie";
     fuellen(
       kopf,
       h("h2.abschnitt__titel", {}, titel()),
-      h("span.abschnitt__zahl", {}, String(aufgaben.length)),
+      h("span.abschnitt__zahl", {}, `(${aufgaben.length})`),
     );
 
     fuellen(

@@ -20,6 +20,7 @@ import { ausHash } from "./router.js";
 import { S, STAGE_NAMES } from "./strings.js";
 import { formatLongDay } from "./format.js";
 import { orb } from "./orb.js";
+import { aufteilen } from "./motion.js";
 import { todayView } from "./views/today.js";
 import { browseView } from "./views/browse.js";
 import { focusView } from "./views/focus.js";
@@ -33,11 +34,19 @@ import { aktionenNachholen, inHuelle, zeitplanSenden } from "./bruecke.js";
 import { geteiltesUebernehmen } from "./share.js";
 import { willkommenZeigen } from "./onboarding.js";
 
+/**
+ * Die Ansichten.
+ *
+ * `taktet` heißt: Diese Ansicht muss auch dann neu gezeichnet werden, wenn sich nur die
+ * Uhr weitergedreht hat — die Restzeit im Fokus, die ablaufende Sperre am Begleiter. Alle
+ * anderen werden **nur bei echten Änderungen** gebaut. Ohne diese Unterscheidung fängt
+ * jede Einlauf-Animation im Sekundentakt von vorn an.
+ */
 const ANSICHTEN = {
   today: { bauen: todayView, titel: () => S.nav_today },
   browse: { bauen: browseView, titel: () => S.nav_browse },
-  focus: { bauen: focusView, titel: () => S.focus_title },
-  companion: { bauen: companionView, titel: () => S.nav_companion },
+  focus: { bauen: focusView, titel: () => S.focus_title, taktet: true },
+  companion: { bauen: companionView, titel: () => S.nav_companion, taktet: true },
   habits: { bauen: habitsView, titel: () => S.habits_title },
   stats: { bauen: statsView, titel: () => S.stats_title },
   settings: { bauen: settingsView, titel: () => S.settings_title },
@@ -71,7 +80,7 @@ const SCHLAUE_LISTEN = [
 const gebaute = new Map();
 
 export async function starten(wurzel) {
-  const kopfTitel = h("h1");
+  const kopfTitel = h("h1.display");
   const kopfDatum = h("span.kopf__datum");
   const laufendeRunde = h("div");
   const kopf = h(
@@ -101,10 +110,26 @@ export async function starten(wurzel) {
 
   fuellen(wurzel, h("div.rahmen", {}, seitenleiste, kopf, inhalt, leiste, nebenspalte));
 
-  function zeichnen() {
+  function zeichnen(_zustand, grund = "daten") {
     const ansicht = ANSICHTEN[state.route] ?? ANSICHTEN.today;
+    const nurTakt = grund === "takt";
 
-    kopfTitel.textContent = ansicht.titel();
+    // Beim reinen Takt bewegt sich nur, was von der Uhr abhängt.
+    if (nurTakt) {
+      if (ansicht.taktet) gebaute.get(state.route)?.update();
+      laufendeRundeZeichnen(laufendeRunde);
+      // Die Seitenleiste zeigt die Restzeit — aber nur, wenn überhaupt etwas läuft.
+      if (state.focusSession !== null && state.route !== "focus") seitenleisteZeichnen(seitenleiste);
+      return;
+    }
+
+    // Die Überschrift läuft zeichenweise ein — aber nur, wenn sie sich geändert hat.
+    // Bei jedem Takt neu zu starten wäre Zappeln, keine Bewegung.
+    const titel = ansicht.titel();
+    if (kopfTitel.dataset.titel !== titel) {
+      kopfTitel.dataset.titel = titel;
+      aufteilen(kopfTitel, titel);
+    }
     kopfDatum.textContent = formatLongDay(state.today);
 
     if (!gebaute.has(state.route)) gebaute.set(state.route, ansicht.bauen());
@@ -119,6 +144,7 @@ export async function starten(wurzel) {
     nebenspalteZeichnen(nebenspalte);
 
     document.body.classList.toggle("ruhig", state.settings.reduceMotion === true);
+    fassungAnwenden(state.settings.fassung);
   }
 
   abonnieren(zeichnen);
@@ -132,7 +158,7 @@ export async function starten(wurzel) {
 
   on(globalThis, "hashchange", () => {
     ausAdresseUebernehmen();
-    zeichnen();
+    zeichnen(state, "daten");
   });
   ausAdresseUebernehmen();
 
@@ -170,6 +196,31 @@ export async function starten(wurzel) {
   });
 
   tastenkuerzel();
+}
+
+/**
+ * Hell oder dunkel.
+ *
+ * Die Wahrheit steht in der Datenbank, aber die wird erst nach dem ersten Zeichnen gelesen.
+ * Damit die Seite nicht kurz hell aufblitzt, liegt die Wahl zusätzlich im `localStorage`
+ * und wird schon im `index.html` angewandt — der Speicher ist hier ein Zwischenspeicher,
+ * keine zweite Wahrheit.
+ */
+function fassungAnwenden(fassung) {
+  const wert = fassung === "dunkel" ? "dunkel" : "hell";
+  if (document.documentElement.dataset.fassung === wert) return;
+
+  document.documentElement.dataset.fassung = wert;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute(
+    "content",
+    wert === "dunkel" ? "#0d0c11" : "#edebe4",
+  );
+
+  try {
+    localStorage.setItem("petodo.fassung", wert);
+  } catch {
+    /* Privates Fenster: Dann blitzt es beim Laden einmal. Kein Grund für einen Absturz. */
+  }
 }
 
 /**
@@ -232,18 +283,18 @@ function seitenleisteZeichnen(seitenleiste) {
   fuellen(
     seitenleiste,
     h(
-      "div.karte.marke",
+      "div.marke-block",
       {},
-      state.pet ? orb(state.pet, { groesse: 40, ring: false }) : null,
+      state.pet ? orb(state.pet, { groesse: 38, ring: false, bahn: false }) : null,
       h(
         "div",
         {},
-        h("div.marke__name", {}, S.app_name),
-        h("div.marke__satz", {}, S.today_open_count(brett.openCount)),
+        h("div.marke-block__name", {}, S.app_name),
+        h("div.marke-block__satz", {}, S.today_open_count(brett.openCount)),
       ),
     ),
     h(
-      "nav.karte.navi",
+      "nav.karte.karte--erhoben.navi",
       { "aria-label": S.nav_today },
       SEITE.map((punkt) =>
         h(
@@ -334,7 +385,7 @@ function neueListe() {
     },
   });
 
-  return h("div", { style: { padding: "8px" } }, feld);
+  return h("div.navi__neu", {}, feld);
 }
 
 function nebenspalteZeichnen(nebenspalte) {
@@ -348,7 +399,7 @@ function nebenspalteZeichnen(nebenspalte) {
   fuellen(
     nebenspalte,
     h(
-      "div.karte.begleiter",
+      "div.karte.karte--erhoben.begleiter",
       {},
       h(
         "div.begleiter__kopfzeile",
@@ -356,7 +407,7 @@ function nebenspalteZeichnen(nebenspalte) {
         h("span.begleiter__stufe", {}, STAGE_NAMES[stageOf(state.pet.values)]),
         h("span.begleiter__level", {}, S.pet_level(levelForXp(state.pet.xp))),
       ),
-      orb(state.pet, { groesse: 132 }),
+      orb(state.pet, { groesse: 136 }),
       state.speechText ? h("p.blase", {}, state.speechText) : null,
       h(
         "button.knopf.knopf--klein",

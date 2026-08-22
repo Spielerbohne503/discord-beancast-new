@@ -1,11 +1,11 @@
 /*
  * Zwei Anordnungen, ein Programm.
  *
- * Auf dem Telefon: ein Strang, eine Leiste unten, der Begleiter als schmaler Streifen über
- * der Liste. Am Schreibtisch: Seitenleiste links, Inhalt in der Mitte, Begleiter und
- * Rückblick rechts — **alles gleichzeitig sichtbar**, nichts hinter einem Menü. Der
- * Umbruch liegt bei 960 px; darunter ist der zweispaltige Aufbau eng, darüber wirkt der
- * einspaltige verloren.
+ * Auf dem Telefon: ein Strang, eine Leiste unten. Am Schreibtisch: Seitenleiste links,
+ * Inhalt in der Mitte, Begleiter und Rückblick rechts — **alles gleichzeitig sichtbar**,
+ * nichts hinter einem Menü. Der Umbruch liegt bei 960 px.
+ *
+ * Die Ränder sind Kanten, keine Verläufe: Wo eine Spalte aufhört, steht eine Linie.
  */
 
 .rahmen {
@@ -14,11 +14,7 @@
   grid-template-rows: auto 1fr auto;
 }
 
-/*
- * Raster- und Flex-Kinder dürfen sonst nicht unter ihre Inhaltsbreite schrumpfen. Ohne
- * diese Zeile schiebt eine einzige zu breite Chip-Reihe die ganze Seite auseinander, und
- * das Telefon scrollt seitwärts.
- */
+/* Raster- und Flex-Kinder dürfen sonst nicht unter ihre Inhaltsbreite schrumpfen. */
 .rahmen > * {
   min-width: 0;
 }
@@ -26,10 +22,9 @@
 .inhalt {
   width: 100%;
   min-width: 0;
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
-  /* Unten so viel Luft, dass die letzte Karte nicht unter der Leiste verschwindet. */
-  padding: var(--space-4) var(--space-4) calc(var(--space-7) + 56px);
+  padding: var(--space-4) var(--space-4) calc(var(--space-7) + 60px);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -42,16 +37,15 @@
   top: 0;
   z-index: 30;
   padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
-  background: linear-gradient(180deg, rgba(6, 7, 13, 0.92), rgba(6, 7, 13, 0.62) 70%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--papier);
+  border-bottom: var(--strich) solid var(--linie);
 }
 
 .kopf__zeile {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-3);
 }
@@ -63,15 +57,29 @@
   min-width: 0;
 }
 
+.kopf h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-stretch: 88%;
+  font-size: clamp(1.9rem, 9vw, 2.6rem);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+
 .kopf__datum {
-  font-size: 0.78rem;
-  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tinte-faint);
 }
 
 .kopf__werkzeuge {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  padding-bottom: 3px;
 }
 
 /* ------------------------------------------------------------- Leiste (Telefon) */
@@ -83,12 +91,9 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--line);
-  background: rgba(8, 9, 18, 0.86);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: var(--strich-stark) solid var(--linie);
+  background: var(--flaeche);
 }
 
 .leiste__knopf {
@@ -96,11 +101,18 @@
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: var(--space-2) 0;
-  border-radius: var(--r-md);
-  font-size: 0.68rem;
-  color: var(--text-faint);
-  transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+  padding: var(--space-2) 2px;
+  border-right: 1px solid var(--linie-leise);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tinte-faint);
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.leiste__knopf:last-child {
+  border-right: 0;
 }
 
 .leiste__knopf svg {
@@ -108,16 +120,15 @@
   height: 22px;
 }
 
+/* Die aktuelle Ansicht ist ausgefüllt, nicht nur eingefärbt. */
 .leiste__knopf[aria-current="page"] {
-  color: var(--text);
+  background: var(--acid);
+  color: var(--auf-acid);
 }
 
-.leiste__knopf[aria-current="page"] svg {
-  filter: drop-shadow(0 0 8px rgba(126, 126, 255, 0.7));
-}
-
-.leiste__knopf:hover {
-  color: var(--text-dim);
+.leiste__knopf:hover:not([aria-current="page"]) {
+  background: var(--flaeche-2);
+  color: var(--tinte);
 }
 
 /* --------------------------------------------------------- Seitenleiste (Desktop) */
@@ -130,7 +141,7 @@
 @media (min-width: 960px) {
   .rahmen {
     grid-template-rows: 1fr;
-    grid-template-columns: 260px minmax(0, 1fr) 340px;
+    grid-template-columns: 264px minmax(0, 1fr) 340px;
     max-width: 1560px;
     margin: 0 auto;
     gap: var(--space-5);
@@ -159,47 +170,63 @@
     overflow-y: auto;
     padding-right: var(--space-1);
   }
-
-  .marke {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-2) var(--space-3);
-  }
-
-  .marke__name {
-    font-size: 1.05rem;
-    font-weight: 650;
-    letter-spacing: -0.02em;
-  }
-
-  .marke__satz {
-    font-size: 0.72rem;
-    color: var(--text-faint);
-  }
 }
 
-/* Sehr breite Fenster: Die dritte Spalte darf mitwachsen, der Text nicht. */
 @media (min-width: 1400px) {
   .rahmen {
-    grid-template-columns: 280px minmax(0, 1fr) 380px;
+    grid-template-columns: 288px minmax(0, 1fr) 380px;
   }
 }
+
+/* ----------------------------------------------------------------------- Marke */
+
+.marke-block {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--strich-stark) solid var(--linie);
+  border-radius: var(--r-md);
+  background: var(--tinte);
+  color: var(--papier);
+}
+
+.marke-block__name {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-stretch: 88%;
+  font-size: 1.3rem;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.marke-block__satz {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ------------------------------------------------------------------ Navigation */
 
 .navi {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--space-2);
+  padding: 0;
+  overflow: hidden;
 }
 
 .navi__gruppe {
   padding: var(--space-3) var(--space-3) var(--space-1);
-  font-size: 0.7rem;
+  border-bottom: 1px dashed var(--linie-leise);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--tinte-faint);
 }
 
 .navi__punkt {
@@ -207,12 +234,16 @@
   align-items: center;
   gap: var(--space-3);
   width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--r-md);
-  color: var(--text-dim);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--linie-leise);
+  color: var(--tinte-dim);
   font-size: 0.9rem;
   text-align: left;
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.navi__punkt:last-child {
+  border-bottom: 0;
 }
 
 .navi__punkt svg {
@@ -222,14 +253,20 @@
 }
 
 .navi__punkt:hover {
-  background: var(--surface);
-  color: var(--text);
+  background: var(--flaeche-2);
+  color: var(--tinte);
 }
 
+/*
+ * Die aktuelle Ansicht wird ausgefüllt, nicht angetupft.
+ *
+ * Ein schmaler farbiger Strich am Rand ist auf einem hellen Grund kaum zu sehen; ein
+ * ganzer Block in Acid ist es immer.
+ */
 .navi__punkt[aria-current="page"] {
-  background: var(--surface-strong);
-  color: var(--text);
-  box-shadow: inset 2px 0 0 var(--aurora-1);
+  background: var(--acid);
+  color: var(--auf-acid);
+  font-weight: 600;
 }
 
 .navi__punkt-name {
@@ -241,15 +278,20 @@
 }
 
 .navi__zahl {
-  font-family: var(--font-num);
-  font-size: 0.75rem;
-  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: inherit;
+  opacity: 0.65;
 }
 
 .navi__punkt-farbe {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--r-pill);
+  width: 9px;
+  height: 9px;
   flex: none;
-  background: var(--grad-aurora);
+  border: 1.5px solid currentColor;
+}
+
+.navi__neu {
+  padding: var(--space-2);
+  border-top: 1px dashed var(--linie-leise);
 }

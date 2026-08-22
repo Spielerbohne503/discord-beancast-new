@@ -27,8 +27,11 @@ tools/        Entwicklungsserver, Bildschirmfotos, Durchlauf im Browser.
 npm test              Unit-Tests (node --test, keine Abhängigkeit)
 npm run serve         Entwicklungsserver auf :8000
 npm run browsertest   Durchlauf durch die laufende App in Chromium
-npm run shots         Bildschirmfotos beider Anordnungen
-npm run check         alles drei
+npm run bruecketest   Der Vertrag zur Android-Hülle, gegen eine nachgebaute Hülle
+npm run shots         Bildschirmfotos beider Anordnungen und beider Fassungen
+npm run check         alles vier
+
+cd android && ./gradlew assembleRelease    # die Hülle als APK
 ```
 
 Für die Browser-Werkzeuge muss der Server laufen. Chromium liegt unter
@@ -82,26 +85,76 @@ Das hier ist später nicht mehr zu ändern, ohne alles anzufassen:
 
 ## Gestaltung
 
-Ein tiefer, fast schwarzer Grund mit Nebel und Sternfeld; darauf Glasflächen mit
-schmalen Kanten. Drei Verläufe mit fester Bedeutung:
+**Blaupause.** Papiergrund mit feinem Raster, tiefschwarze Tinte, harte Kanten, kein
+Weichzeichner. Jede Fläche hat einen sichtbaren Rand und einen **harten** Schatten — einen
+versetzten Block in Tintenfarbe. Was gedrückt wird, fährt in seinen Schatten hinein.
 
-| Verlauf | Bedeutung |
+Drei Farben mit fester Bedeutung, und nur drei:
+
+| Farbe | Bedeutung |
 | --- | --- |
-| `--grad-aurora` | Handlung, Fortschritt, der Begleiter |
-| `--grad-ember` | Überfällig, dringend — nie dekorativ |
-| `--grad-vital` | Geschafft, Serien, Gewohnheiten |
+| `--acid` | Handlung. Der eine Knopf, der etwas auslöst. |
+| `--violett` | Der Begleiter, Fortschritt, Fokus |
+| `--rot` | Überfällig, dringend — nie dekorativ |
 
-Das Leuchten ist ein Farbschein hinter der Fläche, kein Rahmen. Es gibt bewusst
-nur diese eine, dunkle Fassung.
+Dazu die technischen Beigaben, die den Ton tragen: gestrichelte Hilfslinien,
+Zählmarken in Klammern („(3)“), Beschriftungen in versaler Schreibmaschinenschrift,
+Auszeichnung schwer, schmal und versal.
 
-**Der Begleiter ist ein Himmelskörper, kein Gesicht.** Kugel mit Kern und
-Umlaufbahn, gezeichnet mit CSS und SVG. Kein Emoji, keine Augen — beides sah in
-jeder Größe nach Aufkleber aus.
+**Keine Webschrift.** Die App lädt nichts nach; in der Android-Hülle gibt es dafür nicht
+einmal eine Berechtigung. Was zählt, ist die Anmutung, und die stellt jedes System aus dem
+her, was es hat.
 
-Zwei Anordnungen, Umbruch bei 960 px: Telefon mit Leiste unten und
-Begleiter-Streifen über der Liste; Schreibtisch mit Seitenleiste und
-Nebenspalte, auf dem **alle** Funktionen samt Einstellungen ohne Untermenü
-erreichbar sind.
+**Zwei Fassungen, hell und dunkel** — dieselbe Sprache, getauschte Rollen. Das ist keine
+Bequemlichkeit: Die Acidfarbe leuchtet auf schwarzem Papier stärker als auf weißem. Die
+Wahl steht in der Datenbank; im `localStorage` liegt eine Kopie, damit beim Laden nichts
+aufblitzt.
+
+**Der Begleiter ist ein Himmelskörper, kein Gesicht.** Scheibe mit hartem Rand,
+gestrichelte Umlaufbahn dahinter, Trabant, außen der Fortschrittsring. Kein Emoji, keine
+Augen — beides sah in jeder Größe nach Aufkleber aus. Sein Kern ist ein echter Verlauf und
+damit das einzige Stück Licht im ganzen Programm.
+
+Zwei Anordnungen, Umbruch bei 960 px: Telefon mit Leiste unten und Begleiter-Streifen über
+der Liste; Schreibtisch mit Seitenleiste und Nebenspalte, auf dem **alle** Funktionen samt
+Einstellungen ohne Untermenü erreichbar sind.
+
+### Bewegung
+
+Die Effekte sind der Idee nach von reactbits.dev übernommen und mit Bordmitteln
+nachgebaut — React kommt nicht in Frage: null Laufzeitabhängigkeiten, kein Bauschritt, und
+in der Hülle keine Netzwerkerlaubnis. Sie stehen in `src/ui/motion.js`:
+
+| Vorlage | Hier |
+| --- | --- |
+| Split Text | Überschriften laufen zeichenweise ein |
+| Count Up | Kennzahlen zählen hoch statt zu erscheinen |
+| Decrypt Text | Der Begleiter „findet“ seinen Satz |
+| Click Spark | Ein Tintenstern beim Abhaken |
+
+**Jede Bewegung fragt vorher, ob sie darf.** Wer „Bewegung reduzieren“ eingestellt hat,
+bekommt sofort das Endergebnis — nicht dieselbe Bewegung, nur schneller.
+
+Ansichten werden **nur bei echten Änderungen** neu gebaut, nicht bei jedem Sekundentakt.
+Wer das vergisst, startet jede Einlauf-Animation im Sekundentakt neu, und die Zeilen werden
+nie ganz sichtbar. Ausnahmen tragen `taktet: true` in `src/ui/app.js` — Fokus und
+Begleiter, weil dort eine Uhr läuft.
+
+## Die Android-Hülle
+
+Eine App, die nichts weiter tut, als die Webseite anzuzeigen und einen Wecker zu stellen.
+Sie kennt keine Aufgaben, keine Datenbank und keine Regeln. Einzelheiten in
+`docs/ANDROID.md`; die Kurzfassung:
+
+- **Kein Push.** Es gibt keinen Server und kein Konto. Das Telefon weckt sich selbst zu
+  Zeitpunkten, die die Webseite ausgerechnet hat (`plannedNags` in `src/domain/nag.js`).
+- **Keine `INTERNET`-Berechtigung.** „Kein Netzzugriff“ ist damit vom Betriebssystem
+  durchgesetzt, nicht bloß zugesagt.
+- Der Ursprung `https://appassets.androidplatform.net/web/…` **darf sich nie ändern** — er
+  ist der Schlüssel, unter dem IndexedDB liegt.
+- Der Vertrag zwischen beiden Seiten steht in `src/ui/bruecke.js` und `Bruecke.kt` und wird
+  von `tools/bruecketest.mjs` im Browser gegen eine nachgebaute Hülle geprüft. Ein Emulator
+  läuft hier nicht.
 
 ## Wächter
 

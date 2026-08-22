@@ -1,67 +1,69 @@
 /*
- * Die Gestaltungsgrundlage.
+ * Die Gestaltungsgrundlage: Blaupause.
  *
- * Ein tiefer, fast schwarzer Grund mit einem Hauch Nebel darüber; darauf Glasflächen mit
- * schmalen Kanten und drei Verläufen, die immer dasselbe bedeuten:
+ * Heller Papiergrund mit feinem Raster, tiefschwarze Tinte, harte Kanten, keine
+ * Weichzeichnung. Flächen haben einen sichtbaren Rand und einen **harten** Schatten —
+ * einen versetzten Block in Tintenfarbe, keinen Weichzeichner. Was gedrückt wird, fährt in
+ * seinen Schatten hinein.
  *
- *   --grad-aurora   Handlung, Fortschritt, der Begleiter selbst
- *   --grad-ember    Überfällig, dringend — nie dekorativ
- *   --grad-vital    Geschafft, Serien, Gewohnheiten
+ * Drei Farben mit fester Bedeutung, und nur drei:
  *
- * Das Leuchten ist ein Farbschein hinter der Fläche, kein Rahmen: `box-shadow` in der
- * Farbe des Verlaufs, weit gestreut, niedrige Deckkraft. Ein harter farbiger Rahmen wirkt
- * sofort nach Spielzeug — der Schein wirkt nach Tiefe.
+ *   --acid     Handlung. Der eine Knopf, der etwas auslöst.
+ *   --violett  Der Begleiter, Fortschritt, Fokus.
+ *   --rot      Überfällig, dringend — nie dekorativ.
  *
- * Es gibt bewusst **nur diese eine, dunkle Fassung**: „Space“ mit hellem Grund wäre keine
- * Variante, sondern ein anderes Programm.
+ * Dazu die technischen Beigaben, die dem Ganzen den Blaupausen-Charakter geben:
+ * gestrichelte Hilfslinien, Maßmarken in Schreibmaschinenschrift, Zählmarken wie „(3)“.
+ *
+ * Zwei Fassungen, hell und dunkel — dieselbe Sprache, getauschte Rollen. Das ist keine
+ * Bequemlichkeit: Neobrutalismus funktioniert in beiden, und das Leuchten der Acidfarbe
+ * kommt auf schwarzem Papier stärker heraus als auf weißem.
  */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* -------------------------------------------------------------------- Grund */
-  --ground: #06070d;
-  --ground-2: #0a0c16;
-  --nebula-a: rgba(110, 139, 255, 0.16);
-  --nebula-b: rgba(166, 107, 255, 0.13);
-  --nebula-c: rgba(52, 195, 255, 0.08);
+  /* -------------------------------------------------------------------- Papier */
+  --papier: #edebe4;
+  --flaeche: #ffffff;
+  --flaeche-2: #f6f5f1;
+  --vertieft: #e4e2da;
 
-  /* ------------------------------------------------------------------ Flächen */
-  --surface: rgba(255, 255, 255, 0.035);
-  --surface-strong: rgba(255, 255, 255, 0.06);
-  --surface-sunken: rgba(0, 0, 0, 0.25);
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
+  /* --------------------------------------------------------------------- Tinte */
+  --tinte: #14101b;
+  --tinte-dim: #514b5c;
+  --tinte-faint: #8b8494;
+  --auf-acid: #14101b;
+  --auf-violett: #ffffff;
 
-  /* -------------------------------------------------------------------- Text */
-  --text: #e9ecff;
-  --text-dim: #9aa3c7;
-  --text-faint: #626b93;
+  /* ------------------------------------------------------------------- Akzente */
+  --acid: #d8fa4b;
+  --acid-tief: #c2e532;
+  --violett: #7c4dff;
+  --violett-hell: #ded3ff;
+  --rot: #ff3b30;
+  --rot-hell: #ffe0de;
 
-  /* ---------------------------------------------------------------- Verläufe */
-  --aurora-1: #6e8bff;
-  --aurora-2: #a66bff;
-  --ember-1: #ff8a5c;
-  --ember-2: #ff4d6d;
-  --vital-1: #3ddc97;
-  --vital-2: #34c3ff;
+  /* --------------------------------------------------------------------- Kante */
+  --strich: 1.5px;
+  --strich-stark: 2px;
+  --linie: var(--tinte);
+  --linie-leise: rgba(20, 16, 27, 0.18);
 
-  --grad-aurora: linear-gradient(135deg, var(--aurora-1), var(--aurora-2));
-  --grad-ember: linear-gradient(135deg, var(--ember-1), var(--ember-2));
-  --grad-vital: linear-gradient(135deg, var(--vital-1), var(--vital-2));
+  /*
+   * Der harte Schatten. Kein Weichzeichner: ein versetzter Block.
+   * Die gedrückte Fassung fährt hinein — deshalb dieselbe Zahl an beiden Stellen.
+   */
+  --versatz: 4px;
+  --schatten: var(--versatz) var(--versatz) 0 var(--tinte);
+  --schatten-klein: 2px 2px 0 var(--tinte);
 
-  /* ------------------------------------------------------------------ Leuchten */
-  --glow-aurora: 0 0 32px rgba(126, 126, 255, 0.28);
-  --glow-ember: 0 0 32px rgba(255, 77, 109, 0.26);
-  --glow-vital: 0 0 32px rgba(61, 220, 151, 0.24);
+  /* --------------------------------------------------------------------- Radien */
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: 4px;
 
-  /* -------------------------------------------------------------------- Maße */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
-  --r-pill: 999px;
-
+  /* --------------------------------------------------------------------- Maße */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -70,29 +72,73 @@
   --space-6: 32px;
   --space-7: 48px;
 
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 12px 32px rgba(0, 0, 0, 0.45);
+  /* -------------------------------------------------------------------- Schrift */
+  --font: "Inter", "Helvetica Neue", system-ui, -apple-system, sans-serif;
 
-  /* ------------------------------------------------------------------ Schrift */
-  --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-num: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  /*
+   * Die Auszeichnungsschrift.
+   *
+   * Keine Webschrift: Die App lädt nichts nach, und in der Android-Hülle gibt es dafür
+   * nicht einmal eine Berechtigung. Was zählt, ist die Anmutung — schwer, schmal,
+   * versal — und die stellt jedes System aus dem her, was es hat.
+   */
+  --font-display: "Archivo", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Impact, sans-serif;
+  --font-mono: ui-monospace, "Roboto Mono", "SF Mono", "Cascadia Mono", Menlo, monospace;
 
   /* ------------------------------------------------------------------ Bewegung */
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --fast: 140ms;
-  --normal: 240ms;
-  --slow: 520ms;
+  --ease: cubic-bezier(0.2, 0.9, 0.15, 1);
+  --ease-hart: cubic-bezier(0.85, 0, 0.15, 1);
+  --fast: 120ms;
+  --normal: 220ms;
+  --slow: 480ms;
 
-  /* --------------------------------------------------------------- Prioritäten */
-  --prio-0: #5c6690;
+  /* ---------------------------------------------------------------- Prioritäten */
+  --prio-0: var(--tinte-faint);
   --prio-1: transparent;
-  --prio-2: #ffb45c;
-  --prio-3: #ff4d6d;
+  --prio-2: #ff8a00;
+  --prio-3: var(--rot);
+
+  /* Das Raster im Grund — Millimeterpapier, nicht Dekoration. */
+  --raster: 28px;
+  --raster-linie: rgba(20, 16, 27, 0.055);
+}
+
+/*
+ * Die dunkle Fassung.
+ *
+ * Papier und Tinte tauschen die Rollen, die drei Akzente bleiben. Die Acidfarbe braucht
+ * auf Schwarz keinen Weichzeichner, um zu leuchten — sie tut es von selbst.
+ */
+:root[data-fassung="dunkel"] {
+  color-scheme: dark;
+
+  --papier: #0d0c11;
+  --flaeche: #17161e;
+  --flaeche-2: #1e1d27;
+  --vertieft: #100f15;
+
+  --tinte: #f3f1ea;
+  --tinte-dim: #a7a1b4;
+  --tinte-faint: #6f6980;
+  --auf-acid: #14101b;
+  --auf-violett: #ffffff;
+
+  --acid: #d8fa4b;
+  --acid-tief: #eaffa0;
+  --violett: #9b7bff;
+  --violett-hell: #2a2140;
+  --rot: #ff5c52;
+  --rot-hell: #34181a;
+
+  --linie: var(--tinte);
+  --linie-leise: rgba(243, 241, 234, 0.16);
+  --raster-linie: rgba(243, 241, 234, 0.05);
 }
 
 /*
  * „Bewegung reduzieren“ kommt aus zwei Richtungen: aus dem Betriebssystem und aus den
- * Einstellungen der App. Beide schalten dieselbe Klasse scharf, damit es nur eine Stelle
- * gibt, an der Bewegung endet.
+ * Einstellungen. Beide schalten dieselbe Klasse scharf, damit es genau eine Stelle gibt,
+ * an der Bewegung endet.
  */
 @media (prefers-reduced-motion: reduce) {
   :root {

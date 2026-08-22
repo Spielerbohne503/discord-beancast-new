@@ -176,9 +176,41 @@ function erinnerungenImBrowser(setzenUndNeu) {
   );
 }
 
+/**
+ * Darstellung.
+ *
+ * Zwei Fassungen, dieselbe Sprache: harte Kanten, drei Akzente, kein Weichzeichner. Die
+ * Wahl steht neben „Bewegung reduzieren“, weil beides dasselbe ist — wie viel die
+ * Oberfläche einem zumutet.
+ */
 function darstellung(setzenUndNeu) {
+  const fassungen = [
+    { wert: "hell", text: S.settings_fassung_hell },
+    { wert: "dunkel", text: S.settings_fassung_dunkel },
+  ];
+
   return gruppe(
     S.settings_motion,
+    h(
+      "div.feld",
+      {},
+      h("span.feld__beschriftung", {}, S.settings_fassung),
+      h(
+        "div.chips",
+        {},
+        fassungen.map((eintrag) =>
+          h(
+            "button.chip",
+            {
+              type: "button",
+              "aria-pressed": String(state.settings.fassung === eintrag.wert),
+              onclick: () => void setzenUndNeu("fassung", eintrag.wert),
+            },
+            eintrag.text,
+          ),
+        ),
+      ),
+    ),
     schalter(S.settings_reduce_motion, state.settings.reduceMotion, (an) =>
       setzenUndNeu("reduceMotion", an),
     ),

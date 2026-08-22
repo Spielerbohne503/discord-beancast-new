@@ -107,6 +107,21 @@ for (const ansicht of ANSICHTEN) {
     });
   }
 
+  // Die dunkle Fassung: dieselbe Sprache, getauschte Rollen. Umgeschaltet wird über die
+  // Einstellungen, nicht über den localStorage — der ist nur ein Vorgriff aufs erste
+  // Zeichnen, die Wahrheit steht in der Datenbank und würde ihn sofort überschreiben.
+  await klicken(seite, "Heute");
+  for (const ziel of SEITEN[ansicht.name].find((e) => e.name === "einstellungen").weg) {
+    await klicken(seite, ziel);
+  }
+  await klicken(seite, "Dunkel");
+  await klicken(seite, "Heute");
+  await seite.waitForTimeout(700);
+  await seite.screenshot({
+    path: `${ORDNER}/${ansicht.name}-dunkel.png`,
+    fullPage: ansicht.name === "telefon",
+  });
+
   await kontext.close();
 }
 

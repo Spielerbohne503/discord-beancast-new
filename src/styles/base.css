@@ -1,4 +1,4 @@
-/* Grundlagen: Grund, Schrift, Bedienelemente. */
+/* Grundlagen: Papier, Schrift, Bedienelemente. */
 
 *,
 *::before,
@@ -16,52 +16,29 @@ body {
   font-family: var(--font);
   font-size: 15px;
   line-height: 1.5;
-  color: var(--text);
-  background: var(--ground);
+  color: var(--tinte);
+  background: var(--papier);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
 /*
- * Der Nebel.
+ * Das Raster im Grund.
  *
- * Drei weiche Farbwolken auf schwarzem Grund, fest im Sichtfeld verankert statt
- * mitscrollend — so bleibt der Eindruck von Tiefe, ohne dass beim Scrollen etwas wandert.
+ * Millimeterpapier, kein Zierrat: Es gibt dem Ganzen den Maßstab, an dem die Kanten
+ * ausgerichtet sind, und macht sichtbar, dass hier etwas konstruiert und nicht dekoriert
+ * ist. Fest im Sichtfeld verankert, damit beim Scrollen nichts wandert.
  */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -2;
-  background:
-    radial-gradient(1100px 700px at 12% -10%, var(--nebula-a), transparent 60%),
-    radial-gradient(900px 600px at 92% 8%, var(--nebula-b), transparent 62%),
-    radial-gradient(1000px 800px at 50% 110%, var(--nebula-c), transparent 60%),
-    var(--ground);
-}
-
-/* Ein Sternenfeld aus zwei sich wiederholenden Punktmustern — kein Bild, keine Anfrage. */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.5;
   background-image:
-    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.55), transparent),
-    radial-gradient(1px 1px at 70% 12%, rgba(255, 255, 255, 0.4), transparent),
-    radial-gradient(1px 1px at 44% 76%, rgba(255, 255, 255, 0.35), transparent),
-    radial-gradient(1.5px 1.5px at 86% 62%, rgba(255, 255, 255, 0.3), transparent),
-    radial-gradient(1px 1px at 8% 88%, rgba(255, 255, 255, 0.4), transparent);
-  background-size: 520px 520px, 380px 380px, 610px 610px, 470px 470px, 300px 300px;
-  animation: sterne 240s linear infinite;
-}
-
-@keyframes sterne {
-  to {
-    background-position: 520px 260px, -380px 190px, 305px -610px, -235px -470px, 150px 300px;
-  }
+    linear-gradient(var(--raster-linie) 1px, transparent 1px),
+    linear-gradient(90deg, var(--raster-linie) 1px, transparent 1px);
+  background-size: var(--raster) var(--raster);
 }
 
 h1,
@@ -72,12 +49,19 @@ h3 {
   letter-spacing: -0.02em;
 }
 
-h1 {
-  font-size: 1.7rem;
-}
-
-h2 {
-  font-size: 1.05rem;
+/*
+ * Auszeichnung: schwer, schmal, versal.
+ *
+ * `font-stretch` greift nur bei Schriften, die es können — wo nicht, bleibt die Anmutung
+ * über Gewicht und Laufweite erhalten. Nachgeladen wird nichts.
+ */
+.display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-stretch: 88%;
+  text-transform: uppercase;
+  letter-spacing: -0.025em;
+  line-height: 0.95;
 }
 
 p {
@@ -99,14 +83,16 @@ button {
   padding: 0;
 }
 
+/* Der Fokusrahmen ist Teil der Sprache: hart, versetzt, in Acid. */
 :focus-visible {
-  outline: 2px solid var(--aurora-1);
+  outline: var(--strich-stark) solid var(--tinte);
   outline-offset: 2px;
-  border-radius: var(--r-sm);
+  box-shadow: 0 0 0 4px var(--acid);
 }
 
 ::selection {
-  background: rgba(126, 126, 255, 0.35);
+  background: var(--acid);
+  color: var(--auf-acid);
 }
 
 /* Nur für Vorleseprogramme sichtbar. */
@@ -122,19 +108,57 @@ button {
 }
 
 a {
-  color: var(--aurora-1);
-  text-decoration-color: rgba(110, 139, 255, 0.4);
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
   text-underline-offset: 2px;
+  text-decoration-color: var(--violett);
 }
 
 a:hover {
+  background: var(--acid);
+  color: var(--auf-acid);
   text-decoration-color: currentColor;
 }
 
-/* Schmale, unauffällige Bildlaufleisten — die breite graue Leiste zerschneidet den Grund. */
+/*
+ * Die Maßmarke.
+ *
+ * Kleine versale Schreibmaschinenschrift für alles, was beschriftet und nicht gelesen
+ * wird: Blocküberschriften, Zahlen, Zustände. Sie trägt den technischen Ton.
+ */
+.marke {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinte-faint);
+}
+
+/*
+ * Die Hilfslinie mit Zählmarke.
+ *
+ * Eine gestrichelte Linie quer über die Breite, unterbrochen von einer eingeklammerten
+ * Zahl — die Bauzeichnungs-Anmutung aus der Vorlage, hier mit echter Bedeutung: Die Zahl
+ * ist die Anzahl der Zeilen im Block darunter.
+ */
+.hilfslinie {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hilfslinie::after {
+  content: "";
+  flex: 1;
+  border-top: 1px dashed var(--linie-leise);
+}
+
+/* Schmale Bildlaufleisten — eine breite graue Leiste zerschneidet das Papier. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  scrollbar-color: var(--linie-leise) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -143,8 +167,7 @@ a:hover {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: var(--r-pill);
+  background: var(--linie-leise);
   border: 3px solid transparent;
   background-clip: content-box;
 }

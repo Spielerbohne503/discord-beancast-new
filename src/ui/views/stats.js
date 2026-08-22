@@ -13,6 +13,7 @@ import { fuellen, h } from "../dom.js";
 import { state } from "../store.js";
 import { S } from "../strings.js";
 import { formatDay } from "../format.js";
+import { hochzaehlen } from "../motion.js";
 
 export function statsView() {
   const element = h("div.abschnitt");
@@ -34,17 +35,17 @@ export function statsView() {
         {},
         kachel(S.stats_streak, S.stats_streak_days(rueckblick.streak)),
         kachel(S.stats_longest, S.stats_streak_days(rueckblick.longestStreak)),
-        kachel(S.stats_total, String(rueckblick.totalCompleted)),
-        kachel(S.stats_focus_rounds, String(rueckblick.focusRounds)),
+        kachel(S.stats_total, String(rueckblick.totalCompleted), rueckblick.totalCompleted),
+        kachel(S.stats_focus_rounds, String(rueckblick.focusRounds), rueckblick.focusRounds),
       ),
       h(
         "section.karte.abschnitt",
         {},
         h(
-          "div.abschnitt__kopf",
+          "div.abschnitt__kopf.hilfslinie",
           { style: { padding: "16px 16px 0" } },
           h("h2.abschnitt__titel", {}, S.stats_period(Balance.STATS_WINDOW_DAYS)),
-          h("span.abschnitt__zahl", {}, String(rueckblick.periodCompleted)),
+          h("span.abschnitt__zahl", {}, `(${rueckblick.periodCompleted})`),
         ),
         h(
           "div.diagramm",
@@ -61,15 +62,9 @@ export function statsView() {
           ),
         ),
         h(
-          "div.diagramm",
-          { style: { height: "auto", "padding-top": "0" } },
-          rueckblick.days.map((eintrag) =>
-            h(
-              "span.abschnitt__zahl",
-              { style: { flex: "1", "text-align": "center", "font-size": "0.62rem" } },
-              S.weekdays_short[isoWeekday(eintrag.day) - 1],
-            ),
-          ),
+          "div.diagramm__achse",
+          {},
+          rueckblick.days.map((eintrag) => h("span", {}, S.weekdays_short[isoWeekday(eintrag.day) - 1])),
         ),
       ),
       rueckblick.busiestDay
@@ -86,6 +81,16 @@ export function statsView() {
   return { el: element, update };
 }
 
-function kachel(name, zahl) {
-  return h("div.karte.kachel", {}, h("span.kachel__zahl", {}, zahl), h("span.kachel__name", {}, name));
+/**
+ * Eine Kennzahl.
+ *
+ * Zahlen zählen hoch statt zu erscheinen (Vorlage: „Count Up“) — man sieht dann, dass sie
+ * gerechnet wurden. Alles, was keine reine Zahl ist („3 Tage“), bleibt stehen: Ein
+ * hochzählendes Wort wäre Unfug.
+ */
+function kachel(name, zahl, roh = null) {
+  const wert = h("span.kachel__zahl", {}, zahl);
+  if (roh !== null) hochzaehlen(wert, roh, { formatieren: (n) => String(n) });
+
+  return h("div.karte.kachel", {}, wert, h("span.kachel__name", {}, name));
 }

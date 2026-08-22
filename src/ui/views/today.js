@@ -52,7 +52,7 @@ export function todayView() {
     h("div.schnell__fuss", {}, vorschau, listenwahl),
   );
 
-  const streifen = h("div.karte.streifen");
+  const streifen = h("div");
   const bloecke = h("div.abschnitt");
   const element = h("div.abschnitt", {}, streifen, schnell, bloecke);
 
@@ -62,11 +62,14 @@ export function todayView() {
     if (gelesen.day !== null) teile.push(formatDay(gelesen.day, state.today));
     if (gelesen.minutes !== null) teile.push(formatHhMm(gelesen.minutes));
 
+    // Ein erkanntes Datum wird ausgefüllt dargestellt: Man soll sehen, dass etwas gegriffen
+    // hat, **bevor** man absendet — nicht erst danach an der fertigen Zeile.
+    vorschau.classList.toggle("schnell__vorschau--treffer", teile.length > 0);
     fuellen(
       vorschau,
       teile.length === 0
         ? h("span", {}, eingabe.value.trim().length === 0 ? S.quickadd_beispiel : S.quickadd_hint)
-        : [icon("uhr", 13), h("span", {}, teile.join(", "))],
+        : [icon("uhr", 13), h("span", {}, teile.join(" · "))],
     );
   }
 
@@ -135,11 +138,13 @@ function block(titel, aufgaben, { dringend = false } = {}) {
   return h(
     "section.abschnitt",
     {},
+    // Die gestrichelte Hilfslinie mit Zählmarke — die Bauzeichnungs-Anmutung mit echter
+    // Bedeutung: Die Zahl in Klammern ist die Anzahl der Zeilen darunter.
     h(
-      "div.abschnitt__kopf",
+      "div.abschnitt__kopf.hilfslinie",
       {},
       h(`h2.abschnitt__titel${dringend ? ".abschnitt__titel--dringend" : ""}`, {}, titel),
-      h("span.abschnitt__zahl", {}, String(aufgaben.length)),
+      h("span.abschnitt__zahl", {}, `(${aufgaben.length})`),
     ),
     h(
       "ul.liste",

@@ -18,6 +18,7 @@ import { icon } from "../icons.js";
 import { S } from "../strings.js";
 import { badge, formatDue, renderText } from "../format.js";
 import { meldung } from "../toast.js";
+import { funken } from "../motion.js";
 import { taskDialog } from "../components/taskdialog.js";
 
 export function taskRow(task, { schlicht = false, verzoegerung = 0, ziehbar = false } = {}) {
@@ -65,7 +66,8 @@ export function taskRow(task, { schlicht = false, verzoegerung = 0, ziehbar = fa
       return;
     }
 
-    // Die Zeile fliegt weg, bevor neu gezeichnet wird — sonst springt sie hart um.
+    // Ein Funke am Haken, dann fliegt die Zeile weg — sonst springt sie hart um.
+    funken(haken);
     zeile.classList.add("zeile--verschwindet");
     await repo.completeTask(task.id);
     await aktualisieren();

@@ -30,7 +30,7 @@ const PHASENNAMEN = {
 };
 
 export function focusView() {
-  const element = h("div.karte.fokus");
+  const element = h("div.karte.karte--erhoben.fokus");
   const aufgabenwahl = h("select.eingabe", { "aria-label": S.focus_pick_task });
 
   function einstellungen() {
@@ -134,7 +134,7 @@ export function focusView() {
         ring(anteil),
         h("span.fokus__zahl", {}, formatRemaining(rest)),
       ),
-      h("span.abschnitt__zahl", {}, S.focus_rounds_today(state.focusRounds)),
+      h("span.marke", {}, S.focus_rounds_today(state.focusRounds)),
       h("div.fokus__knoepfe", {}, ...knoepfe(zustand)),
       zustand.state === FocusState.READY ? aufgabenwahl : hinweisAufAufgabe(zustand),
     );
@@ -187,7 +187,7 @@ export function focusView() {
 
   function hinweisAufAufgabe(zustand) {
     const task = state.tasks.find((eintrag) => eintrag.id === zustand.session?.taskId);
-    return h("span.abschnitt__zahl", {}, task ? task.title : S.focus_no_task);
+    return h("span.marke", {}, task ? task.title : S.focus_no_task);
   }
 
   return { el: element, update };
@@ -197,17 +197,17 @@ function ring(anteil) {
   return svg(
     "svg",
     { class: "fokus__ring", viewBox: "0 0 100 100", "aria-hidden": "true" },
-    svg(
-      "defs",
-      {},
-      svg(
-        "linearGradient",
-        { id: "fokusVerlauf", x1: "0", y1: "0", x2: "1", y2: "1" },
-        svg("stop", { offset: "0", "stop-color": "var(--aurora-1)" }),
-        svg("stop", { offset: "1", "stop-color": "var(--aurora-2)" }),
-      ),
-    ),
     svg("circle", { class: "fokus__ring-spur", cx: 50, cy: 50, r: 46 }),
+    // Zwei Linien übereinander: Tinte trägt, Acid liegt obenauf. Acid allein verschwindet
+    // auf hellem Papier.
+    svg("circle", {
+      class: "fokus__ring-kante",
+      cx: 50,
+      cy: 50,
+      r: 46,
+      "stroke-dasharray": UMFANG.toFixed(2),
+      "stroke-dashoffset": (UMFANG * (1 - anteil)).toFixed(2),
+    }),
     svg("circle", {
       class: "fokus__ring-fortschritt",
       cx: 50,

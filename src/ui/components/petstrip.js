@@ -24,11 +24,11 @@ export function petStrip() {
       onclick: () => navigieren("companion"),
       "aria-label": S.nav_companion,
     },
-    orb(state.pet, { groesse: 56, ring: false, bahn: false }),
+    orb(state.pet, { groesse: 54, ring: false }),
     h(
       "div.streifen__text",
       {},
-      h("span.begleiter__stufe", {}, STAGE_NAMES[stageOf(state.pet.values)]),
+      h("span.streifen__stufe", {}, STAGE_NAMES[stageOf(state.pet.values)]),
       state.speechText ? h("span.streifen__satz", {}, state.speechText) : null,
     ),
     h(

@@ -355,7 +355,8 @@ export async function loadFocusSessions() {
 // -------------------------------------------------------------------- Einstellungen
 
 const EINSTELLUNGEN = {
-  theme: "space",
+  /** „hell“ oder „dunkel“ — dieselbe Gestaltung, getauschte Rollen. */
+  fassung: "hell",
   quietHoursEnabled: true,
   quietHoursStart: Balance.QUIET_HOURS_DEFAULT_START,
   quietHoursEnd: Balance.QUIET_HOURS_DEFAULT_END,
