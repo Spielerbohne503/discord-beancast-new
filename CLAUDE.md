@@ -149,7 +149,8 @@ Einstellungen ohne Untermenü erreichbar sind.
 
 Die Effekte sind der Idee nach von reactbits.dev übernommen und mit Bordmitteln
 nachgebaut — React kommt nicht in Frage: null Laufzeitabhängigkeiten, kein Bauschritt, und
-in der Hülle keine Netzwerkerlaubnis. Sie stehen in `src/ui/motion.js`:
+die Hülle lädt ohnehin nichts von außen nach, auch mit Netzerlaubnis nicht. Sie stehen in
+`src/ui/motion.js`:
 
 | Vorlage | Hier |
 | --- | --- |
@@ -174,8 +175,11 @@ Sie kennt keine Aufgaben, keine Datenbank und keine Regeln. Einzelheiten in
 
 - **Kein Push.** Es gibt keinen Server und kein Konto. Das Telefon weckt sich selbst zu
   Zeitpunkten, die die Webseite ausgerechnet hat (`plannedNags` in `src/domain/nag.js`).
-- **Keine `INTERNET`-Berechtigung.** „Kein Netzzugriff“ ist damit vom Betriebssystem
-  durchgesetzt, nicht bloß zugesagt.
+- **`INTERNET` ausschließlich für den Geräteübergreifend-Abgleich.** Der eigene Ursprung
+  geht nie ins Netz — `Vermittler.kt` beantwortet jede Anfrage dorthin aus dem Paket. Die
+  Berechtigung öffnet nur den Weg für den verschlüsselten Abgleich, und auch den nur, wenn
+  er in den Einstellungen eingeschaltet ist. Ohne eingetragene Adresse der Ablage findet er
+  dort nichts — der Ursprung der Hülle ist keine echte Adresse im Netz.
 - Der Ursprung `https://appassets.androidplatform.net/web/…` **darf sich nie ändern** — er
   ist der Schlüssel, unter dem IndexedDB liegt.
 - Der Vertrag zwischen beiden Seiten steht in `src/ui/bruecke.js` und `Bruecke.kt` und wird
@@ -208,7 +212,9 @@ jemand seine Daten schon verloren hat.
 - Keine Bibliotheken ohne Rückfrage. Bisher: null Laufzeitabhängigkeiten.
 - **Kein Inline-Skript und kein `style`-Attribut.** Die Sicherheitsrichtlinie erlaubt nur
   `'self'`; eine Ausnahme dafür wäre das Loch, durch das später alles andere passt.
-- Kein Netzzugriff aus der App heraus, kein Konto, keine Telemetrie.
+- Kein Netzzugriff aus der App heraus außer dem Geräteübergreifend-Abgleich, wenn er
+  eingeschaltet ist — an den eigenen Server, mit einer Losung, die das Gerät nie verlässt.
+  Kein Konto, keine Telemetrie.
 - **Nach jeder Änderung an der Oberfläche `npm run browsertest` und `npm run featuretest`
   laufen lassen.** Der zweite fährt einen echten Zeiger über die Zeilen — eine Geste, die
   nur aus erfundenen Ereignissen besteht, beweist nichts über einen Daumen.

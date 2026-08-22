@@ -126,7 +126,7 @@ test("ein_raum_laesst_sich_wieder_raeumen", async () => {
 test("unbekannte_methoden_werden_benannt_nicht_verschluckt", async () => {
   const antwort = await ruf({ PETODO: kvNachbau() }, `/sync/${RAUM}`, { method: "POST", body: "x" });
   assert.equal(antwort.status, 405);
-  assert.equal(antwort.headers.get("Allow"), "GET, PUT, DELETE");
+  assert.equal(antwort.headers.get("Allow"), "GET, PUT, DELETE, OPTIONS");
 });
 
 test("nichts_wird_zwischengespeichert", async () => {
@@ -142,4 +142,45 @@ test("der_raum_faellt_von_selbst_weg_wenn_niemand_mehr_ablegt", async () => {
 
   await ablegen(umgebung);
   assert.ok(gesehen.expirationTtl > 300 * 86_400, String(gesehen.expirationTtl));
+});
+
+// -------------------------------------------------------- CORS für die Android-Hülle
+
+const HUELLE = "https://appassets.androidplatform.net";
+
+test("ohne_ursprung_bleibt_die_antwort_wie_bisher_ohne_cors_kopf", async () => {
+  const antwort = await ruf({ PETODO: kvNachbau() }, `/sync/${RAUM}`);
+  assert.equal(antwort.headers.get("Access-Control-Allow-Origin"), null);
+});
+
+test("ein_fremder_ursprung_bekommt_keine_freigabe", async () => {
+  const antwort = await ruf(
+    { PETODO: kvNachbau() },
+    `/sync/${RAUM}`,
+    { headers: { Origin: "https://irgendwer-sonst.example" } },
+  );
+  assert.equal(antwort.headers.get("Access-Control-Allow-Origin"), null);
+});
+
+test("die_huelle_bekommt_den_vorflug_beantwortet_noch_vor_der_raumpruefung", async () => {
+  const antwort = await ruf(
+    {},
+    "/sync/kein-gueltiger-raum",
+    { method: "OPTIONS", headers: { Origin: HUELLE } },
+  );
+  assert.equal(antwort.status, 204);
+  assert.equal(antwort.headers.get("Access-Control-Allow-Origin"), HUELLE);
+  assert.equal(antwort.headers.get("Access-Control-Allow-Methods"), "GET, PUT, DELETE, OPTIONS");
+});
+
+test("die_huelle_darf_den_etag_lesen_daran_haengt_der_schutz_vor_ueberschreiben", async () => {
+  const umgebung = { PETODO: kvNachbau() };
+  const antwort = await ruf(umgebung, `/sync/${RAUM}`, {
+    method: "PUT",
+    body: UMSCHLAG,
+    headers: { "If-None-Match": "*", Origin: HUELLE },
+  });
+  assert.equal(antwort.headers.get("Access-Control-Allow-Origin"), HUELLE);
+  assert.equal(antwort.headers.get("Access-Control-Expose-Headers"), "ETag");
+  assert.ok(antwort.headers.get("ETag"));
 });

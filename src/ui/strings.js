@@ -264,7 +264,7 @@ export const S = Object.freeze({
   settings_fassung_dunkel: "Dunkel",
   settings_sync: "Geräteübergreifend",
   settings_sync_huelle_hint:
-    "Diese Hülle hat bewusst keine Netzerlaubnis — deshalb funktioniert der Abgleich hier nicht, auch nicht mit Losung. Aufgaben auf diesem Telefon bleiben eigenständig, getrennt von der Webseite. Zum Abgleich die Webseite im Browser öffnen und als App installieren.",
+    "Diese Hülle liegt an einem eigenen Ursprung, den es im Netz nicht gibt — „leer lassen“ trifft hier nichts. Trag unten die Adresse deines Workers ein, dieselbe wie im Browser.",
   settings_sync_toggle: "Abgleich einschalten",
   settings_sync_hint:
     "Deine Aufgaben liegen verschlüsselt auf deinem eigenen Server. Er kann sie nicht lesen — der Schlüssel entsteht aus deiner Losung und verlässt das Gerät nie.",
@@ -274,6 +274,11 @@ export const S = Object.freeze({
     "Auf jedem Gerät dieselbe Losung eintippen — mehr gehört nicht dazu. Es gibt kein Konto und keine Wiederherstellung: Ist die Losung weg, ist der abgelegte Stand nicht mehr lesbar.",
   settings_sync_adresse: "Adresse der Ablage",
   settings_sync_adresse_hint: "Leer lassen, wenn die Ablage dort liegt, wo auch die App liegt.",
+  settings_sync_adresse_platzhalter_huelle: "https://dein-worker.workers.dev",
+  settings_sync_adresse_hint_huelle:
+    "Erforderlich: dieselbe Adresse wie im Browser. Ohne sie versucht der Abgleich, sich selbst zu erreichen, und findet nichts.",
+  settings_sync_adresse_erforderlich:
+    "Ohne Adresse findet der Abgleich hier nichts — die App liegt an einem eigenen Ursprung, nicht am Server.",
   settings_sync_jetzt: "Jetzt abgleichen",
   settings_sync_verbinden: "Verbinden",
   settings_sync_trennen: "Trennen",

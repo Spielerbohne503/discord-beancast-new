@@ -50,9 +50,9 @@ class MainActivity : Activity() {
             // ist längst ohne Wirkung.
             settings.domStorageEnabled = true
 
-            // Nichts geht ins Netz. Die App hat dafür nicht einmal die Erlaubnis; das hier
-            // ist der zweite Riegel, damit auch ein Versehen im HTML folgenlos bleibt.
-            settings.blockNetworkLoads = true
+            // Netzwerkanfragen dürfen durch — für den Abgleich, den die Webseite selbst
+            // auslöst. Die eigenen Dateien fängt `Vermittler.kt` vorher ab; hier landet
+            // also nur, was die Seite ausdrücklich woanders hinschickt.
             settings.allowFileAccess = false
             settings.allowContentAccess = false
             settings.setSupportMultipleWindows(false)
@@ -76,8 +76,8 @@ class MainActivity : Activity() {
                  * Ein Verweis nach draußen gehört in den Browser, nicht in diese Hülle.
                  *
                  * In der Aufgabenverwaltung stehen Verweise auf Videos und Wikipedia. Im
-                 * WebView geöffnet wären sie in einer App gefangen, die keine Adresszeile,
-                 * keinen Zurück-Knopf zum Browser und keine Netzwerkerlaubnis hat.
+                 * WebView geöffnet wären sie in einer App ohne Adresszeile und ohne
+                 * Zurück-Knopf zum Browser gefangen.
                  */
                 override fun shouldOverrideUrlLoading(
                     ansicht: WebView,

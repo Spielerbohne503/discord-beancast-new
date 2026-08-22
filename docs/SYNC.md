@@ -85,10 +85,19 @@ abgelegten Klumpen kein Aufgabentitel im Klartext steht.
 
 ## Die Android-Hülle
 
-Die Hülle hat **keine `INTERNET`-Berechtigung** — dort funktioniert der Abgleich also
-nicht, und zwar vom Betriebssystem durchgesetzt. Wer ihn auf dem Telefon will, braucht eine
-Fassung mit dieser Berechtigung; das ist bewusst eine eigene Entscheidung und keine, die
-mit einem Update hereinschneit.
+Die Hülle hat die `INTERNET`-Berechtigung — ausschließlich für diesen Abgleich, und auch
+den nur, wenn er hier in den Einstellungen eingeschaltet ist. Zwei Dinge sind dabei anders
+als im Browser:
 
-Bis dahin geht der Weg aufs Telefon über den Browser: Die Webseite lässt sich als App
-installieren und kann alles, was die Hülle kann — außer Erinnerungen bei geschlossener App.
+- **Die Adresse der Ablage muss eingetragen sein.** Der Ursprung der Hülle
+  (`appassets.androidplatform.net`) ist eine örtliche Kennung, keine echte Adresse im
+  Netz — „leer lassen“ funktioniert nur im Browser, wo die Webseite und die Ablage
+  tatsächlich am selben Ursprung liegen. In der Hülle steht deshalb dieselbe Adresse wie
+  im Browser: die des eigenen Workers.
+- **Der Server lässt genau diesen einen zusätzlichen Ursprung an die Antwort heran**
+  (`worker/index.js`, `HUELLEN_URSPRUNG`) — die Ursprungsregel des Browsers gilt sonst
+  auch für einen WebView, und ohne diese Freigabe käme die Antwort zwar an, aber niemand
+  dürfte sie lesen.
+
+Erinnerungen bei geschlossener App bleiben ein Unterschied zur installierten Webseite im
+Browser — den hat die Hülle für sich, dafür gibt es sie.

@@ -58,10 +58,7 @@ export function settingsView() {
  * Feld nach dem Verbinden auch nichts mehr: Es gibt nichts anzuzeigen.
  */
 function abgleich(setzenUndNeu, neuZeichnen) {
-  if (inHuelle()) {
-    return gruppe(S.settings_sync, h("span.feld__hinweis", {}, S.settings_sync_huelle_hint));
-  }
-
+  const huelle = inHuelle();
   const verbunden = Boolean(state.settings.syncRaum);
 
   const losung = h("input.eingabe", {
@@ -73,10 +70,12 @@ function abgleich(setzenUndNeu, neuZeichnen) {
     },
   });
 
+  // In der Hülle liegt „hier“ an einem Ursprung, den es im Netz gar nicht gibt — der
+  // Vorschlag „leer lassen“ wäre also gerade dort falsch, wo er am wichtigsten wäre.
   const adresse = h("input.eingabe", {
     type: "url",
     inputmode: "url",
-    placeholder: globalThis.location?.origin ?? "",
+    placeholder: huelle ? S.settings_sync_adresse_platzhalter_huelle : (globalThis.location?.origin ?? ""),
     value: state.settings.syncAdresse,
     onchange: () => void setzenUndNeu("syncAdresse", adresse.value.trim()),
   });
@@ -92,6 +91,11 @@ function abgleich(setzenUndNeu, neuZeichnen) {
   async function verbinden() {
     const satz = losung.value.trim();
     if (satz.length === 0) return;
+
+    if (huelle && adresse.value.trim().length === 0) {
+      meldung(S.settings_sync_adresse_erforderlich);
+      return;
+    }
 
     losung.value = "";
     losung.disabled = true;
@@ -119,6 +123,7 @@ function abgleich(setzenUndNeu, neuZeichnen) {
 
   return gruppe(
     S.settings_sync,
+    huelle ? h("span.feld__hinweis", {}, S.settings_sync_huelle_hint) : null,
     verbunden
       ? schalter(S.settings_sync_toggle, state.settings.syncAktiv, (an) => setzenUndNeu("syncAktiv", an))
       : null,
@@ -152,9 +157,14 @@ function abgleich(setzenUndNeu, neuZeichnen) {
       : null,
     h(
       "details",
-      {},
+      huelle ? { open: true } : {},
       h("summary.feld__beschriftung", { style: { cursor: "pointer" } }, S.settings_sync_adresse),
-      h("div.feld", { style: { "padding-top": "12px" } }, adresse, h("span.feld__hinweis", {}, S.settings_sync_adresse_hint)),
+      h(
+        "div.feld",
+        { style: { "padding-top": "12px" } },
+        adresse,
+        h("span.feld__hinweis", {}, huelle ? S.settings_sync_adresse_hint_huelle : S.settings_sync_adresse_hint),
+      ),
     ),
     h("span.feld__hinweis", {}, S.settings_sync_hint),
   );

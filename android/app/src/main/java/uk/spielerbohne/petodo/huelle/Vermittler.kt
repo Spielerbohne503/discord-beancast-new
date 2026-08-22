@@ -13,8 +13,10 @@ import java.io.IOException
  * kein IndexedDB. Die ganze Datenhaltung der App hinge daran.
  *
  * Also wird eine `https`-Adresse geladen und **jede** Anfrage darauf hier beantwortet.
- * Ins Netz geht dabei nichts: Die App hat keine Netzwerkerlaubnis, und der WebView hat
- * zusätzlich `blockNetworkLoads`. Was hier nicht beantwortet wird, kommt nicht.
+ * Für den eigenen Ursprung [HOST] kommt nie etwas aus dem Netz — der ist immer diese
+ * Methode. Anfragen an einen anderen Ursprung (der Abgleich) gehen an dieser Stelle
+ * vorbei und laufen über den normalen WebView; dafür braucht die App die
+ * `INTERNET`-Berechtigung.
  */
 class Vermittler(private val assets: AssetManager) {
 

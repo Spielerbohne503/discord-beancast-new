@@ -2,12 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        Es gibt bewusst KEINE android.permission.INTERNET.
+        android.permission.INTERNET — ausschließlich für den Geräteübergreifend-Abgleich.
 
-        Damit ist „kein Netzzugriff, kein Konto, keine Telemetrie“ keine Zusage mehr,
-        sondern vom Betriebssystem durchgesetzt: Die App kann gar nicht ins Netz. Die
-        Webseite liegt im Paket, geladen wird nur von dort.
+        Der Ursprung `appassets.androidplatform.net` selbst geht nie ins Netz: Jede Anfrage
+        dorthin beantwortet `Vermittler.kt` aus dem Paket. Diese Berechtigung öffnet nur den
+        Weg für die Anfragen, die die Webseite selbst stellt — und die Webseite stellt genau
+        eine Sorte: den verschlüsselten Abgleich, und auch die nur, wenn er in den
+        Einstellungen eingeschaltet ist. Kein Konto, keine Telemetrie, kein Nachladen von
+        irgendetwas anderem.
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

@@ -29,9 +29,16 @@ ersten Wochenende von der ersten abgewichen — und die zweite wäre immer die f
 
 ## Was die App nicht darf
 
-**Es gibt keine `INTERNET`-Berechtigung.** „Kein Netzzugriff, kein Konto, keine Telemetrie“
-ist damit keine Zusage mehr, sondern vom Betriebssystem durchgesetzt. Die Webseite liegt im
-Paket; geladen wird nur von dort.
+**Die `INTERNET`-Berechtigung gibt es nur für den Geräteübergreifend-Abgleich**, und auch
+den nur, wenn er in den Einstellungen eingeschaltet ist (siehe `docs/SYNC.md`). Der eigene
+Ursprung geht dabei nie ins Netz: Jede Anfrage dorthin beantwortet `Vermittler.kt` aus dem
+Paket, geladen wird die Webseite selbst also immer nur von dort. Was die Berechtigung
+öffnet, ist ausschließlich der Weg, den die Seite selbst für den Abgleich geht — kein
+Nachladen von Schrift, Skript oder irgendetwas anderem, kein Konto, keine Telemetrie.
+
+Damit der Abgleich in der Hülle etwas findet, muss in den Einstellungen die **Adresse der
+Ablage** eingetragen sein — der Ursprung der Hülle selbst ist keine echte Adresse im Netz,
+„leer lassen“ träfe dort ins Leere.
 
 Geladen wird sie über `https://appassets.androidplatform.net/web/…`, nicht über `file://`.
 Der Grund ist nicht Schönheit: Eine `file://`-Adresse ist kein sicherer Ursprung, und ohne

@@ -11,8 +11,10 @@ import org.json.JSONException
  * Zeichen übereinstimmen. `tools/bruecketest.mjs` baut genau dieses Objekt in JavaScript
  * nach und prüft den Vertrag im Browser — die Hälfte, die sich ohne Telefon prüfen lässt.
  *
- * Erreichbar ist die Brücke nur aus den mitgelieferten Dateien: Es gibt keine
- * Netzwerkerlaubnis, und geladen wird ausschließlich aus dem Paket.
+ * Erreichbar ist die Brücke nur aus den mitgelieferten Dateien: Geladen wird ausschließlich
+ * aus dem Paket, `Vermittler.kt` beantwortet jede Anfrage an den eigenen Ursprung selbst.
+ * Die `INTERNET`-Berechtigung öffnet nur den Weg für den Abgleich zu einem anderen
+ * Ursprung — nicht für ein Nachladen der Seite selbst.
  */
 class Bruecke(
     private val ablage: Ablage,

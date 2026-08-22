@@ -291,11 +291,24 @@ pruefe(
 
 // ------------------------------------------------------------------------ Kein Abgleich
 
-console.log("\nKein Abgleich in der Hülle");
+console.log("\nAbgleich in der Hülle");
 pruefe(
-  "der Abgleich zeigt keinen Schalter, sondern sagt, warum es ihn nicht gibt",
-  (await seite.locator('button:has-text("Verbinden")').count()) === 0 &&
-    (await seite.locator(".einstellungen").innerText()).includes("keine Netzerlaubnis"),
+  "der Abgleich steht wie im Browser da, mit einem Hinweis zum eigenen Ursprung",
+  (await seite.locator('button:has-text("Verbinden")').count()) === 1 &&
+    (await seite.locator(".einstellungen").innerText()).includes("eigenen Ursprung"),
+);
+pruefe(
+  "die Adresse der Ablage steht von selbst offen, statt hinter einem Klapptext versteckt zu sein",
+  await seite.locator(".einstellungen details[open]").isVisible(),
+);
+
+await seite.locator('.einstellungen input[type="password"]').fill("eine Losung");
+await seite.locator('button:has-text("Verbinden")').click();
+await seite.waitForTimeout(300);
+pruefe(
+  "ohne Adresse verbindet er nicht, sondern sagt warum",
+  (await seite.locator(".meldung__text").count()) === 1 &&
+    (await seite.locator(".meldung__text").innerText()).includes("eigenen Ursprung"),
 );
 
 // -------------------------------------------------------------------------- Schluss
