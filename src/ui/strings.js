@@ -263,6 +263,8 @@ export const S = Object.freeze({
   settings_fassung_hell: "Hell",
   settings_fassung_dunkel: "Dunkel",
   settings_sync: "Geräteübergreifend",
+  settings_sync_huelle_hint:
+    "Diese Hülle hat bewusst keine Netzerlaubnis — deshalb funktioniert der Abgleich hier nicht, auch nicht mit Losung. Aufgaben auf diesem Telefon bleiben eigenständig, getrennt von der Webseite. Zum Abgleich die Webseite im Browser öffnen und als App installieren.",
   settings_sync_toggle: "Abgleich einschalten",
   settings_sync_hint:
     "Deine Aufgaben liegen verschlüsselt auf deinem eigenen Server. Er kann sie nicht lesen — der Schlüssel entsteht aus deiner Losung und verlässt das Gerät nie.",

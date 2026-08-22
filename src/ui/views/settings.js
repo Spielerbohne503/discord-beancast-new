@@ -58,6 +58,10 @@ export function settingsView() {
  * Feld nach dem Verbinden auch nichts mehr: Es gibt nichts anzuzeigen.
  */
 function abgleich(setzenUndNeu, neuZeichnen) {
+  if (inHuelle()) {
+    return gruppe(S.settings_sync, h("span.feld__hinweis", {}, S.settings_sync_huelle_hint));
+  }
+
   const verbunden = Boolean(state.settings.syncRaum);
 
   const losung = h("input.eingabe", {

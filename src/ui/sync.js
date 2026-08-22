@@ -10,6 +10,7 @@
  */
 
 import { SyncErgebnis, abgleichen } from "../data/syncstore.js";
+import { inHuelle } from "./bruecke.js";
 import { aktualisieren, nachLaden, state } from "./store.js";
 import { S } from "./strings.js";
 import { meldung } from "./toast.js";
@@ -51,7 +52,10 @@ export function abgleichStarten() {
  * und beide von vorn anfangen — der Riegel ist billiger als das Aufräumen danach.
  */
 export async function anstossen({ still = true } = {}) {
-  if (laeuft || !state.settings.syncAktiv) return null;
+  // Ohne Netzerlaubnis würde jeder Versuch scheitern — und zwar mit derselben Meldung
+  // wie ein Server, der gerade nicht erreichbar ist. Das ist hier aber dauerhaft so, nicht
+  // vorübergehend, und wird deshalb erst gar nicht versucht.
+  if (inHuelle() || laeuft || !state.settings.syncAktiv) return null;
 
   laeuft = true;
   try {

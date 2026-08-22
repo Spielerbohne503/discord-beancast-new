@@ -289,6 +289,15 @@ pruefe(
   (await seite.evaluate(() => globalThis.__hueller.gefragt)) > 0,
 );
 
+// ------------------------------------------------------------------------ Kein Abgleich
+
+console.log("\nKein Abgleich in der Hülle");
+pruefe(
+  "der Abgleich zeigt keinen Schalter, sondern sagt, warum es ihn nicht gibt",
+  (await seite.locator('button:has-text("Verbinden")').count()) === 0 &&
+    (await seite.locator(".einstellungen").innerText()).includes("keine Netzerlaubnis"),
+);
+
 // -------------------------------------------------------------------------- Schluss
 
 await browser.close();
