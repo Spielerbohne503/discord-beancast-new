@@ -467,3 +467,123 @@ select.eingabe {
     scale: 0.4;
   }
 }
+
+/* ------------------------------------------------------------- Ansichtswechsel */
+
+/*
+ * Nur der Inhalt wischt, nicht die Leisten.
+ *
+ * Ohne den eigenen Namen legte der Browser eine Momentaufnahme der **ganzen** Seite
+ * übereinander — die klebenden Leisten oben und unten sprängen bei jedem Wechsel mit.
+ */
+.inhalt {
+  view-transition-name: inhalt;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(inhalt) {
+    animation: wisch-raus 180ms var(--ease-hart) both;
+  }
+
+  ::view-transition-new(inhalt) {
+    animation: wisch-rein 220ms var(--ease-hart) both;
+  }
+}
+
+@keyframes wisch-raus {
+  to {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+@keyframes wisch-rein {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+/* --------------------------------------------------------------------- Stempel */
+
+/*
+ * „Alles weg.“
+ *
+ * Ein schräg aufgeschlagener Stempel wie auf Papier — schnell hinein, kurz überschwingen,
+ * stehen bleiben. Keine Konfetti-Wolke: Das hier ist eine Aufgabenverwaltung, kein Spiel.
+ */
+.stempel {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: 3px solid var(--rot);
+  border-radius: var(--r-md);
+  color: var(--rot);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-stretch: 88%;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-7deg);
+  opacity: 0.9;
+}
+
+.stempel--faellt {
+  animation: stempel-schlag 480ms var(--ease-hart) backwards;
+}
+
+@keyframes stempel-schlag {
+  0% {
+    opacity: 0;
+    transform: rotate(-22deg) scale(2.4);
+  }
+  62% {
+    opacity: 1;
+    transform: rotate(-4deg) scale(0.94);
+  }
+  100% {
+    transform: rotate(-7deg) scale(1);
+  }
+}
+
+/* ---------------------------------------------------------------- Laufende Kante */
+
+/*
+ * Marschierende Ameisen.
+ *
+ * Für das, was gerade läuft oder noch leer ist: eine gestrichelte Kante, die wandert.
+ * Billiger als jede Fortschrittsanzeige und sofort als „hier passiert etwas“ zu lesen.
+ */
+@keyframes ameisen {
+  to {
+    background-position: 40px 0, -40px 100%, 0 -40px, 100% 40px;
+  }
+}
+
+.laeuft {
+  border-color: transparent !important;
+  background-image:
+    repeating-linear-gradient(90deg, var(--tinte) 0 8px, transparent 8px 16px),
+    repeating-linear-gradient(90deg, var(--tinte) 0 8px, transparent 8px 16px),
+    repeating-linear-gradient(0deg, var(--tinte) 0 8px, transparent 8px 16px),
+    repeating-linear-gradient(0deg, var(--tinte) 0 8px, transparent 8px 16px);
+  background-size: 100% 2px, 100% 2px, 2px 100%, 2px 100%;
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  background-repeat: no-repeat;
+  animation: ameisen 1.6s linear infinite;
+}
+
+/* -------------------------------------------------------------- Karte anheben */
+
+/*
+ * Beim Überfahren rückt eine anklickbare Karte einen Hauch heraus — der Schatten wächst
+ * mit. Zwei Pixel, mehr nicht: Es soll sich melden, nicht springen.
+ */
+.karte--erhoben {
+  transition: transform var(--fast) var(--ease-hart), box-shadow var(--fast) var(--ease-hart);
+}
+
+.karte--greifbar:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: calc(var(--versatz) + 2px) calc(var(--versatz) + 2px) 0 var(--tinte);
+}

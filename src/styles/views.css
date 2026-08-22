@@ -509,16 +509,25 @@
   white-space: nowrap;
 }
 
-.streifen__balken {
+/* Der Tagesstand rechts im Streifen: eine Zahl und ein Balken, mehr braucht es nicht. */
+.streifen__stand {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: flex-end;
+  gap: 4px;
   flex: none;
 }
 
-.streifen__balken .wert__balken {
-  width: 52px;
-  height: 8px;
+.streifen__zahl {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.streifen__stand .wert__balken {
+  width: 64px;
+  height: 10px;
 }
 
 @media (min-width: 960px) {
@@ -942,4 +951,11 @@ body[data-fokus="running"] .seitenleiste {
 
 .suchzeile:focus-within {
   box-shadow: 0 0 0 3px var(--acid);
+}
+
+/* Der Stempel steht über der Liste, nicht darin — er gehört zum Tag, nicht zu einer Zeile. */
+.stempel-platz {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) 0 var(--space-2);
 }

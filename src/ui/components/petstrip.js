@@ -9,6 +9,7 @@
  */
 
 import { stageOf } from "../../domain/pet.js";
+import { groupToday } from "../../domain/tasks.js";
 import { navigieren, state } from "../store.js";
 import { h } from "../dom.js";
 import { S, STAGE_NAMES } from "../strings.js";
@@ -31,20 +32,33 @@ export function petStrip() {
       h("span.streifen__stufe", {}, STAGE_NAMES[stageOf(state.pet.values)]),
       state.speechText ? h("span.streifen__satz", {}, state.speechText) : null,
     ),
+    tagesstand(),
+  );
+}
+
+/**
+ * Der Tagesstand: geschafft von insgesamt.
+ *
+ * Die drei Bedürfniswerte standen hier vorher als schmale Balken — sie sagen aber nichts
+ * darüber, wie der **Tag** läuft, und dafür ist die Heute-Ansicht da. Wer die Werte sehen
+ * will, tippt auf den Streifen.
+ */
+function tagesstand() {
+  const brett = groupToday(state.tasks, state.now);
+  const geschafft = brett.doneToday.length;
+  const gesamt = geschafft + brett.openCount;
+
+  return h(
+    "div.streifen__stand",
+    { title: S.today_done_today },
+    h("span.streifen__zahl", {}, `${geschafft}/${gesamt}`),
     h(
-      "div.streifen__balken",
+      "div.wert__balken",
       {},
-      balken("energie", state.pet.values.energy, S.pet_energy),
-      balken("saettigung", state.pet.values.satiety, S.pet_satiety),
-      balken("laune", state.pet.values.mood, S.pet_mood),
+      h("div.wert__fuellung.wert__fuellung--energie", {
+        style: { width: `${gesamt === 0 ? 0 : (geschafft / gesamt) * 100}%` },
+      }),
     ),
   );
 }
 
-function balken(art, wert, name) {
-  return h(
-    "div.wert__balken",
-    { title: `${name}: ${Math.round(wert)} %` },
-    h(`div.wert__fuellung.wert__fuellung--${art}`, { style: { width: `${wert}%` } }),
-  );
-}

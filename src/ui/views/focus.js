@@ -31,6 +31,10 @@ const PHASENNAMEN = {
 
 export function focusView() {
   const element = h("div.karte.karte--erhoben.fokus");
+
+  /** Marschierende Ameisen am Rand, solange die Runde läuft — sichtbar von weitem. */
+  const laufendZeigen = (zustand) =>
+    element.classList.toggle("laeuft", zustand.state === FocusState.RUNNING);
   const aufgabenwahl = h("select.eingabe", { "aria-label": S.focus_pick_task });
 
   function einstellungen() {
@@ -123,6 +127,7 @@ export function focusView() {
       zustand.state === FocusState.READY ? gesamt : remainingAt(zustand.session, zustand.state === FocusState.PAUSED ? zustand.session.pausedAt : state.now);
     const anteil = gesamt === 0 ? 0 : 1 - rest / gesamt;
 
+    laufendZeigen(zustand);
     aufgabenwahlFuellen(zustand);
 
     fuellen(

@@ -28,6 +28,7 @@ npm test              Unit-Tests (node --test, keine Abhängigkeit)
 npm run serve         Entwicklungsserver auf :8000
 npm run browsertest   Durchlauf durch die laufende App in Chromium
 npm run bruecketest   Der Vertrag zur Android-Hülle, gegen eine nachgebaute Hülle
+npm run synctest      Zwei Browser-Kontexte gegen den echten Worker (siehe docs/SYNC.md)
 npm run build         Webseite nach dist/ legen und auf Vollständigkeit prüfen
 npm run shots         Bildschirmfotos beider Anordnungen und beider Fassungen
 npm run check         alles zusammen
@@ -72,6 +73,8 @@ Das hier ist später nicht mehr zu ändern, ohne alles anzufassen:
 8. **Alle Zahlen mit fachlicher Bedeutung stehen in `src/domain/balance.js`** —
    auch die, die nur an einer Stelle gebraucht werden.
 9. **Alle sichtbaren Texte stehen in `src/ui/strings.js`.**
+10. **Der Abgleich führt je Zeile zusammen, nie je Datei.** Wer das ändert, verliert bei
+    jedem Zusammentreffen zweier Geräte die Arbeit eines der beiden.
 
 ## Fachliche Regeln, die keine Geschmacksfrage sind
 

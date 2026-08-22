@@ -17,6 +17,7 @@ import { formatDay } from "../format.js";
 import { taskRow } from "../components/taskrow.js";
 import { petStrip } from "../components/petstrip.js";
 import { SpeechCategory } from "../../domain/pet.js";
+import { stempeln } from "../motion.js";
 
 export function todayView() {
   const eingabe = h("input.schnell__eingabe", {
@@ -119,8 +120,9 @@ export function todayView() {
     fuellen(
       bloecke,
       brett.isEmpty
-        ? leer()
+        ? leer(brett)
         : [
+            stempel(brett),
             block(S.today_overdue, brett.overdue, { dringend: true }),
             block(S.today_today, brett.today),
             block(S.today_later, brett.later),
@@ -182,9 +184,9 @@ function archiv(aufgaben) {
   );
 }
 
-function leer() {
+function leer(brett) {
   return h(
-    "div.leer",
+    "div.leer.laeuft",
     {},
     h("p.leer__titel", {}, S.today_empty_title),
     h("p", {}, S.today_empty_body),
@@ -194,4 +196,19 @@ function leer() {
       S.nav_companion,
     ),
   );
+}
+
+/**
+ * Der Stempel für einen abgeräumten Tag.
+ *
+ * Nur wenn nichts mehr offen ist **und** heute etwas geschafft wurde. Ohne die zweite
+ * Bedingung stempelte eine frisch installierte App den ersten Tag ab, an dem man noch gar
+ * nichts eingetragen hat — und der Stempel wäre nichts mehr wert.
+ */
+function stempel(brett) {
+  if (brett.openCount > 0 || brett.doneToday.length === 0) return null;
+
+  const element = h("div.stempel", {}, S.today_all_done);
+  stempeln(element);
+  return h("div.stempel-platz", {}, element);
 }

@@ -44,6 +44,7 @@ export const S = Object.freeze({
   today_later: "Später",
   today_done_today: "Heute geschafft",
   today_done_earlier: "Früher erledigt",
+  today_all_done: "Alles weg",
   today_empty_title: "Nichts offen",
   today_empty_body: "Kein offener Punkt für heute. Das ist kein Fehler, das ist das Ziel.",
   today_open_count: (n) => (n === 1 ? "1 offener Punkt" : `${n} offene Punkte`),

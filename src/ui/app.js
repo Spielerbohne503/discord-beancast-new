@@ -20,7 +20,7 @@ import { ausHash } from "./router.js";
 import { S, STAGE_NAMES } from "./strings.js";
 import { formatLongDay } from "./format.js";
 import { orb } from "./orb.js";
-import { aufteilen } from "./motion.js";
+import { aufteilen, mitUebergang } from "./motion.js";
 import { todayView } from "./views/today.js";
 import { browseView } from "./views/browse.js";
 import { focusView } from "./views/focus.js";
@@ -136,8 +136,17 @@ export async function starten(wurzel) {
     if (!gebaute.has(state.route)) gebaute.set(state.route, ansicht.bauen());
     const gebaut = gebaute.get(state.route);
 
-    if (inhalt.firstChild !== gebaut.el) fuellen(inhalt, gebaut.el);
-    gebaut.update();
+    // Nur der **Wechsel** bekommt einen Übergang, nicht jede Auffrischung derselben
+    // Ansicht — sonst wischt der Bildschirm bei jedem Abhaken einmal durch.
+    const gewechselt = inhalt.firstChild !== gebaut.el;
+    if (gewechselt) {
+      mitUebergang(() => {
+        fuellen(inhalt, gebaut.el);
+        gebaut.update();
+      });
+    } else {
+      gebaut.update();
+    }
 
     laufendeRundeZeichnen(laufendeRunde);
     leisteZeichnen(leiste);

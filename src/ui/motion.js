@@ -146,3 +146,39 @@ export function funken(element) {
   document.body.append(funke);
   setTimeout(() => funke.remove(), 620);
 }
+
+
+/**
+ * Ansichtswechsel mit Übergang.
+ *
+ * Wo der Browser die View-Transitions-Schnittstelle hat, wischt der Inhalt mechanisch
+ * durch — passend zur harten Kante, keine Weichblende. Wo nicht, wird schlicht gezeichnet:
+ * Der Übergang ist Zierrat, das Zeichnen ist die Aufgabe.
+ *
+ * Das Zeichnen läuft in beiden Fällen **genau einmal**. Ein Übergang, der die Arbeit
+ * doppelt macht oder verschluckt, wäre schlimmer als gar keiner.
+ */
+export function mitUebergang(zeichnen) {
+  if (!bewegungErlaubt() || typeof document.startViewTransition !== "function") {
+    zeichnen();
+    return;
+  }
+
+  try {
+    document.startViewTransition(zeichnen);
+  } catch {
+    zeichnen();
+  }
+}
+
+/**
+ * Der Stempel: „alles weg“.
+ *
+ * Kommt nur, wenn heute wirklich nichts mehr offen ist **und** etwas geschafft wurde. Ohne
+ * die zweite Bedingung stempelte eine frisch installierte App den ersten Tag ab, an dem
+ * man noch gar nichts eingetragen hat — und der Stempel wäre nichts mehr wert.
+ */
+export function stempeln(element) {
+  if (!bewegungErlaubt() || !element) return;
+  element.classList.add("stempel--faellt");
+}
