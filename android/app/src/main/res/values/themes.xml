@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Nur ein Rahmen für den WebView: derselbe fast schwarze Grund wie in der Seite,
+        damit beim Start nichts weiß aufblitzt. Es gibt bewusst nur diese eine, dunkle
+        Fassung — „Space“ mit hellem Grund wäre ein anderes Programm.
+    -->
+    <style name="Theme.PeTodo" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/grund</item>
+        <item name="android:statusBarColor">@color/grund</item>
+        <item name="android:navigationBarColor">@color/grund</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

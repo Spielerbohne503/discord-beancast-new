@@ -10,6 +10,7 @@ import { parseHhMm } from "../../domain/time.js";
 import * as repo from "../../data/repo.js";
 import { clearAll } from "../../data/db.js";
 import { backupFileName, exportBackup, importBackup } from "../../data/backupstore.js";
+import { erinnerungenErlaubt, erlaubnisAnfragen, exakteWeckerErlaubt, huellenFassung, inHuelle } from "../bruecke.js";
 import { aktualisieren, state } from "../store.js";
 import { fuellen, h } from "../dom.js";
 import { icon } from "../icons.js";
@@ -109,10 +110,45 @@ function ruhezeit(setzenUndNeu) {
 /**
  * Erinnerungen.
  *
+ * Zwei Welten, ein Schalter. Im Browser erinnert die Seite, solange sie offen ist; in der
+ * Android-Hülle stellt das Betriebssystem einen Wecker und meldet sich auch bei
+ * geschlossener App. Was gerade gilt, steht darunter — nicht in einer Fußnote irgendwo.
+ *
  * Die Erlaubnis wird erst beim Einschalten erfragt, nie beim ersten Start: Ein Dialog, den
  * man nicht erwartet hat, wird weggeklickt — und danach ist er für immer weg.
  */
 function erinnerungen(setzenUndNeu) {
+  return inHuelle() ? erinnerungenInDerHuelle(setzenUndNeu) : erinnerungenImBrowser(setzenUndNeu);
+}
+
+function erinnerungenInDerHuelle(setzenUndNeu) {
+  const erlaubt = erinnerungenErlaubt();
+  const genau = exakteWeckerErlaubt();
+
+  return gruppe(
+    S.settings_notifications,
+    schalter(S.settings_notifications_toggle, state.settings.notifications && erlaubt, async (an) => {
+      if (!an) {
+        await setzenUndNeu("notifications", false);
+        return;
+      }
+      if (!erlaubt) {
+        // Android beantwortet die Frage in einem eigenen Dialog; die Antwort steht beim
+        // nächsten Zeichnen da, nicht hier.
+        erlaubnisAnfragen();
+      }
+      await setzenUndNeu("notifications", true);
+    }),
+    h(
+      "span.feld__hinweis",
+      {},
+      erlaubt ? S.settings_notifications_hint_app : S.settings_notifications_denied_app,
+    ),
+    erlaubt && !genau ? h("span.feld__hinweis", {}, S.settings_exact_alarms_missing) : null,
+  );
+}
+
+function erinnerungenImBrowser(setzenUndNeu) {
   const unterstuetzt = typeof Notification !== "undefined";
   const abgelehnt = unterstuetzt && Notification.permission === "denied";
 
@@ -225,6 +261,7 @@ function ueber() {
     S.settings_about,
     h("span.feld__hinweis", {}, S.settings_about_body),
     h("span.feld__hinweis", {}, `${S.app_name} · ${S.app_tagline}`),
+    huellenFassung() ? h("span.feld__hinweis", {}, S.settings_app_version(huellenFassung())) : null,
   );
 }
 

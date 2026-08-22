@@ -8,6 +8,7 @@
 
 import { NagStage, stageTraits } from "../domain/nag.js";
 import { nagDurchlauf } from "../data/nagrunner.js";
+import { inHuelle } from "./bruecke.js";
 import { aktualisieren, state } from "./store.js";
 import { meldung } from "./toast.js";
 import { S } from "./strings.js";
@@ -16,6 +17,10 @@ import { S } from "./strings.js";
 const TAKT = 60_000;
 
 export function erinnerungenStarten() {
+  // In der Android-Hülle stellt das Betriebssystem die Wecker. Liefe hier zusätzlich der
+  // Durchlauf, käme jede Erinnerung doppelt — einmal vom Wecker, einmal aus der Seite.
+  if (inHuelle()) return;
+
   void durchlauf();
   setInterval(() => void durchlauf(), TAKT);
 }

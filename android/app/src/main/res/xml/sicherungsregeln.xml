@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Die Aufgaben liegen in IndexedDB im Datenverzeichnis des WebView und fahren mit einer
+    Gerätesicherung mit. Der Zeitplan der Wecker nicht: Er wird beim ersten Öffnen aus der
+    Webseite neu gestellt, und ein alter Plan aus einer Sicherung würde für Aufgaben
+    klingeln, die es längst nicht mehr gibt.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="petodo-huelle.xml" />
+</full-backup-content>

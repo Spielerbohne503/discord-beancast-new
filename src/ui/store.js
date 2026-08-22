@@ -17,6 +17,19 @@ import { S } from "./strings.js";
 
 const hoerer = new Set();
 
+/**
+ * Wird nach jedem vollständigen Laden gerufen — nicht bei jedem Takt.
+ *
+ * Dafür gibt es einen eigenen Haken, weil daran der Wecker der Android-Hülle hängt: Den
+ * Zeitplan sekündlich neu zu stellen wäre Unfug, nach jeder echten Änderung ist er nötig.
+ */
+const nachLadenHoerer = new Set();
+
+export function nachLaden(rueckruf) {
+  nachLadenHoerer.add(rueckruf);
+  return () => nachLadenHoerer.delete(rueckruf);
+}
+
 export const state = {
   route: "today",
   scope: scope(Scope.ALL_OPEN),
@@ -73,6 +86,7 @@ export async function aktualisieren({ neuerSatz = false } = {}) {
 
   state.bereit = true;
   melden();
+  for (const rueckruf of nachLadenHoerer) rueckruf(state);
 }
 
 /** Nur die Uhr weiterstellen — für den Sekundentakt im Fokus, ohne Datenbankzugriff. */

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Es gibt bewusst KEINE android.permission.INTERNET.
+
+        Damit ist „kein Netzzugriff, kein Konto, keine Telemetrie“ keine Zusage mehr,
+        sondern vom Betriebssystem durchgesetzt: Die App kann gar nicht ins Netz. Die
+        Webseite liegt im Paket, geladen wird nur von dort.
+    -->
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!--
+        Erinnerungen sind Wecker: Eine Meldung, die zwanzig Minuten zu spät kommt, hat
+        ihren Zweck verfehlt. USE_EXACT_ALARM gilt für weckerartige Apps ohne Rückfrage;
+        SCHEDULE_EXACT_ALARM ist der Weg auf Android 12, wo es die erste noch nicht gab.
+        Fehlt beides, wird ungenau geweckt statt gar nicht.
+    -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+
+    <application
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/sicherungsregeln"
+        android:dataExtractionRules="@xml/datenregeln"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PeTodo">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|density|fontScale"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.PeTodo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".AlarmEmpfaenger"
+            android:exported="false" />
+
+        <receiver
+            android:name=".AktionsEmpfaenger"
+            android:exported="false" />
+
+        <receiver
+            android:name=".BootEmpfaenger"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

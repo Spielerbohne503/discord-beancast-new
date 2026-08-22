@@ -2,3 +2,10 @@ node_modules/
 .screenshots/
 *.log
 .DS_Store
+
+# Android
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+*.apk

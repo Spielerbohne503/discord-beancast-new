@@ -2,9 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  NagOutcome, NagStage, QUIET_HOURS_DEFAULT, QUIET_HOURS_OFF, anchorMinutes, decideNag,
-  firstNagAt, isInQuietHours, nagStageFor, nextNagAt, postponeToTomorrow, quietHours,
-  shiftOutOfQuietHours, shouldGroup, stageTraits,
+  NagOutcome, NagStage, QUIET_HOURS_DEFAULT, QUIET_HOURS_OFF, alreadyNaggedToday,
+  anchorMinutes, decideNag, firstNagAt, isInQuietHours, nagStageFor, nextNagAt,
+  nextNagFor, plannedNags, postponeToTomorrow, quietHours, shiftOutOfQuietHours,
+  shouldGroup, stageTraits,
 } from "../src/domain/nag.js";
 import { Balance } from "../src/domain/balance.js";
 import { minutesOfDay, parseHhMm } from "../src/domain/time.js";
@@ -122,4 +123,95 @@ test("morgen_rechnet_ab_heute_wenn_der_termin_laengst_vorbei_ist", () => {
 test("ab_drei_ueberfaelligen_wird_gesammelt_gemeldet", () => {
   assert.ok(!shouldGroup(Balance.NAG_GROUP_THRESHOLD - 1));
   assert.ok(shouldGroup(Balance.NAG_GROUP_THRESHOLD));
+});
+
+
+// ---------------------------------------------------------------- Vorausschau
+
+const KEINE = new Set();
+
+test("hoechstens eine erinnerung je aufgabe und kalendertag", () => {
+  const task = aufgabe({ dueAt: um("2026-08-01", 0), dueTimeLocal: 8 * 60, nagLastAt: um(HEUTE, 8) });
+  assert.ok(alreadyNaggedToday(task, um(HEUTE, 20)));
+  assert.ok(!alreadyNaggedToday(task, um("2026-08-20", 8)));
+  assert.ok(!alreadyNaggedToday(aufgabe({}), um(HEUTE, 12)));
+});
+
+test("ein laengst vergangener termin klingelt jetzt und nicht rueckwirkend", () => {
+  const task = aufgabe({ dueAt: um("2026-08-01", 0), dueTimeLocal: 8 * 60 });
+  assert.equal(nextNagFor(task, false, um(HEUTE, 12), QUIET_HOURS_OFF), um(HEUTE, 12));
+});
+
+test("nach der heutigen erinnerung kommt die naechste morgen zur ankeruhrzeit", () => {
+  const task = aufgabe({ dueAt: um("2026-08-01", 0), dueTimeLocal: 8 * 60, nagLastAt: um(HEUTE, 8) });
+  assert.equal(nextNagFor(task, false, um(HEUTE, 12), QUIET_HOURS_OFF), um("2026-08-20", 8));
+});
+
+test("ein kuenftiger termin klingelt zu seiner zeit", () => {
+  const task = aufgabe({ dueAt: um("2026-08-25", 9), hasTime: true });
+  assert.equal(nextNagFor(task, false, um(HEUTE, 12), QUIET_HOURS_OFF), um("2026-08-25", 9));
+});
+
+test("aufgeschobenes schlaegt auch in der vorausschau den zeitplan", () => {
+  const task = aufgabe({ dueAt: um("2026-08-01", 0), snoozedUntil: um(HEUTE, 15) });
+  assert.equal(nextNagFor(task, false, um(HEUTE, 12), QUIET_HOURS_OFF), um(HEUTE, 15));
+});
+
+test("ein termin in der ruhezeit wird ans fensterende gelegt statt verworfen", () => {
+  const task = aufgabe({ dueAt: um("2026-08-20", 2), hasTime: true });
+  assert.equal(nextNagFor(task, false, um(HEUTE, 12), QUIET_HOURS_DEFAULT), um("2026-08-20", 8));
+});
+
+test("ohne grund zu mahnen gibt es keinen termin", () => {
+  const jetzt = um(HEUTE, 12);
+  const faellig = { dueAt: um("2026-08-01", 9), hasTime: true };
+  assert.equal(nextNagFor(aufgabe({}), false, jetzt, QUIET_HOURS_OFF), null);
+  assert.equal(nextNagFor(aufgabe(faellig), true, jetzt, QUIET_HOURS_OFF), null);
+  assert.equal(nextNagFor(aufgabe({ ...faellig, completedAt: jetzt }), false, jetzt, QUIET_HOURS_OFF), null);
+  assert.equal(nextNagFor(aufgabe({ ...faellig, deletedAt: jetzt }), false, jetzt, QUIET_HOURS_OFF), null);
+});
+
+test("die vorausschau widerspricht der entscheidung nicht", () => {
+  // Was jetzt gemeldet würde, muss auch jetzt geplant sein — sonst rechnen zwei Stellen
+  // verschieden, und der Wecker klingelt an einem anderen Tag als die App meint.
+  const jetzt = um(HEUTE, 12);
+  const task = aufgabe({ dueAt: um("2026-08-01", 0), dueTimeLocal: 8 * 60 });
+
+  assert.equal(decideNag(task, false, jetzt, QUIET_HOURS_OFF).outcome, NagOutcome.POST);
+  assert.equal(nextNagFor(task, false, jetzt, QUIET_HOURS_OFF), jetzt);
+});
+
+test("die vorausschau kommt aufsteigend und je aufgabe nur einmal", () => {
+  const jetzt = um(HEUTE, 12);
+  const plan = plannedNags(
+    [
+      aufgabe({ id: "spaet", dueAt: um("2026-08-25", 9), hasTime: true }),
+      aufgabe({ id: "jetzt", dueAt: um("2026-08-01", 0), dueTimeLocal: 8 * 60 }),
+      aufgabe({ id: "morgen", dueAt: um("2026-08-20", 9), hasTime: true }),
+    ],
+    KEINE,
+    jetzt,
+    QUIET_HOURS_OFF,
+  );
+
+  assert.deepEqual(plan.map((eintrag) => eintrag.taskId), ["jetzt", "morgen", "spaet"]);
+  assert.equal(new Set(plan.map((eintrag) => eintrag.taskId)).size, plan.length);
+});
+
+test("die vorausschau laesst sich deckeln", () => {
+  const viele = Array.from({ length: 40 }, (_, index) =>
+    aufgabe({ id: `t${index}`, dueAt: um("2026-08-20", 9) + index * 60_000, hasTime: true }),
+  );
+  assert.equal(plannedNags(viele, KEINE, um(HEUTE, 12), QUIET_HOURS_OFF, 8).length, 8);
+});
+
+test("die stufe faehrt mit, damit der wecker leise oder laut klingeln kann", () => {
+  const plan = plannedNags(
+    [aufgabe({ dueAt: um("2026-08-01", 0), dueTimeLocal: 8 * 60, nagCount: 6 })],
+    KEINE,
+    um(HEUTE, 12),
+    QUIET_HOURS_OFF,
+  );
+  assert.equal(plan[0].stage, NagStage.CLEANUP);
+  assert.equal(plan[0].day, 7);
 });

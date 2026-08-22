@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Das Symbol in der Statusleiste wird von Android auf eine Farbe reduziert. Also eine
+    Form, die als Silhouette funktioniert: die Kugel des Begleiters mit ihrer Umlaufbahn.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFFFF">
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,6.5a5.5,5.5 0,1 0,0 11a5.5,5.5 0,0 0,0 -11z" />
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,9.5m-1.6,0a1.6,1.6 0,1 0,3.2 0a1.6,1.6 0,1 0,-3.2 0" />
+
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.1"
+        android:fillColor="#00000000"
+        android:pathData="M4.4,12c0,-1.2 3.4,-2.2 7.6,-2.2s7.6,1 7.6,2.2 -3.4,2.2 -7.6,2.2 -7.6,-1 -7.6,-2.2z" />
+</vector>

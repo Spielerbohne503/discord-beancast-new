@@ -42,7 +42,10 @@
           `<p>${String(fehler?.message ?? fehler)}</p></div>`;
       });
 
-      if ("serviceWorker" in navigator) {
+      // In der Android-Hülle liegen die Dateien schon im Paket. Ein Dienstarbeiter würde
+      // dort nur eine zweite, ältere Kopie zwischenspeichern — und nach einem Update der
+      // App bekäme man tagelang die alte Fassung zu sehen.
+      if ("serviceWorker" in navigator && !globalThis.Petodo) {
         addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
       }
     </script>

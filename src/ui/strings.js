@@ -199,6 +199,13 @@ export const S = Object.freeze({
   settings_notifications_toggle: "Im Browser erinnern",
   settings_notifications_hint:
     "Erinnerungen erscheinen, solange die Seite geöffnet ist. Ohne Konto, ohne Server.",
+  settings_notifications_hint_app:
+    "In der App stellt Android den Wecker — Erinnerungen kommen auch bei geschlossener App. Ohne Konto, ohne Server.",
+  settings_notifications_denied_app:
+    "Android meldet nichts, solange die Erlaubnis fehlt. In den App-Einstellungen erlauben.",
+  settings_exact_alarms_missing:
+    "Ohne die Erlaubnis für genaue Wecker kann Android eine Erinnerung um einige Minuten verschieben.",
+  settings_app_version: (fassung) => `App-Hülle ${fassung}`,
   settings_notifications_denied: "Vom Browser abgelehnt. In den Seiteneinstellungen erlauben.",
   settings_motion: "Darstellung",
   settings_reduce_motion: "Bewegung reduzieren",

@@ -13,7 +13,7 @@ import { levelForXp, stageOf } from "../domain/pet.js";
 import { FocusState, focusStateOf, formatRemaining } from "../domain/focus.js";
 import * as repo from "../data/repo.js";
 import { pruneRewardLog } from "../data/petstore.js";
-import { abonnieren, aktualisieren, navigieren, setzen, state, tickern } from "./store.js";
+import { abonnieren, aktualisieren, nachLaden, navigieren, setzen, state, tickern } from "./store.js";
 import { fuellen, h, on } from "./dom.js";
 import { icon } from "./icons.js";
 import { ausHash } from "./router.js";
@@ -29,6 +29,7 @@ import { statsView } from "./views/stats.js";
 import { settingsView } from "./views/settings.js";
 import { moreView } from "./views/more.js";
 import { erinnerungenStarten } from "./nag.js";
+import { aktionenNachholen, inHuelle, zeitplanSenden } from "./bruecke.js";
 import { geteiltesUebernehmen } from "./share.js";
 import { willkommenZeigen } from "./onboarding.js";
 
@@ -136,6 +137,15 @@ export async function starten(wurzel) {
   ausAdresseUebernehmen();
 
   await repo.seedIfEmpty(S);
+
+  // Was an einer Meldung angetippt wurde, während die Seite zu war, gilt rückwirkend zum
+  // Zeitpunkt des Antippens — deshalb vor dem ersten Laden.
+  await aktionenNachholen();
+
+  // Der Wecker der Hülle wird nach **jedem** Laden neu gestellt: Eine abgehakte Aufgabe
+  // darf nicht mehr klingeln, eine neue schon.
+  if (inHuelle()) nachLaden(zeitplanSenden);
+
   await aktualisieren({ neuerSatz: true });
   await pruneRewardLog(Date.now());
 

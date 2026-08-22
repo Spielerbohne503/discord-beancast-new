@@ -9,15 +9,13 @@
  * Entschieden wird nichts hier: `domain/nag.js` sagt, was zu tun ist, das hier führt aus.
  */
 
-import { NagOutcome, decideNag, nagStageFor, quietHours, shouldGroup, stageTraits } from "../domain/nag.js";
+import {
+  NagOutcome, alreadyNaggedToday, decideNag, nagStageFor, plannedNags, quietHours,
+  shouldGroup, stageTraits,
+} from "../domain/nag.js";
 import { isOpen, isOverdue } from "../domain/tasks.js";
-import { dayOf, parseHhMm } from "../domain/time.js";
+import { parseHhMm } from "../domain/time.js";
 import { updateTask } from "./repo.js";
-
-/** Höchstens eine Erinnerung je Aufgabe und Kalendertag — die Kette eskaliert täglich. */
-function schonHeuteGemahnt(task, now) {
-  return task.nagLastAt !== null && task.nagLastAt !== undefined && dayOf(task.nagLastAt) === dayOf(now);
-}
 
 function fensterAus(settings) {
   return quietHours(
@@ -39,7 +37,7 @@ export async function nagDurchlauf(tasks, lists, settings, now) {
   const faellig = [];
 
   for (const task of tasks) {
-    if (!isOpen(task) || schonHeuteGemahnt(task, now)) continue;
+    if (!isOpen(task) || alreadyNaggedToday(task, now)) continue;
 
     const entscheidung = decideNag(task, ohneMahnung.has(task.listId), now, fenster);
     if (entscheidung.outcome !== NagOutcome.POST) continue;
@@ -71,6 +69,19 @@ export async function nagDurchlauf(tasks, lists, settings, now) {
 /** Wie viele Aufgaben gerade überfällig sind — für die Sammelmeldung und das Abzeichen. */
 export function ueberfaelligeAnzahl(tasks, now) {
   return tasks.filter((task) => isOverdue(task, now)).length;
+}
+
+/**
+ * Der Zeitplan für einen Wecker im Betriebssystem.
+ *
+ * Im Browser braucht das niemand — dort läuft der Durchlauf, solange die Seite offen ist.
+ * In der Android-Hülle ist es der ganze Sinn der Übung: Die Webseite rechnet aus, wann
+ * geklingelt werden soll, das Betriebssystem klingelt. Gerechnet wird weiterhin nur an
+ * einer Stelle.
+ */
+export function erinnerungsplan(tasks, lists, settings, now, limit) {
+  const ohneMahnung = new Set(lists.filter((liste) => liste.excludeFromNag).map((liste) => liste.id));
+  return plannedNags(tasks, ohneMahnung, now, fensterAus(settings), limit);
 }
 
 export { nagStageFor, stageTraits };

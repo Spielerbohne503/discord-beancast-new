@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Die Hülle hat fast keine eigenen Texte: Was in einer Meldung steht, kommt aus der
+    Webseite. Hier steht nur, was Android selbst anzeigt, bevor die Seite geladen ist.
+-->
+<resources>
+    <string name="app_name">PeTodo</string>
+
+    <string name="kanal_leise">Erinnerungen</string>
+    <string name="kanal_leise_beschreibung">Die ersten Tage einer Fälligkeit — lautlos.</string>
+
+    <string name="kanal_laut">Dringende Erinnerungen</string>
+    <string name="kanal_laut_beschreibung">Wenn etwas seit Tagen liegt — mit Ton.</string>
+
+    <string name="aktion_erledigt">Erledigt</string>
+    <string name="aktion_morgen">Morgen</string>
+</resources>

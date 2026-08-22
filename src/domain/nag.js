@@ -150,6 +150,17 @@ export function postponeToTomorrow(task, now) {
   return atTime(dayOf(basis) + 1, 0, anchorMinutes(task));
 }
 
+/**
+ * Ob diese Aufgabe heute schon gemahnt wurde.
+ *
+ * Die Kette eskaliert **täglich**, nicht minütlich: höchstens eine Erinnerung je Aufgabe
+ * und Kalendertag. Ohne diese Bremse meldet sich eine überfällige Aufgabe bei jedem
+ * Durchlauf neu, und nach dem dritten Mal schaltet man den Kanal ab.
+ */
+export function alreadyNaggedToday(task, now) {
+  return task.nagLastAt !== null && task.nagLastAt !== undefined && dayOf(task.nagLastAt) === dayOf(now);
+}
+
 // ------------------------------------------------------------------ Entscheidung
 
 export const NagOutcome = Object.freeze({
@@ -197,4 +208,51 @@ export function decideNag(task, listExcludedFromNag, now, quiet) {
     nagCount: task.nagCount + 1,
     nextNagAt: shiftOutOfQuietHours(nextNagAt(now, anchorMinutes(task)), quiet),
   };
+}
+
+
+// ------------------------------------------------------------------ Vorausschau
+
+/**
+ * Wann diese Aufgabe **das nächste Mal** dran wäre — `null`, wenn nie.
+ *
+ * Dieselben Regeln wie [decideNag], nur nach vorn statt auf jetzt gerichtet: Ein Wecker
+ * im Betriebssystem muss vorher wissen, wann er klingeln soll. Die Prüfungen stehen
+ * deshalb in derselben Reihenfolge — wer hier eine andere Antwort gibt als [decideNag],
+ * baut genau den Widerspruch ein, den zwei getrennte Rechnungen immer erzeugen.
+ */
+export function nextNagFor(task, listExcludedFromNag, now, quiet) {
+  if (isDeleted(task) || isCompleted(task) || listExcludedFromNag) return null;
+  if (task.dueAt === null || task.dueAt === undefined) return null;
+
+  let kandidat;
+  if (task.snoozedUntil !== null && task.snoozedUntil !== undefined && task.snoozedUntil > now) {
+    kandidat = task.snoozedUntil;
+  } else if (alreadyNaggedToday(task, now)) {
+    // Heute war schon eine — die nächste kommt morgen zur Ankeruhrzeit.
+    kandidat = nextNagAt(task.nagLastAt, anchorMinutes(task));
+  } else {
+    // Ein längst vergangener Termin klingelt nicht rückwirkend, sondern jetzt.
+    kandidat = Math.max(firstNagAt(task) ?? task.dueAt, now);
+  }
+
+  return shiftOutOfQuietHours(kandidat, quiet);
+}
+
+/**
+ * Die nächsten Erinnerungstermine, aufsteigend.
+ *
+ * Je Aufgabe **einer** — der übernächste hängt davon ab, ob der erste etwas bewirkt hat,
+ * und das weiß erst die App. Ein Telefon, das vierzig Mal wegen derselben Liste klingelt,
+ * wird stummgeschaltet, und danach ist auch die eine wichtige Meldung weg.
+ */
+export function plannedNags(tasks, excludedListIds, now, quiet, limit = Number.POSITIVE_INFINITY) {
+  return tasks
+    .map((task) => {
+      const at = nextNagFor(task, excludedListIds.has(task.listId), now, quiet);
+      return at === null ? null : { taskId: task.id, at, stage: nagStageFor(task.nagCount), day: nagDay(task.nagCount) };
+    })
+    .filter((eintrag) => eintrag !== null)
+    .sort((a, b) => a.at - b.at)
+    .slice(0, limit);
 }
