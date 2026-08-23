@@ -30,6 +30,14 @@ class Vermittler(private val assets: AssetManager) {
         return try {
             WebResourceResponse(typVon(pfad), "utf-8", assets.open(pfad)).apply {
                 // Die Dateien liegen im Paket; nach einem Update sollen die neuen gelten.
+                //
+                // **Hier steht bewusst keine Sicherheitsrichtlinie.** Die aus `_headers`
+                // gilt nur für die Webseite im Netz; dort hat `connect-src 'self'` recht,
+                // weil Seite und Ablage am selben Ursprung liegen. Hier liegen sie das
+                // nie: Die Hülle wohnt unter `appassets.androidplatform.net`, die Ablage
+                // beim eigenen Worker. Wer hier eine Richtlinie nachrüstet, muss
+                // `connect-src` für die Ablage öffnen — sonst stirbt der Abgleich
+                // lautlos, und der Fehler steht in einer Konsole, die niemand sieht.
                 responseHeaders = mapOf("Cache-Control" to "no-store")
             }
         } catch (fehler: IOException) {

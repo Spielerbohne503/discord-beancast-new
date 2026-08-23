@@ -263,32 +263,39 @@ export const S = Object.freeze({
   settings_fassung_hell: "Hell",
   settings_fassung_dunkel: "Dunkel",
   settings_sync: "Geräteübergreifend",
-  settings_sync_huelle_hint:
-    "Diese Hülle liegt an einem eigenen Ursprung, den es im Netz nicht gibt — „leer lassen“ trifft hier nichts. Trag unten die Adresse deines Workers ein, dieselbe wie im Browser.",
   settings_sync_toggle: "Abgleich einschalten",
   settings_sync_hint:
-    "Deine Aufgaben liegen verschlüsselt auf deinem eigenen Server. Er kann sie nicht lesen — der Schlüssel entsteht aus deiner Losung und verlässt das Gerät nie.",
-  settings_sync_losung: "Losung",
-  settings_sync_losung_platzhalter: "Ein Satz, den nur du kennst",
-  settings_sync_losung_hint:
-    "Auf jedem Gerät dieselbe Losung eintippen — mehr gehört nicht dazu. Es gibt kein Konto und keine Wiederherstellung: Ist die Losung weg, ist der abgelegte Stand nicht mehr lesbar.",
-  settings_sync_adresse: "Adresse der Ablage",
-  settings_sync_adresse_hint: "Leer lassen, wenn die Ablage dort liegt, wo auch die App liegt.",
-  settings_sync_adresse_platzhalter_huelle: "https://dein-worker.workers.dev",
-  settings_sync_adresse_hint_huelle:
-    "Erforderlich: dieselbe Adresse wie im Browser. Ohne sie versucht der Abgleich, sich selbst zu erreichen, und findet nichts.",
-  settings_sync_adresse_erforderlich:
-    "Ohne Adresse findet der Abgleich hier nichts — die App liegt an einem eigenen Ursprung, nicht am Server.",
+    "Deine Aufgaben liegen verschlüsselt auf deinem eigenen Server. Er kann sie nicht lesen — der Schlüssel bleibt auf deinen Geräten. Kein Konto, keine Anmeldung, nichts auszudenken.",
+  settings_sync_einschalten: "Abgleich einschalten",
+  settings_sync_einschalten_allein: "Stattdessen hier neu anfangen",
+  settings_sync_koppeln: "Koppeln",
+
+  settings_sync_link_einfuegen: "Schon ein Gerät eingerichtet?",
+  settings_sync_link_platzhalter: "Koppel-Link einfügen",
+  settings_sync_link_hint:
+    "Den Link findest du auf dem anderen Gerät unter Einstellungen → Geräteübergreifend.",
+  settings_sync_link_hint_huelle:
+    "Erforderlich: Der Link bringt die Adresse deines Servers mit, und die gibt es hier nicht von selbst. Du findest ihn im Browser unter Einstellungen → Geräteübergreifend.",
+  settings_sync_link_unbrauchbar: "Das ist kein Koppel-Link. Kopier ihn noch einmal ganz.",
+  settings_sync_link_ohne_adresse:
+    "In diesem Link fehlt die Adresse. Kopier ihn auf dem anderen Gerät noch einmal ganz.",
+
+  settings_sync_link_zeigen: "Koppel-Link für das nächste Gerät",
+  settings_sync_link_zeigen_hint:
+    "Auf dem anderen Gerät öffnen — mehr gehört nicht dazu. Wer den Link hat, hat deine Aufgaben: also nur an dich selbst schicken.",
+  settings_sync_link_kopieren: "Kopieren",
+  settings_sync_link_kopiert: "Koppel-Link kopiert",
+  settings_sync_link_von_hand: "Kopieren ging nicht — der Link ist markiert.",
+
   settings_sync_jetzt: "Jetzt abgleichen",
-  settings_sync_verbinden: "Verbinden",
   settings_sync_trennen: "Trennen",
-  settings_sync_rechnet: "Schlüssel wird abgeleitet …",
   settings_sync_nie: "Noch nie abgeglichen",
   settings_sync_stand: (text) => `Zuletzt abgeglichen: ${text}`,
+  settings_sync_gekoppelt: "Gerät gekoppelt — die Aufgaben kommen gleich.",
   settings_sync_ergebnis: Object.freeze({
     abgeglichen: "Abgeglichen.",
     gleichstand: "Alles war schon gleich.",
-    losung_falsch: "Die Losung passt nicht zu dem, was dort liegt.",
+    losung_falsch: "Der Schlüssel passt nicht zu dem, was dort liegt.",
     unerreichbar: "Die Ablage ist nicht erreichbar.",
     fehler: "Das hat nicht geklappt.",
     aus: "Abgleich ist aus.",

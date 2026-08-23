@@ -11,7 +11,8 @@ import * as repo from "../../data/repo.js";
 import { clearAll } from "../../data/db.js";
 import { backupFileName, exportBackup, importBackup } from "../../data/backupstore.js";
 import { dateiSichern, erinnerungenErlaubt, erlaubnisAnfragen, exakteWeckerErlaubt, huellenFassung, inHuelle } from "../bruecke.js";
-import { ausLosung } from "../../data/krypto.js";
+import { ausGeheimnis, neuesGeheimnis } from "../../data/krypto.js";
+import { ausKoppelLink, koppelLink } from "../../domain/koppeln.js";
 import { SKINS, naechsteGestalt, verfuegbar } from "../../domain/skins.js";
 import { levelForXp } from "../../domain/pet.js";
 import { anstossen, letzterAusgang } from "../sync.js";
@@ -54,55 +55,24 @@ export function settingsView() {
  * dieses Geräts ändert. Standardmäßig aus — und der Hinweis darunter sagt, was passiert,
  * bevor man einschaltet, nicht danach.
  *
- * Die Losung wird **nicht** gespeichert, nur was daraus abgeleitet wurde. Deshalb steht im
- * Feld nach dem Verbinden auch nichts mehr: Es gibt nichts anzuzeigen.
+ * **Ein Knopf.** Es gibt nichts auszudenken, nichts zu tippen und nichts abzuwarten: Das
+ * Geheimnis kommt aus dem Zufallsgenerator. Wer ein zweites Gerät dazunimmt, kopiert einen
+ * Link — die Adresse der Ablage steckt darin, also gibt es auch die nicht mehr einzutragen.
  */
 function abgleich(setzenUndNeu, neuZeichnen) {
   const huelle = inHuelle();
   const verbunden = Boolean(state.settings.syncRaum);
 
-  const losung = h("input.eingabe", {
-    type: "password",
-    autocomplete: "off",
-    placeholder: S.settings_sync_losung_platzhalter,
-    onkeydown: (ereignis) => {
-      if (ereignis.key === "Enter") void verbinden();
-    },
-  });
+  async function einschalten() {
+    await koppeln(neuesGeheimnis(), eigeneAdresse());
+  }
 
-  // In der Hülle liegt „hier“ an einem Ursprung, den es im Netz gar nicht gibt — der
-  // Vorschlag „leer lassen“ wäre also gerade dort falsch, wo er am wichtigsten wäre.
-  const adresse = h("input.eingabe", {
-    type: "url",
-    inputmode: "url",
-    placeholder: huelle ? S.settings_sync_adresse_platzhalter_huelle : (globalThis.location?.origin ?? ""),
-    value: state.settings.syncAdresse,
-    onchange: () => void setzenUndNeu("syncAdresse", adresse.value.trim()),
-  });
+  /** Beide Wege enden hier: frisch gewürfelt oder aus einem Link gelesen. */
+  async function koppeln(geheimnis, adresse) {
+    const abgeleitet = await ausGeheimnis(geheimnis);
 
-  const stand = h(
-    "span.feld__hinweis",
-    {},
-    state.settings.syncStand
-      ? S.settings_sync_stand(new Date(state.settings.syncStand).toLocaleString("de-DE"))
-      : S.settings_sync_nie,
-  );
-
-  async function verbinden() {
-    const satz = losung.value.trim();
-    if (satz.length === 0) return;
-
-    if (huelle && adresse.value.trim().length === 0) {
-      meldung(S.settings_sync_adresse_erforderlich);
-      return;
-    }
-
-    losung.value = "";
-    losung.disabled = true;
-    losung.placeholder = S.settings_sync_rechnet;
-
-    // Dauert absichtlich spürbar: Die Ableitung ist teuer, damit Raten weh tut.
-    const abgeleitet = await ausLosung(satz);
+    await repo.saveSetting("syncAdresse", adresse);
+    await repo.saveSetting("syncGeheimnis", geheimnis);
     await repo.saveSetting("syncRaum", abgeleitet.raum);
     await repo.saveSetting("syncSchluessel", abgeleitet.schluessel);
     await repo.saveSetting("syncAktiv", true);
@@ -114,60 +84,157 @@ function abgleich(setzenUndNeu, neuZeichnen) {
 
   async function trennen() {
     // Der Stand auf dem Server bleibt liegen — er gehört auch den anderen Geräten.
-    for (const schluessel of ["syncRaum", "syncSchluessel", "syncStand"]) {
-      await repo.saveSetting(schluessel, schluessel === "syncStand" ? null : "");
+    for (const schluessel of ["syncAdresse", "syncGeheimnis", "syncRaum", "syncSchluessel"]) {
+      await repo.saveSetting(schluessel, "");
     }
+    await repo.saveSetting("syncStand", null);
     await setzenUndNeu("syncAktiv", false);
     neuZeichnen();
   }
 
-  return gruppe(
-    S.settings_sync,
-    huelle ? h("span.feld__hinweis", {}, S.settings_sync_huelle_hint) : null,
-    verbunden
-      ? schalter(S.settings_sync_toggle, state.settings.syncAktiv, (an) => setzenUndNeu("syncAktiv", an))
-      : null,
-    verbunden
-      ? h(
-          "div.chips",
-          {},
-          h(
-            "button.knopf.knopf--haupt",
-            { onclick: () => void anstossen({ still: false }) },
-            icon("wiederholen", 16),
-            S.settings_sync_jetzt,
-          ),
-          h("button.knopf.knopf--gefahr", { onclick: () => void trennen() }, S.settings_sync_trennen),
-        )
-      : h(
-          "div.feld",
-          {},
-          h("span.feld__beschriftung", {}, S.settings_sync_losung),
-          h(
-            "div.schnell__zeile",
-            { style: { gap: "8px" } },
-            losung,
-            h("button.knopf.knopf--haupt", { onclick: () => void verbinden() }, S.settings_sync_verbinden),
-          ),
-          h("span.feld__hinweis", {}, S.settings_sync_losung_hint),
-        ),
-    verbunden ? stand : null,
-    verbunden && letzterAusgang
-      ? h("span.feld__hinweis", {}, S.settings_sync_ergebnis[letzterAusgang.ergebnis] ?? "")
-      : null,
-    h(
-      "details",
-      huelle ? { open: true } : {},
-      h("summary.feld__beschriftung", { style: { cursor: "pointer" } }, S.settings_sync_adresse),
-      h(
-        "div.feld",
-        { style: { "padding-top": "12px" } },
-        adresse,
-        h("span.feld__hinweis", {}, huelle ? S.settings_sync_adresse_hint_huelle : S.settings_sync_adresse_hint),
-      ),
-    ),
+  return verbunden
+    ? gruppe(S.settings_sync, ...eingerichtet(setzenUndNeu, trennen))
+    : gruppe(S.settings_sync, ...nochNicht(huelle, einschalten, koppeln));
+}
+
+/**
+ * Der Zustand vor dem ersten Mal: ein Knopf, und darunter der Weg fürs zweite Gerät.
+ *
+ * Die Reihenfolge ist Absicht. Wer hier zum ersten Mal steht, hat noch kein anderes Gerät —
+ * für den ist der obere Knopf der richtige. Das Einfügefeld steht darunter und erklärt
+ * sich selbst.
+ */
+function nochNicht(huelle, einschalten, koppeln) {
+  const feld = h("input.eingabe", {
+    type: "text",
+    autocomplete: "off",
+    spellcheck: false,
+    placeholder: S.settings_sync_link_platzhalter,
+    onkeydown: (ereignis) => {
+      if (ereignis.key === "Enter") void einfuegen();
+    },
+  });
+
+  async function einfuegen() {
+    const gelesen = ausKoppelLink(feld.value);
+    if (gelesen === null) {
+      meldung(S.settings_sync_link_unbrauchbar);
+      return;
+    }
+
+    // Ohne Adresse im Link gilt die eigene. In der Hülle gibt es die nicht — dort ist der
+    // ganze Link erforderlich, und das steht dann auch da.
+    const adresse = gelesen.adresse ?? eigeneAdresse();
+    if (adresse.length === 0) {
+      meldung(S.settings_sync_link_ohne_adresse);
+      return;
+    }
+
+    feld.value = "";
+    await koppeln(gelesen.geheimnis, adresse);
+  }
+
+  return [
     h("span.feld__hinweis", {}, S.settings_sync_hint),
-  );
+    // In der Hülle ist der obere Weg der seltenere: Wer die App aufs Telefon holt, hat den
+    // Rechner meist schon eingerichtet.
+    huelle ? null : h("button.knopf.knopf--haupt", { onclick: () => void einschalten() }, icon("wiederholen", 16), S.settings_sync_einschalten),
+    h(
+      "div.feld",
+      {},
+      h("span.feld__beschriftung", {}, S.settings_sync_link_einfuegen),
+      h(
+        "div.schnell__zeile",
+        { style: { gap: "8px" } },
+        feld,
+        h(
+          huelle ? "button.knopf.knopf--haupt" : "button.knopf",
+          { onclick: () => void einfuegen() },
+          S.settings_sync_koppeln,
+        ),
+      ),
+      h("span.feld__hinweis", {}, huelle ? S.settings_sync_link_hint_huelle : S.settings_sync_link_hint),
+    ),
+    huelle
+      ? h("button.knopf.knopf--still", { onclick: () => void einschalten() }, S.settings_sync_einschalten_allein)
+      : null,
+  ];
+}
+
+/**
+ * Der eingerichtete Zustand.
+ *
+ * Obenan steht der Koppel-Link, denn das ist das Einzige, was man hier noch braucht: ihn
+ * aufs nächste Gerät bringen.
+ */
+function eingerichtet(setzenUndNeu, trennen) {
+  const adresse = state.settings.syncAdresse || eigeneAdresse();
+  const link = koppelLink(adresse, state.settings.syncGeheimnis);
+
+  const linkfeld = h("input.eingabe", {
+    type: "text",
+    readonly: true,
+    value: link,
+    onclick: () => linkfeld.select(),
+  });
+
+  async function kopieren() {
+    // `navigator.clipboard` gibt es nicht überall und nicht immer mit Erlaubnis. Das Feld
+    // ist dann immer noch da und markiert sich beim Antippen selbst.
+    try {
+      await navigator.clipboard.writeText(link);
+      meldung(S.settings_sync_link_kopiert);
+    } catch {
+      linkfeld.select();
+      meldung(S.settings_sync_link_von_hand);
+    }
+  }
+
+  return [
+    schalter(S.settings_sync_toggle, state.settings.syncAktiv, (an) => setzenUndNeu("syncAktiv", an)),
+    h(
+      "div.feld",
+      {},
+      h("span.feld__beschriftung", {}, S.settings_sync_link_zeigen),
+      h(
+        "div.schnell__zeile",
+        { style: { gap: "8px" } },
+        linkfeld,
+        h("button.knopf.knopf--haupt", { onclick: () => void kopieren() }, S.settings_sync_link_kopieren),
+      ),
+      h("span.feld__hinweis", {}, S.settings_sync_link_zeigen_hint),
+    ),
+    h(
+      "div.chips",
+      {},
+      h(
+        "button.knopf",
+        { onclick: () => void anstossen({ still: false }) },
+        icon("wiederholen", 16),
+        S.settings_sync_jetzt,
+      ),
+      h("button.knopf.knopf--gefahr", { onclick: () => void trennen() }, S.settings_sync_trennen),
+    ),
+    h(
+      "span.feld__hinweis",
+      {},
+      state.settings.syncStand
+        ? S.settings_sync_stand(new Date(state.settings.syncStand).toLocaleString("de-DE"))
+        : S.settings_sync_nie,
+    ),
+    letzterAusgang ? h("span.feld__hinweis", {}, S.settings_sync_ergebnis[letzterAusgang.ergebnis] ?? "") : null,
+  ];
+}
+
+/**
+ * Die eigene Adresse — in der Hülle gibt es keine.
+ *
+ * Ihr Ursprung (`appassets.androidplatform.net`) ist eine örtliche Kennung und keine
+ * Adresse im Netz. Dort muss die Adresse aus dem Koppel-Link kommen.
+ */
+function eigeneAdresse() {
+  if (inHuelle()) return "";
+  return globalThis.location?.origin ?? "";
 }
 
 function gruppe(titel, ...kinder) {

@@ -11,7 +11,7 @@ hier nicht wegdiskutiert, sondern eingegrenzt:
 - **Der Abgleich ist aus**, bis man ihn einschaltet. Ohne ihn ändert sich nichts.
 - **Der Server ist deiner.** Derselbe Worker, der die Seite ausliefert.
 - **Er kann nichts lesen.** Was dort liegt, ist mit einem Schlüssel verschlüsselt, der aus
-  deiner Losung entsteht und das Gerät nie verlässt.
+  einem Geheimnis entsteht, das auf deinen Geräten bleibt.
 - **Es gibt kein Konto**, keine Anmeldung, keine Kennung, die dich beschreibt.
 
 Was der Server sieht: eine 43 Zeichen lange Kennung und einen Klumpen Bytes. Nicht, wem er
@@ -19,42 +19,51 @@ gehört, nicht wie viele Aufgaben darin stehen, nicht wovon sie handeln.
 
 ## Einschalten
 
-**Am Server ist nichts einzurichten.** Pushen genügt: Cloudflare baut neu, legt das
-Durable Object beim Ausrollen selbst an, und `/sync/…` antwortet.
+**Am Server ist nichts einzurichten.** Pushen genügt: Cloudflare baut neu, legt den
+Speicher beim Ausrollen selbst an, und `/sync/…` antwortet.
 
-**In der App:** Einstellungen → Geräteübergreifend → eine Losung eintippen → **Verbinden**.
-Auf jedem weiteren Gerät dieselbe Losung. Mehr gehört nicht dazu.
+**Auf dem ersten Gerät:** Einstellungen → Geräteübergreifend → **Abgleich einschalten**.
+Ein Knopf. Nichts auszudenken, nichts zu tippen, nichts abzuwarten.
 
-In der Android-Hülle kommt genau ein Feld dazu, siehe unten: die **Adresse der Ablage**.
+**Auf jedem weiteren Gerät:** Den **Koppel-Link** vom ersten Gerät öffnen. Fertig.
 
-### Warum hier nichts einzurichten ist
+In der Android-Hülle lässt sich kein Link „öffnen“ — sie wohnt an einem eigenen Ursprung.
+Dort gibt es stattdessen ein Feld: Link einfügen, **Koppeln**. Ein Handgriff, und die
+Adresse der Ablage kommt gleich mit.
 
-Vorher lag der Stand in KV, und dafür musste jemand von Hand im Dashboard eine Namespace
-anlegen und ihre Kennung in `wrangler.toml` eintragen. Wer den Schritt nicht kannte, hatte
-einen Abgleich, der nie funktioniert hat — und nichts sagte das, außer einer Meldung
-„nicht erreichbar“, die nach einer vorübergehenden Störung aussah.
+## Warum es keine Losung mehr gibt
 
-Ein Durable Object entsteht beim Ausrollen aus der Angabe in `wrangler.toml`. Es gibt keine
-Kennung, die man abschreiben, und keinen Schritt, den man vergessen kann.
+Vorher tippte man auf jedem Gerät denselben ausgedachten Satz. Daraus wurden mit PBKDF2
+über 310 000 Runden Schlüssel und Raumkennung abgeleitet — teuer sein **musste** das, weil
+in einem ausgedachten Satz wenig Zufall steckt und man das Raten künstlich verteuern muss.
 
-Der zweite Grund wiegt schwerer: **In KV hielt die Prüfung gegen gleichzeitiges Schreiben
-nicht, was sie versprach.** KV ist letztlich-konsistent — zwei Geräte konnten denselben
-Stempel lesen, beide für aktuell halten und beide schreiben. Genau der lautlose
-Datenverlust, gegen den der Stempel da ist. Ein Durable Object arbeitet einen Aufruf nach
-dem anderen ab; „lies den Stempel, vergleiche, schreibe“ ist dort **ein** Schritt.
+Der Preis dafür war überall spürbar: einen Satz ausdenken, ihn auf dem zweiten Gerät
+fehlerfrei abtippen, eine Sekunde warten — und beim Vertippen eine Meldung bekommen, die
+wie ein Serverfehler aussah. Dazu auf dem Telefon noch die Adresse der Ablage von Hand.
 
-## Die Losung
+Das Geheimnis kommt jetzt aus `crypto.getRandomValues`. **32 Byte echter Zufall sind nicht
+zu raten**, egal wie billig die Ableitung ist; PBKDF2 fällt damit weg und mit ihm die
+Wartezeit. Geteilt wird mit HKDF in Schlüssel und Raumkennung.
 
-Sie ist das Einzige, was zählt — und es gibt **keine Wiederherstellung**. Ist sie weg, ist
-der abgelegte Stand nicht mehr lesbar. Das ist kein Versäumnis, sondern die Folge davon,
-dass der Server nichts weiß: Wer sie zurücksetzen könnte, könnte auch mitlesen.
+Auf das zweite Gerät kommt es über den Koppel-Link:
 
-Die Losung selbst wird nirgends gespeichert. Aus ihr werden 512 Bit abgeleitet und in der
-Mitte geteilt: vorn der Schlüssel, hinten die Raumkennung. Beides aus demselben teuren
-Schritt (PBKDF2, 310 000 Runden) — wer die Kennung erraten will, muss denselben Aufwand
-treiben wie für den Schlüssel.
+```
+https://petodo.beispiel.workers.dev/#koppeln=<43 Zeichen>
+```
 
-Nimm einen Satz, keine acht Zeichen.
+**Hinter der Raute ist kein Zufall.** Was dort steht, schickt ein Browser nie an einen
+Server — es taucht in keinem Zugriffsprotokoll auf, in keinem `Referer`, in keinem
+Zwischenspeicher unterwegs. Und weil die Adresse mit im Link steht, ist auch die auf dem
+Telefon nichts mehr zum Abtippen.
+
+Der Tausch, ehrlich benannt: **Wer den Link hat, hat die Aufgaben.** Vorher war das
+Geheimnis in einem Kopf, jetzt ist es in einer Zeile, die man verschicken kann. Für einen
+Link an sich selbst ist das der richtige Tausch; er gehört nicht in einen Gruppenchat. Steht
+so auch in der App unter dem Link.
+
+Verloren gegangen ist damit nichts, was man wiederherstellen könnte — das ging vorher auch
+nicht. Ist das Geheimnis auf allen Geräten weg, ist der abgelegte Stand nicht mehr lesbar.
+Wer das ändern wollte, müsste jemanden einbauen, der mitlesen kann.
 
 ## Wie zusammengeführt wird
 
@@ -93,11 +102,13 @@ Die Hülle hat die `INTERNET`-Berechtigung — ausschließlich für diesen Abgle
 den nur, wenn er hier in den Einstellungen eingeschaltet ist. Zwei Dinge sind dabei anders
 als im Browser:
 
-- **Die Adresse der Ablage muss eingetragen sein.** Der Ursprung der Hülle
-  (`appassets.androidplatform.net`) ist eine örtliche Kennung, keine echte Adresse im
-  Netz — „leer lassen“ funktioniert nur im Browser, wo die Webseite und die Ablage
-  tatsächlich am selben Ursprung liegen. In der Hülle steht deshalb dieselbe Adresse wie
-  im Browser: die des eigenen Workers.
+- **Eingerichtet wird über den Koppel-Link, nicht über einen Knopf.** Der Ursprung der
+  Hülle (`appassets.androidplatform.net`) ist eine örtliche Kennung, keine Adresse im Netz.
+  Die Adresse der Ablage muss also von außen kommen — und genau die bringt der Link mit.
+- **In der Hülle gilt keine Sicherheitsrichtlinie aus `_headers`.** Die gilt nur für die
+  Webseite im Netz, wo `connect-src 'self'` richtig ist, weil Seite und Ablage denselben
+  Ursprung haben. In der Hülle haben sie das nie. Wer in `Vermittler.kt` eine Richtlinie
+  nachrüstet, muss `connect-src` für die Ablage öffnen — sonst stirbt der Abgleich lautlos.
 - **Der Server lässt genau diesen einen zusätzlichen Ursprung an die Antwort heran**
   (`worker/index.js`, `HUELLEN_URSPRUNG`) — die Ursprungsregel des Browsers gilt sonst
   auch für einen WebView, und ohne diese Freigabe käme die Antwort zwar an, aber niemand

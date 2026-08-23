@@ -82,11 +82,16 @@ Das hier ist später nicht mehr zu ändern, ohne alles anzufassen:
     Nur dort liegen „lies den Stempel, vergleiche, schreibe“ in einem Schritt. In KV war
     die Prüfung gegen gleichzeitiges Schreiben Zierde — und nebenbei brauchte KV einen
     Schritt im Dashboard, den zu vergessen einen Abgleich ergab, der nie lief.
-11. **Verweise zeigen auf den Titel, nicht auf eine Kennung.** `[[Steuer]]` tippt man,
+11. **Der Abgleich hat kein Passwort und keine Losung.** Das Geheimnis ist Zufall aus
+    `crypto.getRandomValues` und wandert über den Koppel-Link aufs nächste Gerät —
+    hinter der Raute, weil das ein Browser nie an einen Server schickt. Wer daraus wieder
+    etwas Getipptes macht, holt sich PBKDF2, die Wartezeit und die Vertipper zurück.
+    Der Preis steht dafür in der Oberfläche: Wer den Link hat, hat die Aufgaben.
+12. **Verweise zeigen auf den Titel, nicht auf eine Kennung.** `[[Steuer]]` tippt man,
     statt es nachzuschlagen. Der Preis ist ein Verweis, der nach dem Umbenennen ins Leere
     zeigt — dann sagt die Oberfläche das (`.verweis--leer`) und tut nicht so, als ginge er
     noch irgendwohin.
-12. **Zeit je Aufgabe wird aus den Fokusrunden gerechnet, nie mitgeschrieben.** Es gibt
+13. **Zeit je Aufgabe wird aus den Fokusrunden gerechnet, nie mitgeschrieben.** Es gibt
     keine zweite Stoppuhr; `jeAufgabe` in `src/domain/zeit.js` ist die einzige Stelle.
     Abgebrochene Runden zählen null — sonst wird Abbrechen zur Leistung.
 
@@ -219,7 +224,7 @@ jemand seine Daten schon verloren hat.
 - **Kein Inline-Skript und kein `style`-Attribut.** Die Sicherheitsrichtlinie erlaubt nur
   `'self'`; eine Ausnahme dafür wäre das Loch, durch das später alles andere passt.
 - Kein Netzzugriff aus der App heraus außer dem Geräteübergreifend-Abgleich, wenn er
-  eingeschaltet ist — an den eigenen Server, mit einer Losung, die das Gerät nie verlässt.
+  eingeschaltet ist — an den eigenen Server, mit einem Schlüssel, der die Geräte nie verlässt.
   Kein Konto, keine Telemetrie.
 - **Nach jeder Änderung an der Oberfläche `npm run browsertest` und `npm run featuretest`
   laufen lassen.** Der zweite fährt einen echten Zeiger über die Zeilen — eine Geste, die

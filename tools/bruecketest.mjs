@@ -89,11 +89,28 @@ const kontext = await browser.newContext({
 });
 await kontext.addInitScript(HUELLE);
 
+/**
+ * Was der Abgleich meldet, gehört hier nicht her.
+ *
+ * Der Vertrag zur Hülle wird gegen `tools/serve.py` geprüft — einen Dateiserver, der
+ * `/sync/…` nicht kennt und auf `PUT` mit 501 antwortet. Sobald der Test das Koppeln
+ * durchspielt, sind diese beiden Meldungen die erwartete Folge und kein Befund.
+ *
+ * Ob der Abgleich **wirklich** funktioniert, prüft `tools/synctest.mjs` gegen den echten
+ * Worker. Hier wird nur geprüft, dass die Hülle ihn richtig einrichtet.
+ */
+const erwartet = (text) => text.includes("/sync/") || text.includes("Unsupported method ('PUT')");
+
 const seite = await kontext.newPage();
 seite.on("console", (m) => {
-  if (m.type() === "error") konsolenfehler.push(m.text());
+  // Bei „Failed to load resource“ steht die Adresse nicht im Text, sondern im Ort.
+  if (m.type() === "error" && !erwartet(m.text()) && !erwartet(m.location()?.url ?? "")) {
+    konsolenfehler.push(m.text());
+  }
 });
-seite.on("pageerror", (e) => konsolenfehler.push(e.message));
+seite.on("pageerror", (e) => {
+  if (!erwartet(e.message)) konsolenfehler.push(e.message);
+});
 
 await seite.goto(ADRESSE, { waitUntil: "networkidle" });
 await seite.waitForSelector(".rahmen");
@@ -298,22 +315,51 @@ pruefe(
 
 console.log("\nAbgleich in der Hülle");
 pruefe(
-  "der Abgleich steht wie im Browser da, mit einem Hinweis zum eigenen Ursprung",
-  (await seite.locator('button:has-text("Verbinden")').count()) === 1 &&
-    (await seite.locator(".einstellungen").innerText()).includes("eigenen Ursprung"),
+  "es gibt keine Losung mehr, sondern ein Feld für den Koppel-Link",
+  (await seite.locator('.einstellungen input[type="password"]').count()) === 0 &&
+    (await seite.locator('.einstellungen input[placeholder*="Koppel-Link"]').count()) === 1,
 );
 pruefe(
-  "die Adresse der Ablage steht von selbst offen, statt hinter einem Klapptext versteckt zu sein",
-  await seite.locator(".einstellungen details[open]").isVisible(),
+  "und der Hinweis sagt, dass der Link hier nötig ist",
+  (await seite.locator(".einstellungen").innerText()).includes("Adresse deines Servers mit"),
 );
 
-await seite.locator('.einstellungen input[type="password"]').fill("eine Losung");
-await seite.locator('button:has-text("Verbinden")').click();
-await seite.waitForTimeout(300);
+// Unbrauchbares darf nicht stillschweigend etwas einrichten.
+await seite.locator('.einstellungen input[placeholder*="Koppel-Link"]').fill("irgendwas");
+await seite.locator('.einstellungen button:has-text("Koppeln")').click();
+await seite.waitForTimeout(400);
 pruefe(
-  "ohne Adresse verbindet er nicht, sondern sagt warum",
-  (await seite.locator(".meldung__text").count()) === 1 &&
-    (await seite.locator(".meldung__text").innerText()).includes("eigenen Ursprung"),
+  "was kein Koppel-Link ist, richtet nichts ein und sagt das",
+  (await seite.locator(".meldung__text").innerText()).includes("kein Koppel-Link") &&
+    (await seite.locator('button:has-text("Jetzt abgleichen")').count()) === 0,
+);
+
+// Der echte Weg: einfügen, koppeln. Die Adresse kommt aus dem Link — in der Hülle gibt es
+// keine eigene, und genau daran ist der Abgleich dort vorher gescheitert.
+//
+// Genommen wird der eigene Ursprung, obwohl es im Betrieb ein fremder ist: Die Seite läuft
+// hier unter der echten Sicherheitsrichtlinie aus `_headers`, und deren `connect-src
+// 'self'` verbietet den Abgleich woandershin. In der Hülle gibt es diese Richtlinie nicht
+// (siehe `Vermittler.kt`) — hier schon, und ein geblockter Abruf wäre ein Konsolenfehler,
+// der den ganzen Lauf rot färbt.
+//
+// Geprüft wird trotzdem das Richtige: Ohne die Adresse aus dem Link bliebe sie leer, denn
+// `eigeneAdresse()` gibt in der Hülle nichts zurück.
+const KOPPEL_ADRESSE = await seite.evaluate(() => globalThis.location.origin);
+await seite.locator('.einstellungen input[placeholder*="Koppel-Link"]').fill(
+  `  <${KOPPEL_ADRESSE}/#koppeln=${"K".repeat(43)}>  `,
+);
+await seite.locator('.einstellungen button:has-text("Koppeln")').click();
+await seite.waitForTimeout(1200);
+
+pruefe(
+  "ein eingefügter Link richtet den Abgleich ein",
+  (await seite.locator('button:has-text("Jetzt abgleichen")').count()) === 1,
+);
+pruefe(
+  "und übernimmt die Adresse aus dem Link, nicht den eigenen Ursprung",
+  (await seite.locator("input[readonly]").first().inputValue()).startsWith(KOPPEL_ADRESSE),
+  await seite.locator("input[readonly]").first().inputValue(),
 );
 
 // ------------------------------------------------------------------------ Sicherung

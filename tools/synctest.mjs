@@ -7,7 +7,7 @@
  * Geprüft wird das, woran selbstgebauter Abgleich scheitert: dass gleichzeitige Arbeit auf
  * beiden Seiten überlebt, und dass **Gelöschtes gelöscht bleibt**.
  *
- * Voraussetzung: `npx wrangler dev --port 8787` läuft (mit KV-Bindung).
+ * Voraussetzung: `npx wrangler dev --port 8787` läuft. Einzurichten ist dort nichts.
  * Aufruf: `node tools/synctest.mjs [adresse]`
  */
 
@@ -17,7 +17,6 @@ const require = createRequire(import.meta.url);
 const { chromium } = require("/opt/node22/lib/node_modules/playwright");
 
 const ADRESSE = process.argv[2] ?? "http://127.0.0.1:8787/";
-const LOSUNG = `probe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 let bestanden = 0;
 const fehlgeschlagen = [];
@@ -37,15 +36,29 @@ const browser = await chromium.launch();
 console.log("\nGerät A richtet den Abgleich ein");
 const a = await geraet("A");
 await eingeben(a, "Zahnarzt");
-await verbinden(a, LOSUNG);
-pruefe("A ist verbunden", await verbundenIst(a));
+await einschalten(a);
+pruefe("ein Knopf genügt — nichts zu tippen, nichts abzuwarten", await verbundenIst(a));
 
-console.log("\nGerät B kommt dazu");
-const b = await geraet("B");
-pruefe("B fängt leer an", (await zeilen(b)).length === 0, (await zeilen(b)).join(", "));
+const link = await koppelLinkVon(a);
+pruefe("A zeigt einen Koppel-Link", /#koppeln=[A-Za-z0-9_-]{43}$/.test(link), link);
+pruefe("und der Link trägt die Adresse der Ablage", link.startsWith(ADRESSE.replace(/\/+$/, "")), link);
 
-await verbinden(b, LOSUNG);
-pruefe("B bekommt beim Verbinden alles", (await zeilen(b)).includes("Zahnarzt"), (await zeilen(b)).join(", "));
+console.log("\nGerät B kommt dazu — nur über den Link");
+const b = await geraet("B", link);
+pruefe(
+  "das Öffnen des Links koppelt von allein",
+  await verbundenIst(b),
+);
+pruefe(
+  "B bekommt dabei gleich alles",
+  (await zeilen(b)).includes("Zahnarzt"),
+  (await zeilen(b)).join(", "),
+);
+pruefe(
+  "und das Geheimnis bleibt nicht in der Adresszeile stehen",
+  !(await b.seite.evaluate(() => globalThis.location.hash)).includes("koppeln"),
+  await b.seite.evaluate(() => globalThis.location.hash),
+);
 
 console.log("\nBeide arbeiten gleichzeitig");
 await eingeben(a, "Steuer");
@@ -78,10 +91,15 @@ await abgleichen(a);
 await abgleichen(b);
 pruefe("und sie kommt nicht zurück", !(await zeilen(b)).includes("Fahrrad"), (await zeilen(b)).join(", "));
 
-console.log("\nEine falsche Losung öffnet nichts");
-const c = await geraet("C");
-await verbinden(c, `${LOSUNG}-daneben`);
+console.log("\nEin fremdes Geheimnis öffnet nichts");
+// Ein anderer Zufall heißt ein anderer Raum. Dass dort nichts liegt, ist der Beweis, dass
+// der Raum aus dem Geheimnis kommt und nicht aus der Adresse.
+const c = await geraet("C", `${ADRESSE.replace(/\/+$/, "")}/#koppeln=${"Z".repeat(43)}`);
 pruefe("C sieht die fremden Aufgaben nicht", (await zeilen(c)).length === 0, (await zeilen(c)).join(", "));
+pruefe(
+  "und landet in einem anderen Raum",
+  (await raumVon(c)) !== (await raumVon(a)),
+);
 
 console.log("\nDer Server versteht nichts von dem, was er hat");
 const abgelegt = await a.seite.evaluate(async (adresse) => {
@@ -102,13 +120,17 @@ if (fehlgeschlagen.length > 0) process.exit(1);
 
 // --------------------------------------------------------------------------- Hilfen
 
-async function geraet(name) {
+async function geraet(name, adresse = ADRESSE) {
   const kontext = await browser.newContext({ locale: "de-DE", timezoneId: "Europe/Berlin" });
   const seite = await kontext.newPage();
   seite.on("pageerror", (fehler) => console.log(`  [${name}] ${fehler.message}`));
 
-  await seite.goto(ADRESSE, { waitUntil: "networkidle" });
+  // Nicht auf Netzruhe warten: Ein Koppel-Link stößt sofort einen Abgleich an, und der
+  // hält die Leitung länger wach, als `networkidle` Geduld hat.
+  await seite.goto(adresse, { waitUntil: "domcontentloaded" });
   await seite.waitForSelector(".rahmen");
+  // Ein Koppel-Link richtet ein und schließt den Willkommensdialog gleich mit.
+  await seite.waitForTimeout(1200);
 
   const dialog = seite.locator("dialog[open]");
   if ((await dialog.count()) > 0) {
@@ -118,13 +140,18 @@ async function geraet(name) {
   return { name, kontext, seite };
 }
 
-async function verbinden(geraet, losung) {
+async function einschalten(geraet) {
   await klicken(geraet, "Einstellungen");
-  await geraet.seite.locator('input[type="password"]').fill(losung);
-  await klicken(geraet, "Verbinden");
-  // Die Ableitung ist absichtlich teuer; danach folgt der erste Abgleich.
-  await geraet.seite.waitForTimeout(3500);
+  await klicken(geraet, "Abgleich einschalten");
+  await geraet.seite.waitForTimeout(1400);
   await klicken(geraet, "Heute");
+}
+
+async function koppelLinkVon(geraet) {
+  await klicken(geraet, "Einstellungen");
+  const wert = await geraet.seite.locator("input[readonly]").first().inputValue();
+  await klicken(geraet, "Heute");
+  return wert;
 }
 
 async function verbundenIst(geraet) {

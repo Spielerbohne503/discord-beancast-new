@@ -497,11 +497,16 @@ const EINSTELLUNGEN = {
 
   // ------------------------------------------------------------------- Abgleich
   //
-  // Standardmäßig aus. Die Losung selbst wird **nie** gespeichert — nur das, was daraus
-  // abgeleitet wurde. Wer das Gerät in die Hand bekommt, hat ohnehin Zugriff auf die
-  // Aufgaben; wer den Server hat, bekommt damit trotzdem nichts.
+  // Standardmäßig aus. Das Geheimnis liegt **hier auf dem Gerät** und geht nie an den
+  // Server: Der bekommt nur `syncRaum` zu sehen, und der verrät nichts über den Schlüssel.
+  // Wer das Gerät in die Hand bekommt, hat ohnehin Zugriff auf die Aufgaben selbst.
+  //
+  // `syncGeheimnis` steht neben dem Abgeleiteten, weil sich der Koppel-Link sonst nie
+  // wieder anzeigen ließe — und ein Link, den man nur einmal sieht, ist einer, den man
+  // beim dritten Gerät nicht mehr hat.
   syncAktiv: false,
   syncAdresse: "",
+  syncGeheimnis: "",
   syncRaum: "",
   syncSchluessel: "",
   syncStand: null,
