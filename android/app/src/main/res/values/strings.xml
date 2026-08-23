@@ -14,4 +14,12 @@
 
     <string name="aktion_erledigt">Erledigt</string>
     <string name="aktion_morgen">Morgen</string>
+
+    <!--
+        Das Sichern läuft außerhalb des WebView, über die Systemauswahl. Die Rückmeldung
+        gehört deshalb auch dorthin: Die Seite weiß gar nicht, ob es geklappt hat.
+    -->
+    <string name="sicherung_gespeichert">Sicherung gespeichert</string>
+    <string name="sicherung_fehlgeschlagen">Die Sicherung ließ sich nicht schreiben</string>
+    <string name="sicherung_kein_ziel">Auf diesem Gerät gibt es keine App, die Dateien ablegt</string>
 </resources>

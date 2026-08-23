@@ -23,6 +23,7 @@
  * | `erlaubnisAnfragen()`           | Fragt den Nutzer (Android 13 und neuer)               |
  * | `exakteWeckerErlaubt()`         | Darf minutengenau geweckt werden?                     |
  * | `fassung()`                     | Fassungsnummer der Hülle, für die Einstellungen       |
+ * | `dateiSichern(name, inhalt)`    | Eine Datei ablegen — die Hülle fragt wohin            |
  *
  * Der Zeitplan ist eine Liste aus `{ id, at, titel, stufe, ton }`.
  */
@@ -71,6 +72,32 @@ export function exakteWeckerErlaubt() {
   try {
     return huelle()?.exakteWeckerErlaubt() === true;
   } catch {
+    return false;
+  }
+}
+
+/**
+ * Reicht eine Datei an die Hülle weiter, damit sie sie ablegen kann.
+ *
+ * Im Browser speichert ein `<a download>` mit einem `blob:`-Verweis. In einem WebView tut
+ * derselbe Verweis **nichts**: Ein Download braucht dort einen `DownloadListener`, und der
+ * kann einen `blob:`-Verweis nicht auflösen — die Bytes liegen im Browser, nicht im
+ * Dateisystem. Deshalb wandert der Inhalt hier über die Brücke, und die Hülle fragt den
+ * Nutzer über die Systemauswahl, wohin damit.
+ *
+ * Gibt zurück, ob die Hülle es übernommen hat. `false` heißt: Es ist ein Browser, mach es
+ * wie bisher.
+ */
+export function dateiSichern(name, inhalt) {
+  const ziel = huelle();
+  if (ziel === null || typeof ziel.dateiSichern !== "function") return false;
+
+  try {
+    ziel.dateiSichern(name, inhalt);
+    return true;
+  } catch {
+    // Eine ältere Hülle kennt das nicht. Dann soll der Browserweg greifen, statt dass gar
+    // nichts passiert.
     return false;
   }
 }

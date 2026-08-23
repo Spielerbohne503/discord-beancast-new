@@ -19,25 +19,29 @@ gehört, nicht wie viele Aufgaben darin stehen, nicht wovon sie handeln.
 
 ## Einschalten
 
-**1. Speicher anlegen.** In Cloudflare: *Storage & Databases → KV → Create*. Der Name ist
-egal; du brauchst die **ID**.
+**Am Server ist nichts einzurichten.** Pushen genügt: Cloudflare baut neu, legt das
+Durable Object beim Ausrollen selbst an, und `/sync/…` antwortet.
 
-**2. Eintragen.** In `wrangler.toml` die drei Zeilen am Ende entkommentieren und die ID
-einsetzen:
+**In der App:** Einstellungen → Geräteübergreifend → eine Losung eintippen → **Verbinden**.
+Auf jedem weiteren Gerät dieselbe Losung. Mehr gehört nicht dazu.
 
-```toml
-[[kv_namespaces]]
-binding = "PETODO"
-id = "…deine Kennung…"
-```
+In der Android-Hülle kommt genau ein Feld dazu, siehe unten: die **Adresse der Ablage**.
 
-**3. Pushen.** Cloudflare baut neu, und `/sync/…` antwortet.
+### Warum hier nichts einzurichten ist
 
-**4. In der App:** Einstellungen → Geräteübergreifend → eine Losung eintippen →
-**Verbinden**. Auf jedem weiteren Gerät dieselbe Losung. Mehr gehört nicht dazu.
+Vorher lag der Stand in KV, und dafür musste jemand von Hand im Dashboard eine Namespace
+anlegen und ihre Kennung in `wrangler.toml` eintragen. Wer den Schritt nicht kannte, hatte
+einen Abgleich, der nie funktioniert hat — und nichts sagte das, außer einer Meldung
+„nicht erreichbar“, die nach einer vorübergehenden Störung aussah.
 
-Solange Schritt 1–3 fehlen, läuft die Webseite genau wie bisher; der Abgleich sagt dann
-„kein Speicher gebunden“ und rührt nichts an.
+Ein Durable Object entsteht beim Ausrollen aus der Angabe in `wrangler.toml`. Es gibt keine
+Kennung, die man abschreiben, und keinen Schritt, den man vergessen kann.
+
+Der zweite Grund wiegt schwerer: **In KV hielt die Prüfung gegen gleichzeitiges Schreiben
+nicht, was sie versprach.** KV ist letztlich-konsistent — zwei Geräte konnten denselben
+Stempel lesen, beide für aktuell halten und beide schreiben. Genau der lautlose
+Datenverlust, gegen den der Stempel da ist. Ein Durable Object arbeitet einen Aufruf nach
+dem anderen ab; „lies den Stempel, vergleiche, schreibe“ ist dort **ein** Schritt.
 
 ## Die Losung
 
@@ -75,7 +79,7 @@ Takt: Es ändert sich ja nichts, wenn niemand etwas tut. Dazu der Knopf in den E
 
 ```
 npm test                                   # Fachlogik und Server, ohne Netz
-npx wrangler dev --port 8787               # mit entkommentierter KV-Bindung
+npx wrangler dev --port 8787               # nichts zu entkommentieren
 node tools/synctest.mjs                    # zwei Browser-Kontexte, ein Worker
 ```
 

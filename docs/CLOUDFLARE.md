@@ -79,8 +79,10 @@ Der Umzug geht über eine Sicherung: Einstellungen → herunterladen, an der neu
 einlesen.
 
 **Die Android-Hülle ist davon unberührt.** Sie lädt die Dateien aus dem Paket, nicht aus
-dem Netz — sie hat dafür nicht einmal eine Berechtigung. Ein Deploy ändert an der App auf
-dem Telefon nichts, und umgekehrt sind es zwei getrennte Datenbestände.
+dem Netz — `Vermittler.kt` beantwortet jede Anfrage an ihren Ursprung selbst. Ein Deploy
+ändert an der App auf dem Telefon nichts, und umgekehrt sind es zwei getrennte
+Datenbestände. Zusammen kommen sie nur über den Abgleich (`docs/SYNC.md`) oder über eine
+Sicherung.
 
 ## Ohne Cloudflare
 

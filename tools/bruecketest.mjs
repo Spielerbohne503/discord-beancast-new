@@ -59,6 +59,8 @@ const HUELLE = `
     set gefragt(wert) { schreib("stub.gefragt", wert); },
     get erlaubt() { return lies("stub.erlaubt", true); },
     set erlaubt(wert) { schreib("stub.erlaubt", wert); },
+    get gesichert() { return lies("stub.gesichert", null); },
+    set gesichert(wert) { schreib("stub.gesichert", wert); },
   };
 
   globalThis.Petodo = {
@@ -73,6 +75,9 @@ const HUELLE = `
     erlaubnisAnfragen: () => { globalThis.__hueller.gefragt = globalThis.__hueller.gefragt + 1; },
     exakteWeckerErlaubt: () => true,
     fassung: () => "1.0.0 (Test)",
+    // Die echte Hülle reicht das an die Systemauswahl weiter. Hier wird nur festgehalten,
+    // **dass** und **womit** sie gerufen wurde — mehr ist ohne Telefon nicht zu prüfen.
+    dateiSichern: (name, inhalt) => { globalThis.__hueller.gesichert = { name, inhalt }; },
   };
 `;
 
@@ -309,6 +314,42 @@ pruefe(
   "ohne Adresse verbindet er nicht, sondern sagt warum",
   (await seite.locator(".meldung__text").count()) === 1 &&
     (await seite.locator(".meldung__text").innerText()).includes("eigenen Ursprung"),
+);
+
+// ------------------------------------------------------------------------ Sicherung
+
+console.log("\nSicherung in der Hülle");
+await seite.locator('button:has-text("Sicherung herunterladen")').click();
+await seite.waitForTimeout(600);
+
+const gesichert = await seite.evaluate(() => globalThis.__hueller.gesichert);
+pruefe(
+  "„Herunterladen“ reicht die Datei an die Hülle weiter, statt ins Leere zu klicken",
+  gesichert !== null,
+);
+pruefe(
+  "sie trägt einen Namen mit Datum und endet auf .json",
+  Boolean(gesichert?.name?.endsWith(".json")),
+  gesichert?.name,
+);
+pruefe(
+  "und enthält die Tabellen der Sicherung, nicht bloß eine Hülse",
+  (() => {
+    try {
+      const inhalt = JSON.parse(gesichert?.inhalt ?? "null");
+      return inhalt?.version === 1 && Array.isArray(inhalt?.tables?.tasks);
+    } catch {
+      return false;
+    }
+  })(),
+);
+
+// Das Gegenstück lässt sich hier nicht klicken — eine Dateiauswahl gehört dem System.
+// Geprüft wird deshalb, dass die Seite überhaupt eine anbietet: Ohne dieses Feld hätte die
+// Hülle nichts, was sie über `onShowFileChooser` beantworten könnte.
+pruefe(
+  "„Einlesen“ hängt an einer echten Dateiauswahl",
+  (await seite.locator('.einstellungen input[type="file"]').count()) === 1,
 );
 
 // -------------------------------------------------------------------------- Schluss

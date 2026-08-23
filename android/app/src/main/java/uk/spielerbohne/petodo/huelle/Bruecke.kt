@@ -28,6 +28,7 @@ class Bruecke(
         fun erlaubnisAnfragen()
         fun genaueWeckerErlaubt(): Boolean
         fun fassung(): String
+        fun dateiSichern(name: String, inhalt: String)
     }
 
     /**
@@ -101,6 +102,20 @@ class Bruecke(
 
     @JavascriptInterface
     fun fassung(): String = umgebung.fassung()
+
+    /**
+     * Eine Datei ablegen, wohin der Nutzer sie haben will.
+     *
+     * Die Webseite kann das nicht selbst: Ihr `<a download>` mit einem `blob:`-Verweis tut
+     * in einem WebView nichts. Der Inhalt kommt deshalb als Zeichenkette herüber, und die
+     * Systemauswahl entscheidet über den Ort — ohne Speicherberechtigung, denn dort
+     * schreibt nicht die App, sondern der Nutzer.
+     */
+    @JavascriptInterface
+    fun dateiSichern(name: String, inhalt: String) {
+        if (name.isEmpty()) return
+        umgebung.dateiSichern(name, inhalt)
+    }
 
     companion object {
         /** Unter diesem Namen steht die Brücke im JavaScript: `window.Petodo`. */

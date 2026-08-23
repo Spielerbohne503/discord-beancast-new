@@ -10,10 +10,13 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.view.ViewGroup
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import android.app.Activity
 
 /**
@@ -28,6 +31,12 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private lateinit var vermittler: Vermittler
     private val hauptfaden = Handler(Looper.getMainLooper())
+
+    /** Läuft gerade eine Dateiauswahl aus `<input type="file">`, wartet hier ihr Rückruf. */
+    private var dateiRueckruf: ValueCallback<Array<Uri>>? = null
+
+    /** Was gesichert werden soll, solange der Nutzer noch den Ort aussucht. */
+    private var zuSichern: String? = null
 
     override fun onCreate(zustand: Bundle?) {
         super.onCreate(zustand)
@@ -88,6 +97,36 @@ class MainActivity : Activity() {
 
                     nachDraussen(adresse)
                     return true
+                }
+            }
+
+            /**
+             * Ohne das hier tut `<input type="file">` **gar nichts**.
+             *
+             * Ein WebView öffnet von sich aus keine Dateiauswahl; die Voreinstellung sagt
+             * schlicht „nicht behandelt“, und der Knopf „Sicherung einlesen“ bleibt tot —
+             * ohne Fehler, ohne Meldung, ohne Spur im Protokoll.
+             */
+            webChromeClient = object : WebChromeClient() {
+                override fun onShowFileChooser(
+                    ansicht: WebView,
+                    rueckruf: ValueCallback<Array<Uri>>,
+                    einzelheiten: FileChooserParams,
+                ): Boolean {
+                    // Eine noch offene Auswahl bekommt ihr `null`, sonst wartet die Seite
+                    // für immer auf eine Antwort, die nie kommt.
+                    dateiRueckruf?.onReceiveValue(null)
+                    dateiRueckruf = rueckruf
+
+                    val absicht = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                        .addCategory(Intent.CATEGORY_OPENABLE)
+                        .setType("*/*")
+
+                    return runCatching { startActivityForResult(absicht, ANFRAGE_DATEI_OEFFNEN) }
+                        .fold(onSuccess = { true }, onFailure = {
+                            dateiRueckruf = null
+                            false
+                        })
                 }
             }
 
@@ -155,6 +194,72 @@ class MainActivity : Activity() {
         override fun genaueWeckerErlaubt(): Boolean = Wecker.genauErlaubt(this@MainActivity)
 
         override fun fassung(): String = BuildConfig.VERSION_NAME
+
+        /**
+         * Der Aufruf kommt aus dem JavaScript-Faden; eine Activity startet nur im Hauptfaden.
+         */
+        override fun dateiSichern(name: String, inhalt: String) {
+            hauptfaden.post {
+                zuSichern = inhalt
+
+                val absicht = Intent(Intent.ACTION_CREATE_DOCUMENT)
+                    .addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType("application/json")
+                    .putExtra(Intent.EXTRA_TITLE, name)
+
+                val gestartet = runCatching { startActivityForResult(absicht, ANFRAGE_DATEI_SICHERN) }.isSuccess
+                if (!gestartet) {
+                    zuSichern = null
+                    melden(getString(R.string.sicherung_kein_ziel))
+                }
+            }
+        }
+    }
+
+    /**
+     * Zwei Wege zurück: die gewählte Datei zum Einlesen, der gewählte Ort zum Sichern.
+     *
+     * Beide brauchen eine Antwort, auch wenn der Nutzer abbricht. Beim Einlesen wartet
+     * sonst die Seite für immer, beim Sichern bliebe der Inhalt im Speicher liegen.
+     */
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(anfrage: Int, ergebnis: Int, daten: Intent?) {
+        super.onActivityResult(anfrage, ergebnis, daten)
+
+        if (anfrage == ANFRAGE_DATEI_OEFFNEN) {
+            val rueckruf = dateiRueckruf ?: return
+            dateiRueckruf = null
+            rueckruf.onReceiveValue(
+                if (ergebnis == RESULT_OK) WebChromeClient.FileChooserParams.parseResult(ergebnis, daten) else null,
+            )
+            return
+        }
+
+        if (anfrage == ANFRAGE_DATEI_SICHERN) {
+            val inhalt = zuSichern
+            zuSichern = null
+
+            val ziel = daten?.data
+            if (ergebnis != RESULT_OK || inhalt == null || ziel == null) return
+
+            val geschrieben = runCatching {
+                contentResolver.openOutputStream(ziel)?.use { strom ->
+                    strom.write(inhalt.toByteArray(Charsets.UTF_8))
+                } ?: error("kein Strom")
+            }.isSuccess
+
+            melden(getString(if (geschrieben) R.string.sicherung_gespeichert else R.string.sicherung_fehlgeschlagen))
+        }
+    }
+
+    /**
+     * Die Rückmeldung kommt vom System, nicht von der Seite.
+     *
+     * Das Speichern selbst läuft außerhalb des WebView — eine Meldung *in* der Seite
+     * behauptete einen Erfolg, den die Seite gar nicht kennt.
+     */
+    private fun melden(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
     }
 
     private fun einstellungenOeffnen() {
@@ -165,5 +270,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val ANFRAGE_MELDUNGEN = 1
+        private const val ANFRAGE_DATEI_OEFFNEN = 2
+        private const val ANFRAGE_DATEI_SICHERN = 3
     }
 }

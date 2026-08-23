@@ -10,7 +10,7 @@ import { parseHhMm } from "../../domain/time.js";
 import * as repo from "../../data/repo.js";
 import { clearAll } from "../../data/db.js";
 import { backupFileName, exportBackup, importBackup } from "../../data/backupstore.js";
-import { erinnerungenErlaubt, erlaubnisAnfragen, exakteWeckerErlaubt, huellenFassung, inHuelle } from "../bruecke.js";
+import { dateiSichern, erinnerungenErlaubt, erlaubnisAnfragen, exakteWeckerErlaubt, huellenFassung, inHuelle } from "../bruecke.js";
 import { ausLosung } from "../../data/krypto.js";
 import { SKINS, naechsteGestalt, verfuegbar } from "../../domain/skins.js";
 import { levelForXp } from "../../domain/pet.js";
@@ -434,10 +434,15 @@ function daten() {
 async function herunterladen() {
   const jetzt = Date.now();
   const text = await exportBackup(jetzt);
+  const name = backupFileName(jetzt);
+
+  // In der Hülle tut ein `blob:`-Verweis nichts — dort geht die Datei über die Brücke.
+  if (dateiSichern(name, text)) return;
+
   const blob = new Blob([text], { type: "application/json" });
   const adresse = URL.createObjectURL(blob);
 
-  const verweis = h("a", { href: adresse, download: backupFileName(jetzt) });
+  const verweis = h("a", { href: adresse, download: name });
   document.body.append(verweis);
   verweis.click();
   verweis.remove();

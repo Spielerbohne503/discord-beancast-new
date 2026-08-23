@@ -15,7 +15,10 @@ compatibility_date = "2026-08-20"
 # `worker/index.js` beantwortet ausschließlich `/sync/…`; alles andere holt Cloudflare aus
 # `dist/`. Damit liegt der Abgleich am **selben Ursprung** wie die App — die
 # Sicherheitsrichtlinie braucht keine Ausnahme, und CORS gibt es gar nicht erst.
-main = "worker/index.js"
+#
+# Der Einstieg ist `entry.js` und nicht `index.js`: Nur `entry.js` zieht
+# `cloudflare:workers` herein. `index.js` bleibt dadurch mit `node --test` prüfbar.
+main = "worker/entry.js"
 
 # Ausgeliefert wird `dist/` — nicht das Wurzelverzeichnis. Cloudflare lädt alles hoch, was
 # im angegebenen Verzeichnis liegt; zeigte es auf die Wurzel, stünde `.git` mit der ganzen
@@ -38,11 +41,23 @@ binding = "ASSETS"
 
 # ------------------------------------------------------------------------- Abgleich
 #
-# Ohne diese Bindung läuft die Webseite genau wie bisher; der Abgleich sagt dann „kein
-# Speicher gebunden“ und rührt nichts an. Zum Einschalten in Cloudflare eine KV-Namespace
-# anlegen, deren `id` hier eintragen und die drei Zeilen entkommentieren.
-# Einzelheiten in `docs/SYNC.md`.
+# Ein Durable Object je Raum, mit SQLite als Speicher.
 #
-# [[kv_namespaces]]
-# binding = "PETODO"
-# id = "hier-die-kennung-aus-cloudflare"
+# **Hier ist nichts einzutragen und nichts zu entkommentieren.** Das Objekt entsteht beim
+# Ausrollen von selbst; es gibt keine Kennung, die jemand aus dem Dashboard abschreiben
+# müsste. Genau daran ist die vorherige Fassung mit KV gescheitert: Wer den Schritt nicht
+# kannte, hatte einen Abgleich, der nie lief — und nichts sagte das.
+#
+# Der zweite Grund steht in `worker/raum.js`: Ein Objekt arbeitet einen Aufruf nach dem
+# anderen ab. Damit ist die Prüfung „gehst du vom aktuellen Stand aus?“ tatsächlich ein
+# Schritt. In KV war sie es nie.
+
+[[durable_objects.bindings]]
+name = "RAUM"
+class_name = "Raum"
+
+# `new_sqlite_classes` statt `new_classes`: SQLite-gestützte Objekte sind die, die es auch
+# im kostenlosen Tarif gibt.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Raum"]

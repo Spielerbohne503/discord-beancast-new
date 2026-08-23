@@ -19,6 +19,8 @@ src/ui/       Ansichten. Bauen Elemente, halten keinen eigenen Zustand.
 src/styles/   Gestaltung. tokens → base → components → layout → orb → views.
 test/         node --test. Fachlogik plus zwei Wächter über den Quelltext.
 tools/        Entwicklungsserver, Bildschirmfotos, Durchlauf im Browser.
+worker/       Der Ablageort für den Abgleich. `index.js` ist ohne Cloudflare prüfbar;
+              nur `entry.js` zieht `cloudflare:workers` herein.
 ```
 
 ## Befehle
@@ -76,6 +78,10 @@ Das hier ist später nicht mehr zu ändern, ohne alles anzufassen:
 9. **Alle sichtbaren Texte stehen in `src/ui/strings.js`.**
 10. **Der Abgleich führt je Zeile zusammen, nie je Datei.** Wer das ändert, verliert bei
     jedem Zusammentreffen zweier Geräte die Arbeit eines der beiden.
+    Der Stand liegt je Raum in einem **Durable Object** (`worker/raum.js`) und nicht in KV:
+    Nur dort liegen „lies den Stempel, vergleiche, schreibe“ in einem Schritt. In KV war
+    die Prüfung gegen gleichzeitiges Schreiben Zierde — und nebenbei brauchte KV einen
+    Schritt im Dashboard, den zu vergessen einen Abgleich ergab, der nie lief.
 11. **Verweise zeigen auf den Titel, nicht auf eine Kennung.** `[[Steuer]]` tippt man,
     statt es nachzuschlagen. Der Preis ist ein Verweis, der nach dem Umbenennen ins Leere
     zeigt — dann sagt die Oberfläche das (`.verweis--leer`) und tut nicht so, als ginge er
@@ -127,9 +133,9 @@ Dazu die technischen Beigaben, die den Ton tragen: gestrichelte Hilfslinien,
 Zählmarken in Klammern („(3)“), Beschriftungen in versaler Schreibmaschinenschrift,
 Auszeichnung schwer, schmal und versal.
 
-**Keine Webschrift.** Die App lädt nichts nach; in der Android-Hülle gibt es dafür nicht
-einmal eine Berechtigung. Was zählt, ist die Anmutung, und die stellt jedes System aus dem
-her, was es hat.
+**Keine Webschrift.** Die App lädt nichts nach — auch die Hülle nicht, deren Netzerlaubnis
+ausschließlich dem Abgleich dient. Was zählt, ist die Anmutung, und die stellt jedes System
+aus dem her, was es hat.
 
 **Zwei Fassungen, hell und dunkel** — dieselbe Sprache, getauschte Rollen. Das ist keine
 Bequemlichkeit: Die Acidfarbe leuchtet auf schwarzem Papier stärker als auf weißem. Die

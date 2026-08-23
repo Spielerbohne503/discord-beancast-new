@@ -78,9 +78,9 @@
   /*
    * Die Auszeichnungsschrift.
    *
-   * Keine Webschrift: Die App lädt nichts nach, und in der Android-Hülle gibt es dafür
-   * nicht einmal eine Berechtigung. Was zählt, ist die Anmutung — schwer, schmal,
-   * versal — und die stellt jedes System aus dem her, was es hat.
+   * Keine Webschrift: Die App lädt nichts nach — auch die Hülle nicht, deren
+   * Netzerlaubnis ausschließlich dem Abgleich dient. Was zählt, ist die Anmutung —
+   * schwer, schmal, versal — und die stellt jedes System aus dem her, was es hat.
    */
   --font-display: "Archivo", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Impact, sans-serif;
   --font-mono: ui-monospace, "Roboto Mono", "SF Mono", "Cascadia Mono", Menlo, monospace;

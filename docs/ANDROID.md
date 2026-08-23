@@ -88,3 +88,21 @@ seine Daten so herüber:
 2. In der App: Einstellungen → **Sicherung einlesen**
 
 Die Sicherung fügt zusammen, statt zu überschreiben — zweimal einlesen schadet nicht.
+
+### Warum beide Knöpfe in der Hülle eigenen Code brauchen
+
+Beide taten in der Hülle lange **gar nichts** — ohne Fehler, ohne Meldung. Zwei
+verschiedene Gründe, die derselbe Satz erklärt: Ein WebView ist kein Browser, er ist eine
+Ansicht, und was ein Browser drumherum tut, muss die Hülle selbst tun.
+
+- **Einlesen** hängt an `<input type="file">`. Ein WebView öffnet von sich aus keine
+  Dateiauswahl; ohne `WebChromeClient.onShowFileChooser` sagt er schlicht „nicht
+  behandelt“, und der Knopf bleibt tot.
+- **Herunterladen** speichert im Browser über ein `<a download>` mit einem
+  `blob:`-Verweis. Ein WebView bräuchte dafür einen `DownloadListener` — und der könnte
+  einen `blob:`-Verweis nicht auflösen, weil die Bytes im Browser liegen und nicht im
+  Dateisystem. Der Inhalt wandert deshalb über die Brücke (`dateiSichern`), und die Hülle
+  fragt über die Systemauswahl, wohin damit.
+
+Beide Wege gehen über die Systemauswahl und brauchen **keine Speicherberechtigung**: Dort
+schreibt nicht die App, sondern der Nutzer.
