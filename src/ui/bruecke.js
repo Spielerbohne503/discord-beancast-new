@@ -122,8 +122,14 @@ export function zeitplanSenden(state) {
   const ziel = huelle();
   if (ziel === null) return false;
 
+  // Sind die Erinnerungen aus, geht ein **leerer** Plan hinüber — und der löscht drüben
+  // alle Wecker. Ohne das wäre der Schalter Zierde: Die Hülle klingelte weiter, weil sie
+  // von der Einstellung nichts weiß, und wer ihn umlegt und trotzdem geweckt wird, schaltet
+  // beim nächsten Mal die ganze App stumm.
+  const aus = state.settings.notifications !== true;
+
   const titel = new Map(state.tasks.map((task) => [task.id, task.title]));
-  const plan = erinnerungsplan(state.tasks, state.lists, state.settings, Date.now(), MAX_WECKER)
+  const plan = (aus ? [] : erinnerungsplan(state.tasks, state.lists, state.settings, Date.now(), MAX_WECKER))
     .map((eintrag) => ({
       id: eintrag.taskId,
       at: eintrag.at,

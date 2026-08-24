@@ -13,6 +13,21 @@ Google-Dienste. Das Telefon weckt sich selbst zu Zeitpunkten, die die Webseite a
 hat. Für den Nutzer sieht es gleich aus; für die Daten ist es der Unterschied zwischen
 „liegt auf meinem Gerät“ und „liegt bei jemand anderem“.
 
+## Erinnerungen einschalten
+
+Sie sind **ab Werk aus**, und das ist seit dieser Fassung auch wirksam: Bei
+ausgeschalteten Erinnerungen geht ein leerer Zeitplan hinüber, und der löscht alle Wecker.
+Vorher stellte die Seite den Zeitplan unabhängig vom Schalter — wer ihn umlegte und
+trotzdem geweckt wurde, schaltete beim nächsten Mal die ganze App stumm.
+
+Der Weg: **Einstellungen → Erinnerungen → einschalten.** Android fragt dann nach der
+Erlaubnis (ab Android 13). Gefragt wird erst hier und nie beim ersten Start: Ein Dialog,
+den man nicht erwartet hat, wird weggeklickt, und danach ist er für immer weg.
+
+Die Antwort aus dem Systemdialog kommt nicht in die Seite zurück. Die Einstellungen schauen
+deshalb eine halbe Minute lang im Takt nach und zeichnen neu, sobald die Erlaubnis da ist —
+sonst bliebe der Schalter aus, obwohl er längst dürfte.
+
 ## Wer was entscheidet
 
 ```
@@ -36,9 +51,9 @@ Paket, geladen wird die Webseite selbst also immer nur von dort. Was die Berecht
 öffnet, ist ausschließlich der Weg, den die Seite selbst für den Abgleich geht — kein
 Nachladen von Schrift, Skript oder irgendetwas anderem, kein Konto, keine Telemetrie.
 
-Damit der Abgleich in der Hülle etwas findet, muss in den Einstellungen die **Adresse der
-Ablage** eingetragen sein — der Ursprung der Hülle selbst ist keine echte Adresse im Netz,
-„leer lassen“ träfe dort ins Leere.
+Eingerichtet wird der Abgleich hier über den **Koppel-Link** vom anderen Gerät: Der
+Ursprung der Hülle ist keine Adresse im Netz, die Adresse der Ablage muss also von außen
+kommen — und die bringt der Link mit. Einzelheiten in `docs/SYNC.md`.
 
 Geladen wird sie über `https://appassets.androidplatform.net/web/…`, nicht über `file://`.
 Der Grund ist nicht Schönheit: Eine `file://`-Adresse ist kein sicherer Ursprung, und ohne

@@ -38,7 +38,7 @@ export function settingsView() {
       abgleich(setzenUndNeu, update),
       fokusgruppe(setzenUndNeu),
       ruhezeit(setzenUndNeu),
-      erinnerungen(setzenUndNeu),
+      erinnerungen(setzenUndNeu, update),
       darstellung(setzenUndNeu),
       daten(),
       ueber(),
@@ -312,13 +312,41 @@ function ruhezeit(setzenUndNeu) {
  * Die Erlaubnis wird erst beim Einschalten erfragt, nie beim ersten Start: Ein Dialog, den
  * man nicht erwartet hat, wird weggeklickt — und danach ist er für immer weg.
  */
-function erinnerungen(setzenUndNeu) {
-  return inHuelle() ? erinnerungenInDerHuelle(setzenUndNeu) : erinnerungenImBrowser(setzenUndNeu);
+function erinnerungen(setzenUndNeu, neuZeichnen) {
+  return inHuelle() ? erinnerungenInDerHuelle(setzenUndNeu, neuZeichnen) : erinnerungenImBrowser(setzenUndNeu);
 }
 
-function erinnerungenInDerHuelle(setzenUndNeu) {
+/**
+ * Wie lange auf die Antwort aus dem Systemdialog gewartet wird.
+ *
+ * Android beantwortet die Frage in einem eigenen Fenster über der App. Die Antwort kommt
+ * nicht zurück in die Seite — ohne Nachschauen bliebe der Schalter aus, obwohl die
+ * Erlaubnis längst da ist, und man müsste die Ansicht verlassen und neu betreten, um es zu
+ * merken. Genau die Sorte Kleinigkeit, nach der man glaubt, es sei kaputt.
+ */
+const ERLAUBNIS_TAKT_MS = 500;
+const ERLAUBNIS_GEDULD_MS = 30_000;
+
+function erinnerungenInDerHuelle(setzenUndNeu, neuZeichnen) {
   const erlaubt = erinnerungenErlaubt();
   const genau = exakteWeckerErlaubt();
+
+  /** Schaut nach, bis die Erlaubnis da ist — oder bis die Geduld reicht. */
+  function aufAntwortWarten() {
+    const bis = Date.now() + ERLAUBNIS_GEDULD_MS;
+
+    const takt = setInterval(() => {
+      if (erinnerungenErlaubt()) {
+        clearInterval(takt);
+        // Neu zeichnen **und** neu laden: Am zweiten hängt der Zeitplan, der jetzt
+        // erstmals hinübergehen darf.
+        neuZeichnen?.();
+        void aktualisieren();
+        return;
+      }
+      if (Date.now() > bis) clearInterval(takt);
+    }, ERLAUBNIS_TAKT_MS);
+  }
 
   return gruppe(
     S.settings_notifications,
@@ -328,9 +356,8 @@ function erinnerungenInDerHuelle(setzenUndNeu) {
         return;
       }
       if (!erlaubt) {
-        // Android beantwortet die Frage in einem eigenen Dialog; die Antwort steht beim
-        // nächsten Zeichnen da, nicht hier.
         erlaubnisAnfragen();
+        aufAntwortWarten();
       }
       await setzenUndNeu("notifications", true);
     }),

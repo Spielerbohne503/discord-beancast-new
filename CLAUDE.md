@@ -113,6 +113,9 @@ Das hier ist später nicht mehr zu ändern, ohne alles anzufassen:
 - **Aufräumen zählt wie Erledigen** — auch Löschen. Sonst bestraft man Ehrlichkeit.
 - **Erinnerungen eskalieren, sie wiederholen sich nicht.** In der Ruhezeit werden
   sie verschoben, nie verworfen.
+- **Sind die Erinnerungen aus, geht ein leerer Zeitplan an die Hülle** — und der löscht dort
+  alle Wecker. Ein Schalter, der nichts abschaltet, kostet nicht die Erinnerung, sondern
+  die ganze App: Wer trotzdem geweckt wird, schaltet sie im System stumm.
 - **Ein Wochenziel bricht die Serie erst, wenn die Woche vorbei ist.** Die laufende Woche
   zählt nie gegen einen — dieselbe Regel wie beim heutigen Tag, nur eine Ebene höher.
 - **Gestalten schaltet die Stufe frei, nichts anderes.** Kein Kauf, keine Kiste, kein

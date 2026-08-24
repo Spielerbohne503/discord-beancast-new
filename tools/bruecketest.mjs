@@ -124,6 +124,10 @@ pruefe(
   (await seite.evaluate(() => globalThis.__weckerRufe.length)) > 0,
 );
 pruefe(
+  "solange die Erinnerungen aus sind, steht kein einziger Wecker",
+  (await letzterPlan(seite)).length === 0,
+);
+pruefe(
   "in der Hülle wird kein Dienstarbeiter angemeldet",
   (await seite.evaluate(() => navigator.serviceWorker?.controller ?? null)) === null,
 );
@@ -131,6 +135,8 @@ pruefe(
 // ------------------------------------------------------------------------ Zeitplan
 
 console.log("\nDer Wecker");
+// Die Erinnerungen sind ab Werk aus — und das ist seit dieser Fassung auch wirksam.
+await erinnerungenAn(seite);
 await eingeben(seite, "Zahnarzt");
 await faelligMachen(seite, "Zahnarzt", "2020-03-05");
 
@@ -179,6 +185,25 @@ pruefe(
   plan.every((eintrag) => eintrag.titel !== "Zahnarzt"),
   JSON.stringify(plan),
 );
+
+// Der Schalter muss wirken, sonst schaltet man beim nächsten Klingeln die ganze App stumm.
+await eingeben(seite, "Müll");
+await faelligMachen(seite, "Müll", "2020-03-05");
+pruefe("mit eingeschalteten Erinnerungen steht ein Wecker", (await letzterPlan(seite)).length > 0);
+
+await klicken(seite, "Einstellungen");
+await erinnerungsgruppe(seite).locator(".schalter").first().click();
+await seite.waitForTimeout(600);
+pruefe(
+  "das Ausschalten löscht die Wecker wieder",
+  (await letzterPlan(seite)).length === 0,
+  JSON.stringify(await letzterPlan(seite)),
+);
+
+await erinnerungsgruppe(seite).locator(".schalter").first().click();
+await seite.waitForTimeout(600);
+pruefe("und das Wiedereinschalten stellt sie neu", (await letzterPlan(seite)).length > 0);
+await klicken(seite, "Heute");
 
 // ------------------------------------------------------------- Handlungen nachholen
 
@@ -310,6 +335,27 @@ pruefe(
   "beim Einschalten ohne Erlaubnis wird gefragt",
   (await seite.evaluate(() => globalThis.__hueller.gefragt)) > 0,
 );
+pruefe(
+  "und solange sie fehlt, bleibt der Schalter aus",
+  !(await erinnerungsgruppe(seite).locator(".schalter input").first().isChecked()),
+);
+
+// Android beantwortet die Frage in einem eigenen Fenster; die Antwort kommt nicht in die
+// Seite zurück. Ohne Nachschauen bliebe der Schalter aus, obwohl die Erlaubnis da ist —
+// und man hielte es für kaputt.
+await seite.evaluate(() => {
+  globalThis.__hueller.erlaubt = true;
+});
+await seite.waitForTimeout(1600);
+pruefe(
+  "sobald sie erteilt ist, springt der Schalter von allein um",
+  await erinnerungsgruppe(seite).locator(".schalter input").first().isChecked(),
+);
+pruefe(
+  "und die Wecker werden daraufhin gestellt",
+  (await letzterPlan(seite)).length > 0,
+  JSON.stringify(await letzterPlan(seite)),
+);
 
 // ------------------------------------------------------------------------ Kein Abgleich
 
@@ -412,6 +458,16 @@ if (fehlgeschlagen.length > 0 || konsolenfehler.length > 0) process.exit(1);
 // --------------------------------------------------------------------------- Hilfen
 
 /** Die Gruppe mit der Überschrift „Erinnerungen“ — nicht die, die das Wort nur erwähnt. */
+async function erinnerungenAn(seite) {
+  await klicken(seite, "Einstellungen");
+  const schalter = erinnerungsgruppe(seite).locator(".schalter").first();
+  if (!(await schalter.locator("input").isChecked())) {
+    await schalter.click();
+    await seite.waitForTimeout(600);
+  }
+  await klicken(seite, "Heute");
+}
+
 function erinnerungsgruppe(seite) {
   return seite.locator('.gruppe:has(.gruppe__titel:text-is("Erinnerungen"))').first();
 }
