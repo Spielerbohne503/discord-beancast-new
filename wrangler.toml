@@ -61,3 +61,14 @@ class_name = "Raum"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Raum"]
+
+# ---------------------------------------------------------------- Schnittstelle für die KI
+#
+# Ein Worker steht nirgends, wo jemand wohnt — seine Ortszeit ist UTC. Ohne diese Angabe
+# legte `POST /api/aufgaben` mit „18:30“ den Termin im Sommer zwei Stunden daneben.
+#
+# Das ist die **einzige** Angabe, die die Schnittstelle braucht. Einen Zugangsschlüssel gibt
+# es nicht: Der ist das Geheimnis aus dem Koppel-Link. Siehe `docs/KI.md`.
+
+[vars]
+ZEITZONE = "Europe/Berlin"

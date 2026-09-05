@@ -12,6 +12,7 @@
     "featuretest": "node tools/featuretest.mjs",
     "bruecketest": "node tools/bruecketest.mjs",
     "synctest": "node tools/synctest.mjs",
+    "kitest": "node tools/kitest.mjs",
     "shots": "node tools/screenshots.mjs",
     "check": "node --test && node tools/publish.mjs && node tools/browsertest.mjs && node tools/featuretest.mjs && node tools/bruecketest.mjs && node tools/screenshots.mjs"
   }

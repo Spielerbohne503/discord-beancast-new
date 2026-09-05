@@ -25,6 +25,8 @@
  * und damit auch keinen Abgleich, der stillschweigend nie lief.
  */
 
+import { api } from "./api.js";
+
 /**
  * Der einzige weitere Ursprung, der eine Antwort lesen darf.
  *
@@ -39,6 +41,11 @@ const MAX_BYTES = 8 * 1024 * 1024;
 export default {
   async fetch(anfrage, umgebung) {
     const adresse = new URL(anfrage.url);
+
+    // Die Schnittstelle für eine KI. Sie steht bewusst **neben** dem Abgleich und nicht
+    // darin: Der Abgleich bleibt Ende zu Ende verschlüsselt, `/api/` entschlüsselt.
+    const fuerDieKi = await api(anfrage, umgebung, adresse);
+    if (fuerDieKi !== null) return fuerDieKi;
 
     if (!adresse.pathname.startsWith("/sync/")) {
       // Alles andere gehört den Dateien der Webseite.
