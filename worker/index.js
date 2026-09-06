@@ -26,6 +26,7 @@
  */
 
 import { api } from "./api.js";
+import { offen } from "./offen.js";
 
 /**
  * Der einzige weitere Ursprung, der eine Antwort lesen darf.
@@ -46,6 +47,11 @@ export default {
     // darin: Der Abgleich bleibt Ende zu Ende verschlüsselt, `/api/` entschlüsselt.
     const fuerDieKi = await api(anfrage, umgebung, adresse);
     if (fuerDieKi !== null) return fuerDieKi;
+
+    // Die offene Seite: Wer sie aufruft, bekommt das gemeinsame Geheimnis und ist damit
+    // sofort drin. Ausgeschaltet, solange nichts eingetragen ist.
+    const eintritt = offen(umgebung, adresse);
+    if (eintritt !== null) return eintritt;
 
     if (!adresse.pathname.startsWith("/sync/")) {
       // Alles andere gehört den Dateien der Webseite.

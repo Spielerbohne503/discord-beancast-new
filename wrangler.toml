@@ -34,6 +34,16 @@ command = "node tools/publish.mjs"
 directory = "dist"
 binding = "ASSETS"
 
+# **Ohne diese Zeile gewinnt die Datei.** `dist/offen` liegt dort als Rückfallantwort für
+# alles, was kein Worker ist (ein Ordner hinter nginx, GitHub Pages) — ohne sie gäbe es
+# dort bei jedem Laden einen 404 im Protokoll. Cloudflare liefert eine vorhandene Datei
+# aber **vor** dem Worker aus, und dann sagte auch eine offene Seite „zu“.
+#
+# Das ist kein Gedankengang, sondern gemessen: `tools/offentest.mjs` hat genau das
+# aufgedeckt, nachdem eine erste Messung das Gegenteil zu zeigen schien — die Datei war
+# damals erst nach dem Start des Servers entstanden und stand noch in keinem Verzeichnis.
+run_worker_first = ["/offen"]
+
 # `not_found_handling` bleibt aus: Die App führt ihren Verlauf im Hash (`#/heute`), es gibt
 # also nie einen Pfad, der ins Leere zeigt. Stünde hier „single-page-application“, käme
 # statt einer fehlenden `.js`-Datei stillschweigend HTML zurück — und der Fehler läse sich

@@ -280,6 +280,9 @@ export const S = Object.freeze({
   settings_sync_link_ohne_adresse:
     "In diesem Link fehlt die Adresse. Kopier ihn auf dem anderen Gerät noch einmal ganz.",
 
+  settings_sync_offen: "Diese Seite ist offen",
+  settings_sync_offen_hint:
+    "Wer die Adresse dieser Seite kennt, sieht deine Aufgaben und kann sie ändern — ohne Koppeln, ohne Link. Zum Zumachen in Cloudflare das Secret OEFFENTLICH löschen.",
   settings_sync_link_zeigen: "Koppel-Link für das nächste Gerät",
   settings_sync_link_zeigen_hint:
     "Auf dem anderen Gerät öffnen — mehr gehört nicht dazu. Wer den Link hat, hat deine Aufgaben: also nur an dich selbst schicken.",

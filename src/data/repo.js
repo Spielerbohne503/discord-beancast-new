@@ -505,6 +505,9 @@ const EINSTELLUNGEN = {
   // wieder anzeigen ließe — und ein Link, den man nur einmal sieht, ist einer, den man
   // beim dritten Gerät nicht mehr hat.
   syncAktiv: false,
+  // Wurde der Bestand von einer **offenen** Seite übernommen? Dann sagen es die
+  // Einstellungen, statt es zu verschweigen — wer die Adresse kennt, sieht die Aufgaben.
+  syncOffen: false,
   syncAdresse: "",
   syncGeheimnis: "",
   syncRaum: "",

@@ -13,7 +13,7 @@
  * Aufruf: `node tools/publish.mjs [ziel]`
  */
 
-import { cp, mkdir, readdir, readFile, rm, stat } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,6 +47,13 @@ for (const eintrag of MITKOMMEN) {
   }
   await cp(quelle, join(ZIEL, eintrag), { recursive: true });
 }
+
+// Die Rückfallantwort für `/offen`.
+//
+// Auf Cloudflare beantwortet der Worker diesen Weg selbst und diese Datei kommt nie zum
+// Zug. Überall sonst — hinter nginx, auf GitHub Pages, in einem Ordner — gäbe es ohne sie
+// bei **jedem** Laden einen 404 im Protokoll, solange das Gerät nicht gekoppelt ist.
+await writeFile(join(ZIEL, "offen"), `${JSON.stringify({ offen: false })}\n`);
 
 await vollstaendig();
 

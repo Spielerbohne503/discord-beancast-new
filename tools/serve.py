@@ -64,6 +64,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         ".webmanifest": "application/manifest+json",
     }
 
+    def do_GET(self):
+        """``/offen`` beantwortet sonst der Worker — hier heißt die Antwort „zu“.
+
+        Ohne das gäbe es beim Entwickeln bei jedem Laden einen 404 im Protokoll, solange
+        das Gerät nicht gekoppelt ist. Genau die Sorte Rauschen, in der ein echter Fehler
+        später untergeht. Ausgeliefert wird dasselbe, was ``tools/publish.mjs`` nach
+        ``dist/`` legt — der Entwicklungsbetrieb verhält sich damit wie ein Server ohne
+        die offene Seite.
+        """
+        if self.path.split("?", 1)[0].rstrip("/") == "/offen":
+            koerper = b'{"offen":false}\n'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(koerper)))
+            self.end_headers()
+            self.wfile.write(koerper)
+            return
+
+        super().do_GET()
+
     def send_header(self, keyword, value):
         """Kopfzeilen sammeln statt sofort schreiben.
 

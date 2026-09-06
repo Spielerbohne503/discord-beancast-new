@@ -191,6 +191,16 @@ function eingerichtet(setzenUndNeu, trennen) {
   }
 
   return [
+    // Steht ganz oben und nicht im Kleingedruckten: Wer das eingeschaltet hat, soll es
+    // jedes Mal sehen, wenn er hier vorbeikommt.
+    state.settings.syncOffen
+      ? h(
+          "div.feld",
+          {},
+          h("span.feld__beschriftung", {}, S.settings_sync_offen),
+          h("span.feld__hinweis", {}, S.settings_sync_offen_hint),
+        )
+      : null,
     schalter(S.settings_sync_toggle, state.settings.syncAktiv, (an) => setzenUndNeu("syncAktiv", an)),
     h(
       "div.feld",

@@ -34,6 +34,7 @@ npm run featuretest   Gesten und die neueren Ansichten, mit echtem Zeiger auf de
 npm run bruecketest   Der Vertrag zur Android-Hülle, gegen eine nachgebaute Hülle
 npm run synctest      Zwei Browser-Kontexte gegen den echten Worker (siehe docs/SYNC.md)
 npm run kitest        Die Schnittstelle für die KI, gegen Worker und App (siehe docs/KI.md)
+npm run offentest     Die offene Seite: fremder Browser, kein Koppeln (siehe docs/SYNC.md)
 npm run build         Webseite nach dist/ legen und auf Vollständigkeit prüfen
 npm run shots         Bildschirmfotos beider Anordnungen und beider Fassungen
 npm run check         alles zusammen
@@ -84,23 +85,28 @@ Das hier ist später nicht mehr zu ändern, ohne alles anzufassen:
     Nur dort liegen „lies den Stempel, vergleiche, schreibe“ in einem Schritt. In KV war
     die Prüfung gegen gleichzeitiges Schreiben Zierde — und nebenbei brauchte KV einen
     Schritt im Dashboard, den zu vergessen einen Abgleich ergab, der nie lief.
-11. **Der Abgleich hat kein Passwort und keine Losung.** Das Geheimnis ist Zufall aus
+11. **Die offene Seite ist eine ausdrückliche Entscheidung, kein Zustand.** Ohne das
+    Secret `OEFFENTLICH` ist sie aus, und es gibt keinen Weg, sie aus Versehen
+    anzuschalten. Ist sie an, gibt `/offen` das Geheimnis **jedem** heraus — das ist der
+    Zweck und keine Lücke; `test/offen.test.js` nagelt beide Richtungen fest, damit
+    niemand die eine später für einen Fehler hält. Die Einstellungen sagen es sichtbar.
+12. **Der Abgleich hat kein Passwort und keine Losung.** Das Geheimnis ist Zufall aus
     `crypto.getRandomValues` und wandert über den Koppel-Link aufs nächste Gerät —
     hinter der Raute, weil das ein Browser nie an einen Server schickt. Wer daraus wieder
     etwas Getipptes macht, holt sich PBKDF2, die Wartezeit und die Vertipper zurück.
     Der Preis steht dafür in der Oberfläche: Wer den Link hat, hat die Aufgaben.
-12. **Verweise zeigen auf den Titel, nicht auf eine Kennung.** `[[Steuer]]` tippt man,
+13. **Verweise zeigen auf den Titel, nicht auf eine Kennung.** `[[Steuer]]` tippt man,
     statt es nachzuschlagen. Der Preis ist ein Verweis, der nach dem Umbenennen ins Leere
     zeigt — dann sagt die Oberfläche das (`.verweis--leer`) und tut nicht so, als ginge er
     noch irgendwohin.
-13. **`/api/` ist die eine Stelle, an der der Server entschlüsselt** — und sie steht
+14. **`/api/` ist die eine Stelle, an der der Server entschlüsselt** — und sie steht
     **neben** dem Abgleich, nie darin. `/sync/…` bleibt Ende zu Ende verschlüsselt; wer
     das vermischt, nimmt der ganzen App die Zusage. Der Schlüssel kommt je Anfrage im
     Kopf und wird nirgends abgelegt. Einzelheiten in `docs/KI.md`.
-14. **Der Worker rechnet Termine in einer angegebenen Zeitzone**, nie in seiner eigenen:
+15. **Der Worker rechnet Termine in einer angegebenen Zeitzone**, nie in seiner eigenen:
     Seine Ortszeit ist UTC. `domain/zonen.js` ist die einzige Stelle dafür; `time.js` gilt
     weiter auf den Geräten, wo die Ortszeit die des Nutzers ist.
-15. **Zeit je Aufgabe wird aus den Fokusrunden gerechnet, nie mitgeschrieben.** Es gibt
+16. **Zeit je Aufgabe wird aus den Fokusrunden gerechnet, nie mitgeschrieben.** Es gibt
     keine zweite Stoppuhr; `jeAufgabe` in `src/domain/zeit.js` ist die einzige Stelle.
     Abgebrochene Runden zählen null — sonst wird Abbrechen zur Leistung.
 

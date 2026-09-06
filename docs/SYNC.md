@@ -31,6 +31,52 @@ In der Android-Hülle lässt sich kein Link „öffnen“ — sie wohnt an einem
 Dort gibt es stattdessen ein Feld: Link einfügen, **Koppeln**. Ein Handgriff, und die
 Adresse der Ablage kommt gleich mit.
 
+## Die offene Seite
+
+**Wer die Adresse aufruft, ist drin.** Kein Koppeln, kein Link, keine Rückfrage — die Seite
+gibt das Geheimnis jedem heraus, der danach fragt. Das ist keine Schwachstelle, sondern der
+Zweck; wer sie anschaltet, hat sich dafür entschieden.
+
+Das heißt im Klartext: **Wer die Adresse kennt oder errät, sieht deine Aufgaben und kann sie
+ändern.** Die Adresse steht in keiner Suchmaschine, solange niemand sie verlinkt — aber sie
+ist die einzige Hürde, die bleibt.
+
+### Anschalten
+
+```
+npx wrangler secret put OEFFENTLICH
+```
+
+Eingegeben wird das Geheimnis aus dem Koppel-Link — die 43 Zeichen hinter `#koppeln=`. Wer
+das nimmt, was schon auf einem Gerät liegt, behält seinen Bestand; ein frisches Geheimnis
+fängt einen neuen Raum an.
+
+**Als Secret und nicht in `wrangler.toml`.** Herausgegeben wird es ohnehin an jeden
+Besucher — aber in der Datei stünde es zusätzlich in der Projektgeschichte, und die ist
+auch dann noch da, wenn die Seite längst wieder zu ist.
+
+### Ausschalten
+
+```
+npx wrangler secret delete OEFFENTLICH
+```
+
+Danach ist `/offen` wieder `{ offen: false }`, und neue Besucher bekommen nichts mehr.
+**Geräte, die schon drin sind, bleiben drin** — sie haben das Geheimnis gespeichert. Wer
+auch die aussperren will, braucht ein neues: In der App **Trennen**, neu einschalten, und
+das neue Geheimnis als Secret hinterlegen.
+
+### Was auch dann noch gilt
+
+- **Abgelegt wird weiterhin verschlüsselt.** Cloudflare sieht nach wie vor nur einen
+  Klumpen Bytes; das Geheimnis geht an den Browser, nicht in den Speicher.
+- **Ein Koppel-Link schlägt die offene Seite.** Wer einen anklickt, meint genau diesen
+  Bestand — dann zählt der Link.
+- **Ein Gerät, das schon einen Bestand hat, wechselt nicht.** Sonst hätte es seine Aufgaben
+  scheinbar verloren.
+- Die Einstellungen sagen es. Oben in „Geräteübergreifend“ steht **„Diese Seite ist offen“**,
+  jedes Mal — nicht im Kleingedruckten.
+
 ## Warum es keine Losung mehr gibt
 
 Vorher tippte man auf jedem Gerät denselben ausgedachten Satz. Daraus wurden mit PBKDF2

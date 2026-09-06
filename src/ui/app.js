@@ -35,7 +35,7 @@ import { etikettenView } from "./views/etiketten.js";
 import { erinnerungenStarten } from "./nag.js";
 import { aktionenNachholen, inHuelle, zeitplanSenden } from "./bruecke.js";
 import { abgleichStarten } from "./sync.js";
-import { koppelnAusAdresse } from "./koppelstart.js";
+import { koppelnAusAdresse, offeneSeiteUebernehmen } from "./koppelstart.js";
 import { meldung } from "./toast.js";
 import { geteiltesUebernehmen } from "./share.js";
 import { willkommenZeigen } from "./onboarding.js";
@@ -187,7 +187,9 @@ export async function starten(wurzel) {
 
   // Ein Koppel-Link muss vor dem ersten Laden greifen: Danach steht `onboardingDone`, und
   // der Willkommensdialog fragt nicht mehr, ob neu angefangen werden soll.
-  const gekoppelt = await koppelnAusAdresse();
+  //
+  // Der Link schlägt die offene Seite: Wer einen anklickt, meint genau diesen Bestand.
+  const gekoppelt = (await koppelnAusAdresse()) || (await offeneSeiteUebernehmen(state.settings));
 
   // Was an einer Meldung angetippt wurde, während die Seite zu war, gilt rückwirkend zum
   // Zeitpunkt des Antippens — deshalb vor dem ersten Laden.
